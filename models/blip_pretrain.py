@@ -66,7 +66,7 @@ class BLIP_Pretrain(nn.Module):
             self.visual_encoder = timm.create_model(
                 model_name="vit_small_plus_patch16_dinov3.lvd1689m",
                 pretrained=True,
-                img_size=224
+                img_size=224,
                 num_classes=0,
                 global_pool='' # 전체 토큰 유지?
             )
@@ -366,3 +366,4 @@ def tie_encoder_decoder_weights(encoder: nn.Module, decoder: nn.Module, base_mod
 
     # tie weights recursively
     tie_encoder_to_decoder_recursively(decoder, encoder, base_model_prefix, uninitialized_encoder_weights, skip_key)  
+
