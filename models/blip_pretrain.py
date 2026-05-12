@@ -8,13 +8,16 @@
 from models.med import BertConfig, BertModel, BertLMHeadModel
 from transformers import BertTokenizer
 import transformers
-transformers.logging.set_verbosity_error()
+# transformers.logging.set_verbosity_error()
+transformers.logging.set_verbosity_warning() # 에러와 경고까지는 보여줌?
+logger = transformers.logging.get_logger(__name__) # added? for warning at bottom logger
 
 import torch
 from torch import nn
 import torch.nn.functional as F
 
 from models.blip import create_vit, init_tokenizer, load_checkpoint
+
 
 class BLIP_Pretrain(nn.Module):
     def __init__(self,                 
