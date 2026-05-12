@@ -1,0 +1,47 @@
+# =========================
+# Python & Virtual Environment
+# =========================
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+
+# =========================
+# Deep Learning & Data
+# =========================
+# Weights & Checkpoints
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+*.h5
+
+# Datasets & Logs
+data/
+datasets/
+logs/
+tb_logs/
+wandb/
+runs/
+
+# =========================
+# OS & Editors
+# =========================
+# macOS
+.DS_Store
+
+# Editors
+.vscode/
+*.swp
+*.swo
+.idea/
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+
+# ========================
+# personal files
+# =========================
+프로젝트_유의사항
