@@ -54,6 +54,7 @@ class BLIP_Pretrain(nn.Module):
             self.visual_encoder = timm.create_model(
                 model_name='vit_small_patch16_dinov3.lvd1689m',
                 pretrained=True,
+                img_size=224,
                 num_classes=0
             )
 
@@ -62,11 +63,16 @@ class BLIP_Pretrain(nn.Module):
             self.visual_encoder = timm.create_model(
                 model_name="vit_small_plus_patch16_dinov3.lvd1689m",
                 pretrained=True,
+                img_size=224
                 num_classes=0,
                 global_pool='' # 전체 토큰 유지?
             )
+
+        # for test code of output vit dimensions
+        test_input = torch.randn(1,3,224,224)
+        test_output = self.visual_encoder(test_input)
         
-        
+        print(f"model output shape: {test_output}")
                
         self.tokenizer = init_tokenizer()   
         encoder_config = BertConfig.from_json_file(med_config)
