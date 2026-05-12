@@ -46,7 +46,27 @@ class BLIP_Pretrain(nn.Module):
         elif vit=='large':
             from timm.models.helpers import load_custom_pretrained
             from timm.models.vision_transformer import default_cfgs
-            load_custom_pretrained(self.visual_encoder,default_cfgs['vit_large_patch16_224_in21k'])        
+            load_custom_pretrained(self.visual_encoder,default_cfgs['vit_large_patch16_224_in21k'])
+        
+        elif vit=='small': # 내가 추가하게 되는 모델
+            # model: vit_small_patch16_dinov3
+            import timm
+            self.visual_encoder = timm.create_model(
+                model_name='vit_small_patch16_dinov3.lvd1689m',
+                pretrained=True,
+                num_classes=0
+            )
+
+        elif vit=='small_plus':
+            import timm
+            self.visual_encoder = timm.create_model(
+                model_name="vit_small_plus_patch16_dinov3.lvd1689m",
+                pretrained=True,
+                num_classes=0,
+                global_pool='' # 전체 토큰 유지?
+            )
+        
+        
                
         self.tokenizer = init_tokenizer()   
         encoder_config = BertConfig.from_json_file(med_config)
