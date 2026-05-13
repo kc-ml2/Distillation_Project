@@ -545,17 +545,17 @@ class BertOnlyMLMHead(nn.Module):
         return prediction_scores
 
 
-class BertPreTrainedModel(PreTrainedModel):
+class BertPreTrainedModel(PreTrainedModel): # 가중치 공간을 미리 제작을 한 후, 거기다 부드러운 숫자들을 집어넣음. 이후에 bertmodel이나 호출하면서 from_pretrained를 하면 필요한 부분에 집어넣음
     """
     An abstract class to handle weights initialization and a simple interface for downloading and loading pretrained
     models.
     """
 
-    config_class = BertConfig
+    config_class = BertConfig # 버트형태의 컨피그를 따라간다.
     base_model_prefix = "bert"
     _keys_to_ignore_on_load_missing = [r"position_ids"]
 
-    def _init_weights(self, module):
+    def _init_weights(self, module): # pretrainedmode을 호출하면서 모든 구역에 대해서 _init_weight를 실행해준다.
         """ Initialize the weights """
         if isinstance(module, (nn.Linear, nn.Embedding)):
             # Slightly different from the TF version which uses truncated_normal for initialization
@@ -595,7 +595,7 @@ class BertModel(BertPreTrainedModel):
         return self.embeddings.word_embeddings
 
     def set_input_embeddings(self, value):
-        self.embeddings.word_embeddings = value
+        self.embeddings.word_embeddings = value # 이 값으로 둬준다
 
     def _prune_heads(self, heads_to_prune):
         """
@@ -808,15 +808,15 @@ class BertModel(BertPreTrainedModel):
 
 
 
-class BertLMHeadModel(BertPreTrainedModel):
+class BertLMHeadModel(BertPreTrainedModel): # 버트모델을 밑에 달고ㅡ위에다 버트온리mlm헤드를 올림
 
-    _keys_to_ignore_on_load_unexpected = [r"pooler"]
-    _keys_to_ignore_on_load_missing = [r"position_ids", r"predictions.decoder.bias"]
+    _keys_to_ignore_on_load_unexpected = [r"pooler"] # 버트에서 cls를 보고 풀링을 하기 때문.
+    _keys_to_ignore_on_load_missing = [r"position_ids", r"predictions.decoder.bias"] # 가중치가 없을 수도 있으니 무시하라 구글 버트는 없이 했지만 다른데는 있을수도 있으니
 
-    def __init__(self, config):
+    def __init__(self, config): # 컨피그 주소를 넣어줌 med_config주소를 넣긴 하네
         super().__init__(config)
 
-        self.bert = BertModel(config, add_pooling_layer=False)
+        self.bert = BertModel(config, add_pooling_layer=False) 
         self.cls = BertOnlyMLMHead(config)
 
         self.init_weights()
@@ -867,8 +867,7 @@ class BertLMHeadModel(BertPreTrainedModel):
             instead of all :obj:`decoder_input_ids` of shape :obj:`(batch_size, sequence_length)`.
         use_cache (:obj:`bool`, `optional`):
             If set to :obj:`True`, :obj:`past_key_values` key value states are returned and can be used to speed up
-            decoding (see :obj:`past_key_values`).
-        Returns:
+            decoding (see :obj:`past_key_values`). 
         Example::
             >>> from transformers import BertTokenizer, BertLMHeadModel, BertConfig
             >>> import torch
