@@ -57,15 +57,15 @@ class BLIP_Pretrain(nn.Module):
         """               
         super().__init__()
         
-        self.visual_encoder, vision_width = create_vit(vit,image_size, vit_grad_ckpt, vit_ckpt_layer, 0)
-        
         if vit=='base':
+            self.visual_encoder, vision_width = create_vit(vit,image_size, vit_grad_ckpt, vit_ckpt_layer, 0)
             checkpoint = torch.hub.load_state_dict_from_url(
                 url="https://dl.fbaipublicfiles.com/deit/deit_base_patch16_224-b5f2ef4d.pth",
                 map_location="cpu", check_hash=True)
             state_dict = checkpoint["model"]     
             msg = self.visual_encoder.load_state_dict(state_dict,strict=False)
         elif vit=='large':
+            self.visual_encoder, vision_width = create_vit(vit,image_size, vit_grad_ckpt, vit_ckpt_layer, 0)
             from timm.models.helpers import load_custom_pretrained
             from timm.models.vision_transformer import default_cfgs
             load_custom_pretrained(self.visual_encoder,default_cfgs['vit_large_patch16_224_in21k'])
@@ -90,7 +90,8 @@ class BLIP_Pretrain(nn.Module):
                 pretrained=True,
                 img_size=224,
                 num_classes=0,
-                global_pool=''
+                global_pool='',
+                num_reg_tokens=4 # do not have reg tokens
             )
             self.visual_encoder = DINOv3_Wrapper(base_model=raw_model, model_register_tokens=4)
 
@@ -116,22 +117,36 @@ class BLIP_Pretrain(nn.Module):
                 num_reg_tokens=4 # default =4
             )
             self.visual_encoder = DINOv3_Wrapper(base_model=raw_model, model_register_tokens=4)
-
-               
-        self.tokenizer = init_tokenizer()   
-        encoder_config = BertConfig.from_json_file(med_config)
-        encoder_config.encoder_width = vision_width
+        
+        # additional conditions for small vit
+        if vit in ['small', 'small_plus', 'small_reg', 'small_plus_reg']:
+            # embed_dim -> vision projection output
+            # embed_dim = 384 # needs to be checked. it is raw output for model
+            embed_dim = 256 # output layer 384 of vit to 256 projection bert also projected to 256 same.
+            
+            # model making method is different: small's vs base and large
+            vision_width = 384 # hard coded for these model
+        #========================================================================================================
+        
+        ## do we use bert or other generation model?
+        # ok for experiment: fix same bert with only different config of smaller model
+        # set bert_small_config.json
+        self.tokenizer = init_tokenizer()   # -> blip.py file
+        encoder_config = BertConfig.from_json_file(med_config) # configs.bert_config.json, only vocab size is different
+        encoder_config.encoder_width = vision_width # when used as med - vit output is important - default = 768
         self.text_encoder = BertModel.from_pretrained('bert-base-uncased',config=encoder_config, add_pooling_layer=False)
         self.text_encoder.resize_token_embeddings(len(self.tokenizer)) 
 
-        text_width = self.text_encoder.config.hidden_size
+        text_width = self.text_encoder.config.hidden_size # 768 default
         
-        self.vision_proj = nn.Linear(vision_width, embed_dim)
-        self.text_proj = nn.Linear(text_width, embed_dim)
+        self.vision_proj = nn.Linear(vision_width, embed_dim) # 256 in default
+        self.text_proj = nn.Linear(text_width, embed_dim) # 256 in default? why 256 size?
 
-        self.itm_head = nn.Linear(text_width, 2) 
+        self.itm_head = nn.Linear(text_width, 2) # binary 
         
-        # create momentum encoders  
+        
+        # create momentum encoders  == shadow model for stable learning in itm?
+        ## do we have to maintain momentum encoder?
         self.visual_encoder_m, vision_width = create_vit(vit,image_size)              
         self.vision_proj_m = nn.Linear(vision_width, embed_dim)
         self.text_encoder_m = BertModel(config=encoder_config, add_pooling_layer=False)      
@@ -142,19 +157,20 @@ class BLIP_Pretrain(nn.Module):
                             [self.text_encoder,self.text_encoder_m],
                             [self.text_proj,self.text_proj_m],
                            ]       
-        self.copy_params()
+        self.copy_params() # copy paras function -> self.model_pairs loop -> copy and grad off
 
         # create the queue
+        ## momentum encoder requirements: queue size 57600 at __init__
         self.register_buffer("image_queue", torch.randn(embed_dim, queue_size))
         self.register_buffer("text_queue", torch.randn(embed_dim, queue_size))
-        self.register_buffer("queue_ptr", torch.zeros(1, dtype=torch.long))  
+        self.register_buffer("queue_ptr", torch.zeros(1, dtype=torch.long)) # queue pointer?
 
-        self.image_queue = nn.functional.normalize(self.image_queue, dim=0)
+        self.image_queue = nn.functional.normalize(self.image_queue, dim=0) # norm?
         self.text_queue = nn.functional.normalize(self.text_queue, dim=0)
         
-        self.queue_size = queue_size
+        self.queue_size = queue_size # 57600
         self.momentum = momentum
-        self.temp = nn.Parameter(0.07*torch.ones([]))   
+        self.temp = nn.Parameter(0.07*torch.ones([]))   # parameter and tensor(0.0700, requires_grad=True) ?? magic number for temperature
         
         # create the decoder
         decoder_config = BertConfig.from_json_file(med_config)
