@@ -20,10 +20,35 @@ model = timm.create_model(
     num_classes=0,
     global_pool=''
 )
+def test_dinov3_model():
+    model = timm.create_model(
+        model_name='vit_small_patch16_dinov3.lvd1689m',
+        # model_name='vit_small_plus_patch16_dinov3.lvd1689m',
+        pretrained=True,
+        img_size=224,
+        num_classes=0,
+        global_pool=''
+    )
+    test_input = torch.randn(1, 3, 224, 224)
+    test_output = model(test_input)
+    print(f"Output shape: {test_output.shape}")
 
-test_input = torch.randn(1, 3, 224, 224)
-test_output = model(test_input)
-print(f"Output shape: {test_output.shape}")
+def test_dinov3_wrapper_model():
+    from models.blip_pretrain import DINOv3_Wrapper
+    raw_model = timm.create_model(
+        model_name='vit_small_patch16_dinov3.lvd1689m',
+        # model_name='vit_small_plus_patch16_dinov3.lvd1689m',
+        pretrained=True,
+        img_size=224,
+        num_classes=0,
+        global_pool=''
+    )
+    wrapper_model = DINOv3_Wrapper(base_model=raw_model, model_register_tokens=4)
+    test_input = torch.randn(1, 3, 224, 224)
+    test_output = wrapper_model(test_input)
+    print(f"Output shape: {test_output.shape}")
+
+
 # Output shape: torch.Size([1, 384]) -> vit small 경우 w/o gloabl pool option
 # Output shape: torch.Size([1, 201, 384]) -> vit small w global pool ''
 # 결과가 [1, 384]인지, [1, 197, 384]인지 바로 확인 가능!
@@ -35,6 +60,7 @@ print(f"Output shape: {test_output.shape}")
 #### 베이스 생성 코드
 # vit == 'base' 케이스 안에서 실행할 테스트 코드
 from models.blip import create_vit
+
 def test_base_model():
     print("--- Testing DeiT-Base Model ---")
     
@@ -67,5 +93,7 @@ def test_base_model():
     print(f"Vision Width: {vision_width}")
 
 if __name__ == "__main__":
-    test_base_model()
+    # test_base_model()
+    # test_dinov3_model()
+    test_dinov3_wrapper_model()
 
