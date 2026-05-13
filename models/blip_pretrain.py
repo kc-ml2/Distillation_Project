@@ -8,13 +8,35 @@
 from models.med import BertConfig, BertModel, BertLMHeadModel
 from transformers import BertTokenizer
 import transformers
-transformers.logging.set_verbosity_error()
+# transformers.logging.set_verbosity_error()
+transformers.logging.set_verbosity_warning() # 에러와 경고까지는 보여줌?
+logger = transformers.logging.get_logger(__name__) # added? for warning at bottom logger
 
 import torch
 from torch import nn
 import torch.nn.functional as F
 
 from models.blip import create_vit, init_tokenizer, load_checkpoint
+
+# feature add: vit model DIVNO3 - has special tokens: register tokens
+# usually register tokens are trash bins for massive energy for unimportant features
+# so I thought that when building model, maintain register tokens
+class DINOv3_Wrapper(nn.Module):
+    def __init__(self, base_model, model_register_tokens=4):
+        # model_register_tokesn: existing register token number
+        super().__init__()
+        self.model = base_model
+        self.num_reg = model_register_tokens
+
+    def forward(self, x):
+        x = self.model(x) # Output shape: [Batch, 201, 384]
+        # Index 0: CLS token
+        # Index 1 ~ 4: Register token
+        # Index 5 ~ 끝: Patch tokens
+        cls_token = x[:, 0:1, :]
+        patch_tokens = x[:, (1 + self.num_reg):, :]
+        return torch.cat([cls_token, patch_tokens], dim=1) # [Batch, 197, 384]
+# end
 
 class BLIP_Pretrain(nn.Module):
     def __init__(self,                 
@@ -46,7 +68,55 @@ class BLIP_Pretrain(nn.Module):
         elif vit=='large':
             from timm.models.helpers import load_custom_pretrained
             from timm.models.vision_transformer import default_cfgs
-            load_custom_pretrained(self.visual_encoder,default_cfgs['vit_large_patch16_224_in21k'])        
+            load_custom_pretrained(self.visual_encoder,default_cfgs['vit_large_patch16_224_in21k'])
+        
+        elif vit=='small': # model for small vit, and 
+            # model: vit_small_patch16_dinov3
+            import timm
+            self.visual_encoder = timm.create_model(
+                model_name='vit_small_patch16_dinov3.lvd1689m',
+                pretrained=True,
+                img_size=224,
+                num_classes=0,
+                global_pool='',
+                num_reg_tokens=0 # do not have reg tokens
+            )
+        
+        # add vit small with register tokens option (i don't know how skipping register token is working well?)
+        elif vit=='small_reg':
+            import timm
+            raw_model = timm.create_model(
+                model_name='vit_small_patch16_dinov3.lvd1689m',
+                pretrained=True,
+                img_size=224,
+                num_classes=0,
+                global_pool=''
+            )
+            self.visual_encoder = DINOv3_Wrapper(base_model=raw_model, model_register_tokens=4)
+
+        elif vit=='small_plus':
+            import timm
+            self.visual_encoder = timm.create_model(
+                model_name="vit_small_plus_patch16_dinov3.lvd1689m",
+                pretrained=True,
+                img_size=224,
+                num_classes=0,
+                global_pool='', # output
+                num_reg_tokens=0 # do not have reg tokens
+            )
+
+        elif vit=='small_plus_reg': 
+            import timm
+            raw_model = timm.create_model(
+                model_name="vit_small_plus_patch16_dinov3.lvd1689m",
+                pretrained=True,
+                img_size=224,
+                num_classes=0,
+                global_pool='', # output
+                num_reg_tokens=4 # default =4
+            )
+            self.visual_encoder = DINOv3_Wrapper(base_model=raw_model, model_register_tokens=4)
+
                
         self.tokenizer = init_tokenizer()   
         encoder_config = BertConfig.from_json_file(med_config)
@@ -337,3 +407,4 @@ def tie_encoder_decoder_weights(encoder: nn.Module, decoder: nn.Module, base_mod
 
     # tie weights recursively
     tie_encoder_to_decoder_recursively(decoder, encoder, base_model_prefix, uninitialized_encoder_weights, skip_key)  
+
