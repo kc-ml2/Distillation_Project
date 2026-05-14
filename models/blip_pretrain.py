@@ -139,6 +139,42 @@ class BLIP_Pretrain(nn.Module):
         # set bert_small_config.json
         # config initialize method changed
 
+        # 모델 체급별 정보 관리 딕셔너리
+        model_specs = {
+            "MiniLM": {
+                "hub_id": "microsoft/MiniLM-L12-H384-uncased",
+                "config": med_bert_MiniLM_config
+            },
+            "Medium": {
+                "hub_id": "google/bert_uncased_L-8_H-512_A-8",
+                "config": med_bert_medium_config
+            },
+            "Base": {
+                "hub_id": "bert-base-uncased",
+                "config": med_config
+            }
+        } # 저렇게 변수를 저장해놔도 되는구나 흠흠
+
+        if my_bert_size in model_specs:
+            spec = model_specs[my_bert_size]
+            self.tokenizer = init_tokenizer() # 토크나이저 초기화
+            encoder_config = BertConfig.from_json_file(spec["config"]) # 컨피그에 맞게 가져옴
+            encoder_config.encoder_width = vision_width # 수정
+
+            self.text_encoder = BertModel.from_pretrained(
+                pretrained_model_name_or_path=spec["hub_id"], 
+                config=encoder_config, 
+                add_pooling_layer=False
+            )
+
+            self.text_encoder.resize_token_embeddings(len(self.tokenizer)) # 컨피그로 만든 임베딩 토큰 수가 다르니깐 다시 하는 것
+            text_width = self.text_encoder.config.hidden_size # 768 default 모델 내부의 고유한 벡터 차원.
+            print("encoder loading step finish")
+        else:
+            raise ValueError(f"Unknown bert size: {my_bert_size}")
+
+        # ====================== depreciated ==============
+        '''
         if my_bert_size == 'base':
             self.tokenizer = init_tokenizer()   # -> blip.py file
             encoder_config = BertConfig.from_json_file(med_config) # configs.bert_config.json, only vocab size is different
@@ -183,6 +219,8 @@ class BLIP_Pretrain(nn.Module):
             self.text_encoder.resize_token_embeddings(len(self.tokenizer))
             text_width = self.text_encoder.config.hidden_size # 384
             med_config = med_bert_MiniLM_config # decoder와 momentum은 이제 이 컨피그를 보고 제작함
+        '''
+        # ================= depreciated ================
 
         # itc loss part
         self.vision_proj = nn.Linear(vision_width, embed_dim) # 256 in default 
@@ -227,12 +265,26 @@ class BLIP_Pretrain(nn.Module):
         # 디코더만 학습시킬까 생각했는데 컨피그만 잘 주면 아예 윗부분도 다 재사용할 수 있겠는데?
         # create the decoder -> go to med.py file
         # 미리 컨피그랑 다 바꾸어놓 지 않았네
+        # 수정된 model_spec을 사용해서 디코더도 한번에 생성해 보자
 
-        decoder_config = BertConfig.from_json_file(med_config)
-        decoder_config.encoder_width = vision_width      # 비전 인코더의 아웃풋 출력 = small은 384임  이 부분은 쓸때마다 바뀌기 때문인듯하다.
-        self.text_decoder = BertLMHeadModel.from_pretrained('bert-base-uncased',config=decoder_config)    
-        self.text_decoder.resize_token_embeddings(len(self.tokenizer)) 
-        tie_encoder_decoder_weights(self.text_encoder,self.text_decoder.bert,'','/attention')
+        if my_bert_size in model_specs:
+            spec = model_specs[my_bert_size]
+            decoder_config = BertConfig.from_json_file(spec["config"])
+            self.text_decoder = BertLMHeadModel.from_pretrained(
+                pretrained_model_name_or_path=spec["hub_id"],
+                config=decoder_config
+            )
+            self.text_decoder.resize_token_embeddings(len(self.tokenizer)) # 위에서 이미 선언함
+            tie_encoder_decoder_weights(self.text_encoder,self.text_decoder.bert,'','/attention')
+            pass
+        
+        # ========== depreciated =========
+        # decoder_config = BertConfig.from_json_file(med_config)
+        # decoder_config.encoder_width = vision_width      # 비전 인코더의 아웃풋 출력 = small은 384임  이 부분은 쓸때마다 바뀌기 때문인듯하다.
+        # self.text_decoder = BertLMHeadModel.from_pretrained('bert-base-uncased',config=decoder_config)    
+        # self.text_decoder.resize_token_embeddings(len(self.tokenizer)) 
+        # tie_encoder_decoder_weights(self.text_encoder,self.text_decoder.bert,'','/attention')
+        # =========== depreciated ========
         
         
     def forward(self, image, caption, alpha):
