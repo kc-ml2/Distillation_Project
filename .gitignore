@@ -40,6 +40,7 @@ runs/
 
 # Jupyter Notebook
 .ipynb_checkpoints/
+.ipynb
 
 # ========================
 # personal files

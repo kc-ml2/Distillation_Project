@@ -208,6 +208,10 @@ def create_vit(vit, image_size, use_grad_checkpointing=False, ckpt_layer=0, drop
                                           )   
     return visual_encoder, vision_width
 
+# =====================BERT creation? =============
+def create_bert():
+    pass
+
 def is_url(url_or_filename):
     parsed = urlparse(url_or_filename)
     return parsed.scheme in ("http", "https")

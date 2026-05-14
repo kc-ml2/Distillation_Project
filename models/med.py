@@ -545,17 +545,17 @@ class BertOnlyMLMHead(nn.Module):
         return prediction_scores
 
 
-class BertPreTrainedModel(PreTrainedModel):
+class BertPreTrainedModel(PreTrainedModel): # 가중치 공간을 미리 제작을 한 후, 거기다 부드러운 숫자들을 집어넣음. 이후에 bertmodel이나 호출하면서 from_pretrained를 하면 필요한 부분에 집어넣음
     """
     An abstract class to handle weights initialization and a simple interface for downloading and loading pretrained
     models.
     """
 
-    config_class = BertConfig
+    config_class = BertConfig # 버트형태의 컨피그를 따라간다.
     base_model_prefix = "bert"
     _keys_to_ignore_on_load_missing = [r"position_ids"]
 
-    def _init_weights(self, module):
+    def _init_weights(self, module): # pretrainedmode을 호출하면서 모든 구역에 대해서 _init_weight를 실행해준다.
         """ Initialize the weights """
         if isinstance(module, (nn.Linear, nn.Embedding)):
             # Slightly different from the TF version which uses truncated_normal for initialization
@@ -595,7 +595,7 @@ class BertModel(BertPreTrainedModel):
         return self.embeddings.word_embeddings
 
     def set_input_embeddings(self, value):
-        self.embeddings.word_embeddings = value
+        self.embeddings.word_embeddings = value # 이 값으로 둬준다
 
     def _prune_heads(self, heads_to_prune):
         """
@@ -625,20 +625,23 @@ class BertModel(BertPreTrainedModel):
         # ourselves in which case we just need to make it broadcastable to all heads.
         if attention_mask.dim() == 3:
             extended_attention_mask = attention_mask[:, None, :, :]
-        elif attention_mask.dim() == 2:
+            # 브로드캐스팅을 통해서 head차원은 동일하게 가져가게 됨. 즉 같은 마스크를 쓰게 된다는 것
+            # 총 4차원의 어텐션 마스크가 필요하나 그럼?
+        elif attention_mask.dim() == 2: # 실제 토크나이저가 벹으면 배치사이즈, 시퀀스 길이로 들어감
             # Provided a padding mask of dimensions [batch_size, seq_length]
             # - if the model is a decoder, apply a causal mask in addition to the padding mask
             # - if the model is an encoder, make the mask broadcastable to [batch_size, num_heads, seq_length, seq_length]
-            if is_decoder:
-                batch_size, seq_length = input_shape
+            if is_decoder: # 트루라면
+                batch_size, seq_length = input_shape # 인풋 값을 그냥 보고 만들어버린다.
 
-                seq_ids = torch.arange(seq_length, device=device)
-                causal_mask = seq_ids[None, None, :].repeat(batch_size, seq_length, 1) <= seq_ids[None, :, None]
+                seq_ids = torch.arange(seq_length, device=device) # [0, 1, 2, ... ,seq_length-1] 인 텐서를 만듦
+                causal_mask = seq_ids[None, None, :].repeat(batch_size, seq_length, 1) <= seq_ids[None, :, None] # 3차원으로 늘려서 배치개만큼 만들고, (seq_len,1) 사이즈로 넣기, <=연산을 통해서 브로드캐스팅
+                # [[[0,1,2]]] 반복 -> [[[0,1,2],[0,1,2]],[[0,1,2],[0,1,2]]] vs [[[0],[1],[2]]] 이게 되네
                 # in case past_key_values are used we need to add a prefix ones mask to the causal mask
                 # causal and attention masks must have same type with pytorch version < 1.3
-                causal_mask = causal_mask.to(attention_mask.dtype)
+                causal_mask = causal_mask.to(attention_mask.dtype) # dtpe 바꿔주기
    
-                if causal_mask.shape[1] < attention_mask.shape[1]:
+                if causal_mask.shape[1] < attention_mask.shape[1]: # 추론 모드일때 attention_mask = [[1,1,1]] 지금까지 생성한 길이를 변환해서 줌. 3인 셈
                     prefix_seq_len = attention_mask.shape[1] - causal_mask.shape[1]
                     causal_mask = torch.cat(
                         [
@@ -656,7 +659,7 @@ class BertModel(BertPreTrainedModel):
                 "Wrong shape for input_ids (shape {}) or attention_mask (shape {})".format(
                     input_shape, attention_mask.shape
                 )
-            )
+            ) # 이 로직은 아직도 뭔지 잘 모르겠는데? 그냥 하삼각행렬말고 트루로 다 열어버리면 되는거 아닌가?
 
         # Since attention_mask is 1.0 for positions we want to attend and 0.0 for
         # masked positions, this operation will create a tensor which is 0.0 for
@@ -714,7 +717,7 @@ class BertModel(BertPreTrainedModel):
         else:
             use_cache = False
 
-        if input_ids is not None and inputs_embeds is not None:
+        if input_ids is not None and inputs_embeds is not None: # 인덱스를 주던가 진짜 변환이 끝난 텐서를 주던가
             raise ValueError("You cannot specify both input_ids and inputs_embeds at the same time")
         elif input_ids is not None:
             input_shape = input_ids.size()
@@ -724,18 +727,20 @@ class BertModel(BertPreTrainedModel):
             input_shape = inputs_embeds.size()[:-1]
             batch_size, seq_length = input_shape
             device = inputs_embeds.device
-        elif encoder_embeds is not None:    
+        elif encoder_embeds is not None: # 때로는 인코더가 출력한 결과물만 디코더 쪽으로 넘어오는 경우도 있기 때문에
             input_shape = encoder_embeds.size()[:-1]
             batch_size, seq_length = input_shape 
             device = encoder_embeds.device
         else:
-            raise ValueError("You have to specify either input_ids or inputs_embeds or encoder_embeds")
+            raise ValueError("You have to specify either input_ids or inputs_embeds or encoder_embeds") # 셋중에 하나는 트루로 해야되는구나
 
-        # past_key_values_length
+        # past_key_values_length - 이건 추론때 필요한 것이고, 학습때는 필요 없음. 따라서 추론때만 작동하는 코드라 보면 됨
+        # 추론시 이전 단어가 3개네? 3 주기 => 이후 밑에서 seq_length=1(추론시) 3+1=4짜리 마스크를 만들게 됨.
+        # 학습 시에는 이 값이 0이고, seq_length 가 있으니 얘 혼자서 마스크를 만들 수 있게 됨.
         past_key_values_length = past_key_values[0][0].shape[2] if past_key_values is not None else 0
 
         if attention_mask is None:
-            attention_mask = torch.ones(((batch_size, seq_length + past_key_values_length)), device=device)
+            attention_mask = torch.ones(((batch_size, seq_length + past_key_values_length)), device=device) # 마스크를 그 자리에서 만드는데 [batch, seq_len + pask key values lenght]
             
         # We can provide a self-attention mask of dimensions [batch_size, from_seq_length, to_seq_length]
         # ourselves in which case we just need to make it broadcastable to all heads.
@@ -808,15 +813,15 @@ class BertModel(BertPreTrainedModel):
 
 
 
-class BertLMHeadModel(BertPreTrainedModel):
+class BertLMHeadModel(BertPreTrainedModel): # 버트모델을 밑에 달고ㅡ위에다 버트온리mlm헤드를 올림
 
-    _keys_to_ignore_on_load_unexpected = [r"pooler"]
-    _keys_to_ignore_on_load_missing = [r"position_ids", r"predictions.decoder.bias"]
+    _keys_to_ignore_on_load_unexpected = [r"pooler"] # 버트에서 cls를 보고 풀링을 하기 때문.
+    _keys_to_ignore_on_load_missing = [r"position_ids", r"predictions.decoder.bias"] # 가중치가 없을 수도 있으니 무시하라 구글 버트는 없이 했지만 다른데는 있을수도 있으니
 
-    def __init__(self, config):
+    def __init__(self, config): # 컨피그 주소를 넣어줌 med_config주소를 넣긴 하네
         super().__init__(config)
 
-        self.bert = BertModel(config, add_pooling_layer=False)
+        self.bert = BertModel(config, add_pooling_layer=False) 
         self.cls = BertOnlyMLMHead(config)
 
         self.init_weights()
@@ -867,8 +872,7 @@ class BertLMHeadModel(BertPreTrainedModel):
             instead of all :obj:`decoder_input_ids` of shape :obj:`(batch_size, sequence_length)`.
         use_cache (:obj:`bool`, `optional`):
             If set to :obj:`True`, :obj:`past_key_values` key value states are returned and can be used to speed up
-            decoding (see :obj:`past_key_values`).
-        Returns:
+            decoding (see :obj:`past_key_values`). 
         Example::
             >>> from transformers import BertTokenizer, BertLMHeadModel, BertConfig
             >>> import torch
