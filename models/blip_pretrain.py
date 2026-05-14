@@ -172,7 +172,9 @@ class BLIP_Pretrain(nn.Module):
         self.momentum = momentum
         self.temp = nn.Parameter(0.07*torch.ones([]))   # parameter and tensor(0.0700, requires_grad=True) ?? magic number for temperature
         
-        # create the decoder
+
+        ## ==========================decoder line=====================
+        # create the decoder -> go to med.py file
         decoder_config = BertConfig.from_json_file(med_config)
         decoder_config.encoder_width = vision_width        
         self.text_decoder = BertLMHeadModel.from_pretrained('bert-base-uncased',config=decoder_config)    
