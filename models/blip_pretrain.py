@@ -134,13 +134,15 @@ class BLIP_Pretrain(nn.Module):
         self.tokenizer = init_tokenizer()   # -> blip.py file
         encoder_config = BertConfig.from_json_file(med_config) # configs.bert_config.json, only vocab size is different
         encoder_config.encoder_width = vision_width # when used as med - vit output is important - default = 768
+        # encoder_width = 외부 출력값을 받아들일 때 즉, 비전을 받아들일 때 이 width를 쓴다
         self.text_encoder = BertModel.from_pretrained('bert-base-uncased',config=encoder_config, add_pooling_layer=False)
         self.text_encoder.resize_token_embeddings(len(self.tokenizer)) 
 
-        text_width = self.text_encoder.config.hidden_size # 768 default
+        text_width = self.text_encoder.config.hidden_size # 768 default 모델 내부의 고유한 벡터 차원.
         
         self.vision_proj = nn.Linear(vision_width, embed_dim) # 256 in default
         self.text_proj = nn.Linear(text_width, embed_dim) # 256 in default? why 256 size?
+        # 이건 itc loss 를 구하기 위해서 줄인 듯 하다.
 
         self.itm_head = nn.Linear(text_width, 2) # binary 
         
@@ -174,9 +176,10 @@ class BLIP_Pretrain(nn.Module):
         
 
         ## ==========================decoder line=====================
+        # 디코더만 학습시킬까 생각했는데 컨피그만 잘 주면 아예 윗부분도 다 재사용할 수 있겠는데?
         # create the decoder -> go to med.py file
         decoder_config = BertConfig.from_json_file(med_config)
-        decoder_config.encoder_width = vision_width        
+        decoder_config.encoder_width = vision_width      # 비전 인코더의 아웃풋 출력 = small은 384임  이 부분은 쓸때마다 바뀌기 때문인듯하다.
         self.text_decoder = BertLMHeadModel.from_pretrained('bert-base-uncased',config=decoder_config)    
         self.text_decoder.resize_token_embeddings(len(self.tokenizer)) 
         tie_encoder_decoder_weights(self.text_encoder,self.text_decoder.bert,'','/attention')
@@ -186,15 +189,16 @@ class BLIP_Pretrain(nn.Module):
         with torch.no_grad():
             self.temp.clamp_(0.001,0.5)
         
-        image_embeds = self.visual_encoder(image) 
-        image_atts = torch.ones(image_embeds.size()[:-1],dtype=torch.long).to(image.device)        
-        image_feat = F.normalize(self.vision_proj(image_embeds[:,0,:]),dim=-1)          
+        image_embeds = self.visual_encoder(image) # 임베딩 벡터 따와
+        image_atts = torch.ones(image_embeds.size()[:-1],dtype=torch.long).to(image.device) # 어텐션 마스크 준비물
+        image_feat = F.normalize(self.vision_proj(image_embeds[:,0,:]),dim=-1)          # 흠 이놈은 뭐지? vision_proj에 0번 토큰 = cls를 준다
         
-        text = self.tokenizer(caption, padding='max_length', truncation=True, max_length=30, 
+        text = self.tokenizer(caption, padding='max_length', truncation=True, max_length=30, # 토크나이저가 쪼개서 줌
                               return_tensors="pt").to(image.device)  
-        text_output = self.text_encoder(text.input_ids, attention_mask = text.attention_mask,                      
-                                        return_dict = True, mode = 'text')            
-        text_feat = F.normalize(self.text_proj(text_output.last_hidden_state[:,0,:]),dim=-1)                 
+        text_output = self.text_encoder(text.input_ids, attention_mask = text.attention_mask, # return dict?이건 뭐지?
+                                        return_dict = True, mode = 'text')            # 아웃풋도 텍스트로만 나가게 하고
+        text_feat = F.normalize(self.text_proj(text_output.last_hidden_state[:,0,:]),dim=-1)                 # 노말라이즈는 국룰인가보네
+        # 이건 ITC 로스를 구하는 코드구나.
              
         # get momentum features
         with torch.no_grad():
@@ -223,7 +227,7 @@ class BLIP_Pretrain(nn.Module):
         loss_i2t = -torch.sum(F.log_softmax(sim_i2t, dim=1)*sim_i2t_targets,dim=1).mean()
         loss_t2i = -torch.sum(F.log_softmax(sim_t2i, dim=1)*sim_t2i_targets,dim=1).mean() 
 
-        loss_ita = (loss_i2t+loss_t2i)/2
+        loss_ita = (loss_i2t+loss_t2i)/2 # itc는 평균내서 보는구나 그런데 이상하네 왜 왜 image - text text - image가 다른 거지?
 
         self._dequeue_and_enqueue(image_feat_m, text_feat_m)        
 
@@ -284,9 +288,9 @@ class BLIP_Pretrain(nn.Module):
         loss_itm = F.cross_entropy(vl_output, itm_labels)  
         
         ##================= LM ========================##     
-        decoder_input_ids = text.input_ids.clone()      
-        decoder_input_ids[:,0] = self.tokenizer.bos_token_id
-        decoder_targets = decoder_input_ids.masked_fill(decoder_input_ids == self.tokenizer.pad_token_id, -100) 
+        decoder_input_ids = text.input_ids.clone()      # 얘는 어떻게 생겼길래? input_ids가? 입력 토큰처럼 생겼나?
+        decoder_input_ids[:,0] = self.tokenizer.bos_token_id # batch,0번을 bos_token_id로 바꾼다
+        decoder_targets = decoder_input_ids.masked_fill(decoder_input_ids == self.tokenizer.pad_token_id, -100) # 패딩은 -100으로 채우기
 
         decoder_output = self.text_decoder(decoder_input_ids, 
                                            attention_mask = text.attention_mask, 
@@ -315,7 +319,7 @@ class BLIP_Pretrain(nn.Module):
             for param, param_m in zip(model_pair[0].parameters(), model_pair[1].parameters()):
                 param_m.data = param_m.data * self.momentum + param.data * (1. - self.momentum)
 
-                        
+
     @torch.no_grad()
     def _dequeue_and_enqueue(self, image_feat, text_feat):
         # gather keys before updating queue

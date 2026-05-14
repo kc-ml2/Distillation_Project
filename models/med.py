@@ -821,8 +821,8 @@ class BertLMHeadModel(BertPreTrainedModel): # 버트모델을 밑에 달고ㅡ�
     def __init__(self, config): # 컨피그 주소를 넣어줌 med_config주소를 넣긴 하네
         super().__init__(config)
 
-        self.bert = BertModel(config, add_pooling_layer=False) 
-        self.cls = BertOnlyMLMHead(config)
+        self.bert = BertModel(config, add_pooling_layer=False) # 밑 부분은 버트가 달려있고
+        self.cls = BertOnlyMLMHead(config) # 윗 부분은 헤드를 따옴
 
         self.init_weights()
 

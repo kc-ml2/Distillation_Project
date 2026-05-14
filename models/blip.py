@@ -10,6 +10,7 @@ warnings.filterwarnings("ignore")
 
 from models.vit import VisionTransformer, interpolate_pos_embed
 from models.med import BertConfig, BertModel, BertLMHeadModel
+from models.blip_pretrain import DINOv3_Wrapper # for create_vit
 from transformers import BertTokenizer
 
 import torch
@@ -185,7 +186,7 @@ def blip_feature_extractor(pretrained='',**kwargs):
 
 def init_tokenizer():
     tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
-    tokenizer.add_special_tokens({'bos_token':'[DEC]'})
+    tokenizer.add_special_tokens({'bos_token':'[DEC]'}) # special token = DEC이며, 이름은 bos token이다.
     tokenizer.add_special_tokens({'additional_special_tokens':['[ENC]']})       
     tokenizer.enc_token_id = tokenizer.additional_special_tokens_ids[0]  
     return tokenizer
@@ -193,7 +194,7 @@ def init_tokenizer():
 
 def create_vit(vit, image_size, use_grad_checkpointing=False, ckpt_layer=0, drop_path_rate=0):
         
-    assert vit in ['base', 'large'], "vit parameter must be base or large"
+    assert vit in ['base', 'large', 'small', 'small_plus', 'small_reg', 'small_plus_reg'], "vit parameter must be in option"
     if vit=='base':
         vision_width = 768
         visual_encoder = VisionTransformer(img_size=image_size, patch_size=16, embed_dim=vision_width, depth=12, 
@@ -206,6 +207,57 @@ def create_vit(vit, image_size, use_grad_checkpointing=False, ckpt_layer=0, drop
                                            num_heads=16, use_grad_checkpointing=use_grad_checkpointing, ckpt_layer=ckpt_layer,
                                            drop_path_rate=0.1 or drop_path_rate
                                           )   
+    elif vit=='small': # model for small vit, and 
+        # model: vit_small_patch16_dinov3
+        import timm
+        visual_encoder = timm.create_model(
+            model_name='vit_small_patch16_dinov3.lvd1689m',
+            pretrained=False, # 모델 구조만 호출하기
+            img_size=224,
+            num_classes=0,
+            global_pool='',
+            num_reg_tokens=0 # do not have reg tokens
+        )
+        vision_width = 384
+    
+    # add vit small with register tokens option (i don't know how skipping register token is working well?)
+    elif vit=='small_reg':
+        import timm
+        raw_model = timm.create_model(
+            model_name='vit_small_patch16_dinov3.lvd1689m',
+            pretrained=False,
+            img_size=224,
+            num_classes=0,
+            global_pool='',
+            num_reg_tokens=4 # do not have reg tokens
+        )
+        vision_width = 384
+        visual_encoder = DINOv3_Wrapper(base_model=raw_model, model_register_tokens=4)
+
+    elif vit=='small_plus':
+        import timm
+        visual_encoder = timm.create_model(
+            model_name="vit_small_plus_patch16_dinov3.lvd1689m",
+            pretrained=False,
+            img_size=224,
+            num_classes=0,
+            global_pool='', # output
+            num_reg_tokens=0 # do not have reg tokens
+        )
+        vision_width = 384
+
+    elif vit=='small_plus_reg': 
+        import timm
+        raw_model = timm.create_model(
+            model_name="vit_small_plus_patch16_dinov3.lvd1689m",
+            pretrained=False,
+            img_size=224,
+            num_classes=0,
+            global_pool='', # output
+            num_reg_tokens=4 # default =4
+        )
+        vision_width = 384
+        visual_encoder = DINOv3_Wrapper(base_model=raw_model, model_register_tokens=4)
     return visual_encoder, vision_width
 
 # =====================BERT creation? =============
