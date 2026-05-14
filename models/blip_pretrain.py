@@ -48,6 +48,9 @@ class BLIP_Pretrain(nn.Module):
                  embed_dim = 256,     
                  queue_size = 57600,
                  momentum = 0.995,
+
+                 # add option for language model
+                 my_bert_size = "small" # prevent error for bert
                  ):
         """
         Args:
@@ -131,19 +134,32 @@ class BLIP_Pretrain(nn.Module):
         ## do we use bert or other generation model?
         # ok for experiment: fix same bert with only different config of smaller model
         # set bert_small_config.json
-        self.tokenizer = init_tokenizer()   # -> blip.py file
-        encoder_config = BertConfig.from_json_file(med_config) # configs.bert_config.json, only vocab size is different
-        encoder_config.encoder_width = vision_width # when used as med - vit output is important - default = 768
-        # encoder_width = 외부 출력값을 받아들일 때 즉, 비전을 받아들일 때 이 width를 쓴다
-        self.text_encoder = BertModel.from_pretrained('bert-base-uncased',config=encoder_config, add_pooling_layer=False)
-        self.text_encoder.resize_token_embeddings(len(self.tokenizer)) 
 
-        text_width = self.text_encoder.config.hidden_size # 768 default 모델 내부의 고유한 벡터 차원.
+        if my_bert_size == 'base':
+            self.tokenizer = init_tokenizer()   # -> blip.py file
+            encoder_config = BertConfig.from_json_file(med_config) # configs.bert_config.json, only vocab size is different
+            encoder_config.encoder_width = vision_width # when used as med - vit output is important - default = 768
+            # encoder_width = 외부 출력값을 받아들일 때 즉, 비전을 받아들일 때 이 width를 쓴다
+            self.text_encoder = BertModel.from_pretrained('bert-base-uncased',config=encoder_config, add_pooling_layer=False)
+            self.text_encoder.resize_token_embeddings(len(self.tokenizer)) # 컨피그로 만든 임베딩 토큰 수가 다르니깐 다시 하는 것
+
+            text_width = self.text_encoder.config.hidden_size # 768 default 모델 내부의 고유한 벡터 차원.
         
-        self.vision_proj = nn.Linear(vision_width, embed_dim) # 256 in default
-        self.text_proj = nn.Linear(text_width, embed_dim) # 256 in default? why 256 size?
-        # 이건 itc loss 를 구하기 위해서 줄인 듯 하다.
+        # feat addition: small bert model import code
+        elif my_bert_size == 'small':
+            self.tokenizer = init_tokenizer()   # -> blip.py file
+            encoder_config = BertConfig.from_json_file(med_small_config) # configs.bert_config.json, only vocab size is different
+            encoder_config.encoder_width = vision_width # when used as med - vit output is important - default = 768
+            # encoder_width = 외부 출력값을 받아들일 때 즉, 비전을 받아들일 때 이 width를 쓴다
+            self.text_encoder = BertModel.from_pretrained('bert-base-uncased',config=encoder_config, add_pooling_layer=False)
+            self.text_encoder.resize_token_embeddings(len(self.tokenizer)) # 컨피그로 만든 임베딩 토큰 수가 다르니깐 다시 하는 것
 
+            text_width = self.text_encoder.config.hidden_size # 768 default 모델 내부의 고유한 벡터 차원.
+            
+
+        self.vision_proj = nn.Linear(vision_width, embed_dim) # 256 in default 
+        self.text_proj = nn.Linear(text_width, embed_dim) # 256 in default? why 256 size? - 애초에 contrastive learning을 256으로함
+        # 이건 itc loss 를 구하기 위해서 줄인 듯 하다.
         self.itm_head = nn.Linear(text_width, 2) # binary 
         
         
