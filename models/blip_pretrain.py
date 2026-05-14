@@ -40,7 +40,7 @@ class DINOv3_Wrapper(nn.Module):
 
 class BLIP_Pretrain(nn.Module):
     def __init__(self,                 
-                 med_config = 'configs/bert_config.json',  
+                 med_config = 'configs/bert_config.json',
                  image_size = 224,
                  vit = 'base',
                  vit_grad_ckpt = False,
@@ -50,8 +50,11 @@ class BLIP_Pretrain(nn.Module):
                  momentum = 0.995,
 
                  # add option for language model
-                 my_bert_size = "small" # prevent error for bert
+                 my_bert_size = "base", # default = bert (original)
+                 med_bert_medium_config = 'configs/bert_medium_config.json',
+                 med_bert_MiniLM_config = 'configs/bert_minilm_config.json'
                  ):
+        assert my_bert_size in ["base", "medium", "MiniLM"], "bert size must be base, medium, MiniLM"
         """
         Args:
             med_config (str): path for the mixture of encoder-decoder model's configuration file
@@ -134,37 +137,66 @@ class BLIP_Pretrain(nn.Module):
         ## do we use bert or other generation model?
         # ok for experiment: fix same bert with only different config of smaller model
         # set bert_small_config.json
+        # config initialize method changed
 
         if my_bert_size == 'base':
             self.tokenizer = init_tokenizer()   # -> blip.py file
             encoder_config = BertConfig.from_json_file(med_config) # configs.bert_config.json, only vocab size is different
             encoder_config.encoder_width = vision_width # when used as med - vit output is important - default = 768
             # encoder_width = 외부 출력값을 받아들일 때 즉, 비전을 받아들일 때 이 width를 쓴다
-            self.text_encoder = BertModel.from_pretrained('bert-base-uncased',config=encoder_config, add_pooling_layer=False)
+            self.text_encoder = BertModel.from_pretrained(
+                'bert-base-uncased',
+                config=encoder_config,
+                add_pooling_layer=False
+            )
             self.text_encoder.resize_token_embeddings(len(self.tokenizer)) # 컨피그로 만든 임베딩 토큰 수가 다르니깐 다시 하는 것
-
             text_width = self.text_encoder.config.hidden_size # 768 default 모델 내부의 고유한 벡터 차원.
+            med_config = med_config # 자기 자신-base 모델 사용
         
         # feat addition: small bert model import code
-        elif my_bert_size == 'small':
-            self.tokenizer = init_tokenizer()   # -> blip.py file
-            encoder_config = BertConfig.from_json_file(med_small_config) # configs.bert_config.json, only vocab size is different
-            encoder_config.encoder_width = vision_width # when used as med - vit output is important - default = 768
-            # encoder_width = 외부 출력값을 받아들일 때 즉, 비전을 받아들일 때 이 width를 쓴다
-            self.text_encoder = BertModel.from_pretrained('bert-base-uncased',config=encoder_config, add_pooling_layer=False)
-            self.text_encoder.resize_token_embeddings(len(self.tokenizer)) # 컨피그로 만든 임베딩 토큰 수가 다르니깐 다시 하는 것
+        elif my_bert_size == 'medium':
+            self.tokenizer = init_tokenizer()   # additional two special token
+            encoder_config = BertConfig.from_json_file(med_bert_medium_config) # small model config
 
-            text_width = self.text_encoder.config.hidden_size # 768 default 모델 내부의 고유한 벡터 차원.
-            
+            # encoder_width 는 우리가 따로 달은 컨피그임. 따라서 밑에서 바뀌게 됨
+            encoder_config.encoder_width = vision_width # 이건 자동으로 바꾸게 될 거고 384로
+            self.text_encoder = BertModel.from_pretrained(
+                'google/bert_uncased_L-8_H-512_A-8',
+                config=encoder_config,
+                add_pooling_layer=False
+            )
+            # https://huggingface.co/google/bert_uncased_L-8_H-512_A-8
+            self.text_encoder.resize_token_embeddings(len(self.tokenizer)) # 컨피그로 만든 임베딩 토큰 수가 다르니깐 다시 하는 것.
+            text_width = self.text_encoder.config.hidden_size # 512
+            med_config = med_bert_medium_config # 밑에서부터는 변경해서 들어가게
+        
+        elif my_bert_size == "MiniLM":
+            self.tokenizer = init_tokenizer()
+            encoder_config = BertConfig.from_json_file(med_bert_MiniLM_config)
+            encoder_config.encoder_width = vision_width
+            self.text_encoder = BertModel.from_pretrained(
+                'microsoft/MiniLM-L12-H384-uncased',
+                config=encoder_config,
+                add_pooling_layer=False
+            )
+            # https://huggingface.co/microsoft/MiniLM-L12-H384-uncased
+            self.text_encoder.resize_token_embeddings(len(self.tokenizer))
+            text_width = self.text_encoder.config.hidden_size # 384
+            med_config = med_bert_MiniLM_config # decoder와 momentum은 이제 이 컨피그를 보고 제작함
 
+        # itc loss part
         self.vision_proj = nn.Linear(vision_width, embed_dim) # 256 in default 
         self.text_proj = nn.Linear(text_width, embed_dim) # 256 in default? why 256 size? - 애초에 contrastive learning을 256으로함
         # 이건 itc loss 를 구하기 위해서 줄인 듯 하다.
+
+        # itm loss head
         self.itm_head = nn.Linear(text_width, 2) # binary 
         
         
         # create momentum encoders  == shadow model for stable learning in itm?
         ## do we have to maintain momentum encoder?
+        # 아하 여기서 create_vit와 text_encoder_m이 생성되는구나
+        # 미리 컨피그는 다 따놨으니 알아서 될 듯 함.
         self.visual_encoder_m, vision_width = create_vit(vit,image_size)              
         self.vision_proj_m = nn.Linear(vision_width, embed_dim)
         self.text_encoder_m = BertModel(config=encoder_config, add_pooling_layer=False)      
@@ -189,11 +221,13 @@ class BLIP_Pretrain(nn.Module):
         self.queue_size = queue_size # 57600
         self.momentum = momentum
         self.temp = nn.Parameter(0.07*torch.ones([]))   # parameter and tensor(0.0700, requires_grad=True) ?? magic number for temperature
-        
+        # momentum은 안바꿔도 되더라 그런데 디코더는 손을 좀 봐야겠음.
 
         ## ==========================decoder line=====================
         # 디코더만 학습시킬까 생각했는데 컨피그만 잘 주면 아예 윗부분도 다 재사용할 수 있겠는데?
         # create the decoder -> go to med.py file
+        # 미리 컨피그랑 다 바꾸어놓 지 않았네
+
         decoder_config = BertConfig.from_json_file(med_config)
         decoder_config.encoder_width = vision_width      # 비전 인코더의 아웃풋 출력 = small은 384임  이 부분은 쓸때마다 바뀌기 때문인듯하다.
         self.text_decoder = BertLMHeadModel.from_pretrained('bert-base-uncased',config=decoder_config)    
