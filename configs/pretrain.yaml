@@ -4,9 +4,11 @@ train_file: ['/home/minwoo/Distillation_Project/datasets/vision/coco/annotations
 laion_path: ''   
 
 # size of vit model; base or large
-vit: 'base'
+vit: 'base' 
 vit_grad_ckpt: False
 vit_ckpt_layer: 0
+
+# size of language model: base, medium, minilm 중 하나로 설정
 
 image_size: 224
 # batch_size: 75 # 변경해야함

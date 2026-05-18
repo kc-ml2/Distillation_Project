@@ -10,7 +10,7 @@ warnings.filterwarnings("ignore")
 
 from models.vit import VisionTransformer, interpolate_pos_embed
 from models.med import BertConfig, BertModel, BertLMHeadModel
-from models.blip_pretrain import DINOv3_Wrapper # for create_vit
+from custom_functions.dinov3_encoder import DINOv3_Wrapper # for create_vit custom function 으로 이동
 from transformers import BertTokenizer
 
 import torch

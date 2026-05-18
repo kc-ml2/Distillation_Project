@@ -7,7 +7,9 @@
 '''
 import argparse
 import os
-import ruamel.yaml as yaml
+# import ruamel.yaml as yaml
+# from ruamel.yaml import YAML
+import yaml
 import numpy as np
 import random
 import time
@@ -153,7 +155,7 @@ def main(args, config): # configs.pretrain.yaml
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--config', default='./configs/pretrain.yaml')
+    parser.add_argument('--config', default='./configs/pretrain.yaml') # 세팅을 바꿔놨음
     parser.add_argument('--output_dir', default='output/Pretrain')  
     parser.add_argument('--checkpoint', default='')    
     parser.add_argument('--evaluate', action='store_true')    
@@ -164,10 +166,15 @@ if __name__ == '__main__':
     parser.add_argument('--distributed', default=True, type=bool)
     args = parser.parse_args()
 
-    config = yaml.load(open(args.config, 'r'), Loader=yaml.Loader)
+    # config = yaml.load(open(args.config, 'r'), Loader=yaml.Loader) depreciated in yaml
+    with open(args.config, 'r') as f: # pyYAML사용
+        config = yaml.safe_load(f)
 
     Path(args.output_dir).mkdir(parents=True, exist_ok=True)
-        
-    yaml.dump(config, open(os.path.join(args.output_dir, 'config.yaml'), 'w'))    
+    
+    # yaml.dump(config, open(os.path.join(args.output_dir, 'config.yaml'), 'w'))   dep in yaml 
+    with open(os.path.join(args.output_dir, 'config.yaml'), 'w') as f:
+        yaml.dump(config, f)
+    
     
     main(args, config)

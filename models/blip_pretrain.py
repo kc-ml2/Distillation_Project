@@ -15,28 +15,9 @@ logger = transformers.logging.get_logger(__name__) # added? for warning at botto
 import torch
 from torch import nn
 import torch.nn.functional as F
+from custom_functions.dinov3_encoder import DINOv3_Wrapper # custom function으로 이동한 후에 임포트
 
 from models.blip import create_vit, init_tokenizer, load_checkpoint
-
-# feature add: vit model DIVNO3 - has special tokens: register tokens
-# usually register tokens are trash bins for massive energy for unimportant features
-# so I thought that when building model, maintain register tokens
-class DINOv3_Wrapper(nn.Module):
-    def __init__(self, base_model, model_register_tokens=4):
-        # model_register_tokesn: existing register token number
-        super().__init__()
-        self.model = base_model
-        self.num_reg = model_register_tokens
-
-    def forward(self, x):
-        x = self.model(x) # Output shape: [Batch, 201, 384]
-        # Index 0: CLS token
-        # Index 1 ~ 4: Register token
-        # Index 5 ~ 끝: Patch tokens
-        cls_token = x[:, 0:1, :]
-        patch_tokens = x[:, (1 + self.num_reg):, :]
-        return torch.cat([cls_token, patch_tokens], dim=1) # [Batch, 197, 384]
-# end
 
 class BLIP_Pretrain(nn.Module):
     def __init__(self,                 
@@ -54,7 +35,7 @@ class BLIP_Pretrain(nn.Module):
                  med_bert_medium_config = 'configs/bert_medium_config.json',
                  med_bert_MiniLM_config = 'configs/bert_minilm_config.json'
                  ):
-        assert my_bert_size in ["base", "medium", "MiniLM"], "bert size must be base, medium, MiniLM"
+        assert my_bert_size in ["base", "medium", "minilm"], "bert size must be base, medium, minilm"
         """
         Args:
             med_config (str): path for the mixture of encoder-decoder model's configuration file
@@ -141,20 +122,20 @@ class BLIP_Pretrain(nn.Module):
 
         # 모델 체급별 정보 관리 딕셔너리
         model_specs = {
-            "MiniLM": {
+            "minilm": {
                 "hub_id": "microsoft/MiniLM-L12-H384-uncased",
                 "config": med_bert_MiniLM_config
             },
-            "Medium": {
+            "medium": {
                 "hub_id": "google/bert_uncased_L-8_H-512_A-8",
                 "config": med_bert_medium_config
             },
-            "Base": {
+            "base": {
                 "hub_id": "bert-base-uncased",
                 "config": med_config
             }
         } # 저렇게 변수를 저장해놔도 되는구나 흠흠
-
+        print(my_bert_size)
         if my_bert_size in model_specs:
             spec = model_specs[my_bert_size]
             self.tokenizer = init_tokenizer() # 토크나이저 초기화
@@ -275,7 +256,7 @@ class BLIP_Pretrain(nn.Module):
                 config=decoder_config
             )
             self.text_decoder.resize_token_embeddings(len(self.tokenizer)) # 위에서 이미 선언함
-            tie_encoder_decoder_weights(self.text_encoder,self.text_decoder.bert,'','/attention')
+            tie_encoder_decoder_weights(self.text_encoder,self.text_decoder.bert,'','/attention') # 디코더 묶기
         
         # ========== depreciated =========
         # decoder_config = BertConfig.from_json_file(med_config)
