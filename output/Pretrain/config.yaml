@@ -1,17 +1,20 @@
 alpha: 0.4
-batch_size: 16
+batch_size: 64
+cc12m_ratio: 5
+cc12m_tar_path: /home/minwoo/Distillation_Project/datasets/vision/cc12m/cc12m_dataset
+image_root: /home/minwoo/Distillation_Project/datasets/vision/coco/images/
 image_size: 224
-init_lr: 1e-4
+init_lr: 0.00025
 laion_path: ''
 lr_decay_rate: 0.9
-max_epoch: 3
-min_lr: 1e-6
+max_epoch: 10
+min_lr: 1.0e-06
 queue_size: 57600
 train_file:
 - /home/minwoo/Distillation_Project/datasets/vision/coco/annotations/coco_karpathy_train.json
-vit: Base
+vit: base
 vit_ckpt_layer: 0
 vit_grad_ckpt: false
-warmup_lr: 1e-6
-warmup_steps: 6000
+warmup_lr: 1.0e-06
+warmup_steps: 3500
 weight_decay: 0.05
