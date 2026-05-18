@@ -276,7 +276,6 @@ class BLIP_Pretrain(nn.Module):
             )
             self.text_decoder.resize_token_embeddings(len(self.tokenizer)) # 위에서 이미 선언함
             tie_encoder_decoder_weights(self.text_encoder,self.text_decoder.bert,'','/attention')
-            pass
         
         # ========== depreciated =========
         # decoder_config = BertConfig.from_json_file(med_config)

@@ -75,7 +75,7 @@ def train(model, data_loader, optimizer, epoch, device, config):
     return {k: "{:.3f}".format(meter.global_avg) for k, meter in metric_logger.meters.items()}  
 
 
-def main(args, config):
+def main(args, config): # configs.pretrain.yaml
     utils.init_distributed_mode(args)    
     
     device = torch.device(args.device)
