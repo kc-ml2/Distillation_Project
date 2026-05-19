@@ -81,7 +81,7 @@ def train(model, data_loader, optimizer, epoch, device, config):
     # gather the stats from all processes
     metric_logger.synchronize_between_processes()
     print("Averaged stats:", metric_logger.global_avg())     
-    return {k: "{:.3f}".format(meter.global_avg) for k, meter in metric_logger.meters.items()}  
+    return {k: "{:.6f}".format(meter.global_avg) for k, meter in metric_logger.meters.items()}  
 
 
 def main(args, config): # configs.pretrain.yaml

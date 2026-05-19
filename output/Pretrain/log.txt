@@ -1,1 +1,0 @@
-{"train_lr": "0.000", "train_loss_ita": "4.603", "train_loss_itm": "0.515", "train_loss_lm": "4.017", "epoch": 0}
