@@ -78,7 +78,7 @@ class BLIP_Pretrain(nn.Module):
                 img_size=224,
                 num_classes=0,
                 global_pool='',
-                num_reg_tokens=4 # do not have reg tokens
+                num_reg_tokens=4 #
             )
             self.visual_encoder = DINOv3_Wrapper(base_model=raw_model, model_register_tokens=4)
 
@@ -113,6 +113,7 @@ class BLIP_Pretrain(nn.Module):
             
             # model making method is different: small's vs base and large
             vision_width = 384 # hard coded for these model
+        print(f"온라인 모델 비전 width 변수: {vision_width}")
         #========================================================================================================
         
         ## do we use bert or other generation model?
@@ -140,7 +141,7 @@ class BLIP_Pretrain(nn.Module):
             spec = model_specs[my_bert_size]
             self.tokenizer = init_tokenizer() # 토크나이저 초기화
             encoder_config = BertConfig.from_json_file(spec["config"]) # 컨피그에 맞게 가져옴
-            encoder_config.encoder_width = vision_width # 수정
+            encoder_config.encoder_width = vision_width # 수정 # 이부분은 한번 더 맞춰줘야 크로소 모달이 잘 작동한다 - 디코더 커플링을하면서 컨피그를 수정을 안해놓으니깐 오류가 나네
 
             self.text_encoder = BertModel.from_pretrained(
                 pretrained_model_name_or_path=spec["hub_id"], 
@@ -228,6 +229,9 @@ class BLIP_Pretrain(nn.Module):
                            ]       
         self.copy_params() # copy paras function -> self.model_pairs loop -> copy and grad off
 
+        print("Online Dim:", self.visual_encoder.model.embed_dim)
+        print("Momentum Dim:", self.visual_encoder_m.model.embed_dim)
+
         # create the queue
         ## momentum encoder requirements: queue size 57600 at __init__
         self.register_buffer("image_queue", torch.randn(embed_dim, queue_size))
@@ -238,7 +242,7 @@ class BLIP_Pretrain(nn.Module):
         self.text_queue = nn.functional.normalize(self.text_queue, dim=0)
         
         self.queue_size = queue_size # 57600
-        self.momentum = momentum
+        self.momentum = momentum # 0.995
         self.temp = nn.Parameter(0.07*torch.ones([]))   # parameter and tensor(0.0700, requires_grad=True) ?? magic number for temperature
         # momentum은 안바꿔도 되더라 그런데 디코더는 손을 좀 봐야겠음.
 
@@ -251,6 +255,7 @@ class BLIP_Pretrain(nn.Module):
         if my_bert_size in model_specs:
             spec = model_specs[my_bert_size]
             decoder_config = BertConfig.from_json_file(spec["config"])
+            decoder_config.encoder_width = vision_width # 수정
             self.text_decoder = BertLMHeadModel.from_pretrained(
                 pretrained_model_name_or_path=spec["hub_id"],
                 config=decoder_config
