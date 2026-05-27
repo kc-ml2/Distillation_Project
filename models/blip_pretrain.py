@@ -35,7 +35,6 @@ class BLIP_Pretrain(nn.Module):
                  med_bert_medium_config = 'configs/bert_medium_config.json',
                  med_bert_MiniLM_config = 'configs/bert_minilm_config.json'
                  ):
-        assert my_bert_size in ["base", "medium", "minilm"], "bert size must be base, medium, minilm"
         """
         Args:
             med_config (str): path for the mixture of encoder-decoder model's configuration file
@@ -136,7 +135,6 @@ class BLIP_Pretrain(nn.Module):
                 "config": med_config
             }
         } # 저렇게 변수를 저장해놔도 되는구나 흠흠
-        print(my_bert_size)
         if my_bert_size in model_specs:
             spec = model_specs[my_bert_size]
             self.tokenizer = init_tokenizer() # 토크나이저 초기화
@@ -152,8 +150,11 @@ class BLIP_Pretrain(nn.Module):
             self.text_encoder.resize_token_embeddings(len(self.tokenizer)) # 컨피그로 만든 임베딩 토큰 수가 다르니깐 다시 하는 것
             text_width = self.text_encoder.config.hidden_size # 768 default 모델 내부의 고유한 벡터 차원.
             print("encoder loading step finish")
+            print(self.text_encoder)
         else:
             raise ValueError(f"Unknown bert size: {my_bert_size}")
+        print(f"bert size: {my_bert_size}")
+        assert my_bert_size in ["base", "medium", "minilm"], "bert size must be base, medium, minilm" # 버트를 만들고 나서
 
         # ====================== depreciated ==============
         '''
@@ -231,6 +232,14 @@ class BLIP_Pretrain(nn.Module):
 
         print("Online Dim:", self.visual_encoder.model.embed_dim)
         print("Momentum Dim:", self.visual_encoder_m.model.embed_dim)
+        # # 모델 생성 직후 테스트기
+        # print("Checking Layer 0 Cross-Attention:")
+        # layer0_ca = self.text_encoder.encoder.layer[0].crossattention
+        # print(f"Layer 0 CrossAttention exists: {layer0_ca is not None}")
+        # print(f"Layer 0 CrossAttention Query weight shape: {layer0_ca.self.query.weight.shape}")
+
+        # # 가중치가 랜덤인지(평균이 0에 가깝고 표준편차가 작음) 확인
+        # print(f"Layer 0 Mean: {layer0_ca.self.query.weight.mean().item():.4f}")
 
         # create the queue
         ## momentum encoder requirements: queue size 57600 at __init__

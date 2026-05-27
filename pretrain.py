@@ -142,8 +142,13 @@ def main(args, config): # configs.pretrain.yaml
 
     #### Model #### 
     print("Creating model")
-    model = blip_pretrain(image_size=config['image_size'], vit=config['vit'], vit_grad_ckpt=config['vit_grad_ckpt'], 
-                            vit_ckpt_layer=config['vit_ckpt_layer'], queue_size=config['queue_size'])
+    model = blip_pretrain(image_size=config['image_size'],
+                          vit=config['vit'],
+                          vit_grad_ckpt=config['vit_grad_ckpt'],
+                          vit_ckpt_layer=config['vit_ckpt_layer'],
+                          queue_size=config['queue_size'],
+                          my_bert_size=config['my_bert_size']
+    )
 
     model = model.to(device)   
 

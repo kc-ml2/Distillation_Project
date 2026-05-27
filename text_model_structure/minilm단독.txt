@@ -1,0 +1,67 @@
+미니엘엠 단독 컨피그
+BertLayer(
+  (attention): BertAttention(
+    (self): BertSelfAttention(
+      (query): Linear(in_features=384, out_features=384, bias=True)
+      (key): Linear(in_features=384, out_features=384, bias=True)
+      (value): Linear(in_features=384, out_features=384, bias=True)
+      (dropout): Dropout(p=0.1, inplace=False)
+    )
+    (output): BertSelfOutput(
+      (dense): Linear(in_features=384, out_features=384, bias=True)
+      (LayerNorm): LayerNorm((384,), eps=1e-12, elementwise_affine=True)
+      (dropout): Dropout(p=0.1, inplace=False)
+    )
+  )
+  (intermediate): BertIntermediate(
+    (dense): Linear(in_features=384, out_features=1536, bias=True)
+    (intermediate_act_fn): GELUActivation()
+  )
+  (output): BertOutput(
+    (dense): Linear(in_features=1536, out_features=384, bias=True)
+    (LayerNorm): LayerNorm((384,), eps=1e-12, elementwise_affine=True)
+    (dropout): Dropout(p=0.1, inplace=False)
+  )
+)
+
+BertModel(
+  (embeddings): BertEmbeddings(
+    (word_embeddings): Embedding(30522, 384, padding_idx=0)
+    (position_embeddings): Embedding(512, 384)
+    (token_type_embeddings): Embedding(2, 384)
+    (LayerNorm): LayerNorm((384,), eps=1e-12, elementwise_affine=True)
+    (dropout): Dropout(p=0.1, inplace=False)
+  )
+  (encoder): BertEncoder(
+    (layer): ModuleList(
+      (0-11): 12 x BertLayer(
+        (attention): BertAttention(
+          (self): BertSelfAttention(
+            (query): Linear(in_features=384, out_features=384, bias=True)
+            (key): Linear(in_features=384, out_features=384, bias=True)
+            (value): Linear(in_features=384, out_features=384, bias=True)
+            (dropout): Dropout(p=0.1, inplace=False)
+          )
+          (output): BertSelfOutput(
+            (dense): Linear(in_features=384, out_features=384, bias=True)
+            (LayerNorm): LayerNorm((384,), eps=1e-12, elementwise_affine=True)
+            (dropout): Dropout(p=0.1, inplace=False)
+          )
+        )
+        (intermediate): BertIntermediate(
+          (dense): Linear(in_features=384, out_features=1536, bias=True)
+          (intermediate_act_fn): GELUActivation()
+        )
+        (output): BertOutput(
+          (dense): Linear(in_features=1536, out_features=384, bias=True)
+          (LayerNorm): LayerNorm((384,), eps=1e-12, elementwise_affine=True)
+          (dropout): Dropout(p=0.1, inplace=False)
+        )
+      )
+    )
+  )
+  (pooler): BertPooler(
+    (dense): Linear(in_features=384, out_features=384, bias=True)
+    (activation): Tanh()
+  )
+)
