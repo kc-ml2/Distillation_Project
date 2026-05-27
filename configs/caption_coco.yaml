@@ -1,30 +1,38 @@
 image_root: '/home/minwoo/Distillation_Project/datasets/vision/coco/images/'
-ann_root: '/home/minwoo/Distillation_Project/datasets/coco/annotation'
-coco_gt_root: '/home/minwoo/Distillation_Project/datasets/coco/annotation/coco_gt'
+ann_root: '/home/minwoo/Distillation_Project/datasets/vision/coco/annotations/'
+coco_gt_root: '/home/minwoo/Distillation_Project/datasets/vision/coco/annotation/coco_gt'
 
 # set pretrained as a file path or an url
-pretrained: 'https://storage.googleapis.com/sfr-vision-language-research/BLIP/models/model_base_caption_capfilt_large.pth'
+# pretrained: 'https://storage.googleapis.com/sfr-vision-language-research/BLIP/models/model_base_caption_capfilt_large.pth'
+# pretrained: '/home/minwoo/Distillation_Project/output/Pretrain_base_model/checkpoint_00.pth' # 내 처음 모델
+# pretrained: '/home/minwoo/Distillation_Project/output/Pretrain_base_model/checkpoint_09.pth' # 내 10에포크 후 모델
+# pretrained: '/home/minwoo/Distillation_Project/output/oficial_models/pretrained/model_base_14M.pth' # 공식 사이트에서 다운받은 같은 사양 모델
+# pretrained: '/home/minwoo/Distillation_Project/output/oficial_models/pretrained/model_large_129M.pth' # 공식 라지
+pretrained: '/home/minwoo/Distillation_Project/output/Caption_coco/finetune_base_model/checkpoint_best.pth' # 09번 5회 파인튜닝시 받은 결과물
 
 # size of vit model; base or large
 # added small model or other option
+# ===========option for vit size===============
 # vit: 'small'
 # vit_ckpt_layer: False
 # vit_ckpt_layer: 0
 # batch_size: 32
 # init_lr: 1e-5
 
+
 vit: 'base'
 vit_grad_ckpt: False
 vit_ckpt_layer: 0
-batch_size: 32
-init_lr: 1e-5
+# batch_size: 32 # 현재 24기가가 32인데도 터짐 아마 이미지 크기가 늘어서 그런걸로 보임
+batch_size: 24 # 24도 8의 배수라서 하드웨어 친숙할듯?
+init_lr: 1.0e-5
 
 # vit: 'large'
 # vit_grad_ckpt: True
 # vit_ckpt_layer: 5
 # batch_size: 16
-# init_lr: 2e-6
-
+# init_lr: 2.0e-6
+# ===========================
 image_size: 384
 
 # generation configs

@@ -8,6 +8,8 @@ cc12m_tar_path: '/home/minwoo/Distillation_Project/datasets/vision/cc12m/cc12m_d
 # cc12m_tar_path: ''
 cc12m_ratio: 5
 
+output_dir: '/home/minwoo/Distillation_Project/output/Pretrain_base_model'
+
 # size of vit model; base or large
 vit: 'base' 
 vit_grad_ckpt: False

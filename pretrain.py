@@ -65,7 +65,11 @@ def train(model, data_loader, optimizer, epoch, device, config):
         # loss_ita, loss_itm, loss_lm = model(image, caption, alpha = alpha)  
         # loss = loss_ita + loss_itm + loss_lm  
         # bp 16 mixed precision
-        with torch.amp.autocast(device_type='cuda', dtype=torch.bfloat16):
+        if device == "cuda":
+            with torch.amp.autocast(device_type='cuda', dtype=torch.bfloat16):
+                loss_ita, loss_itm, loss_lm = model(image, caption, alpha = alpha)  
+                loss = loss_ita + loss_itm + loss_lm
+        else:
             loss_ita, loss_itm, loss_lm = model(image, caption, alpha = alpha)  
             loss = loss_ita + loss_itm + loss_lm
 
@@ -192,7 +196,7 @@ def main(args, config): # configs.pretrain.yaml
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--config', default='./configs/pretrain.yaml') # 세팅을 바꿔놨음
-    parser.add_argument('--output_dir', default='output/Pretrain')  
+    parser.add_argument('--output_dir', default='output/Pretrain_base_model')  
     parser.add_argument('--checkpoint', default='')    
     parser.add_argument('--evaluate', action='store_true')    
     parser.add_argument('--device', default='cuda')

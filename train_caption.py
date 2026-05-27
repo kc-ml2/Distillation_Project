@@ -7,7 +7,8 @@
 '''
 import argparse
 import os
-import ruamel.yaml as yaml
+# import ruamel.yaml as yaml
+import yaml
 import numpy as np
 import random
 import time
@@ -41,8 +42,13 @@ def train(model, data_loader, optimizer, epoch, device):
     for i, (image, caption, _) in enumerate(metric_logger.log_every(data_loader, print_freq, header)):
         image = image.to(device)       
         
-        loss = model(image, caption)      
-        
+        # loss = model(image, caption)      
+        if device == "cuda":
+            with torch.amp.autocast(device_type='cuda', dtype=torch.bfloat16):
+                loss = model(image, caption)
+        else:
+            loss = model(image, caption)
+            
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()    
@@ -53,7 +59,7 @@ def train(model, data_loader, optimizer, epoch, device):
     # gather the stats from all processes
     metric_logger.synchronize_between_processes()
     print("Averaged stats:", metric_logger.global_avg())     
-    return {k: "{:.3f}".format(meter.global_avg) for k, meter in metric_logger.meters.items()}  
+    return {k: "{:.6f}".format(meter.global_avg) for k, meter in metric_logger.meters.items()}  
 
 
 @torch.no_grad()
@@ -186,7 +192,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--config', default='./configs/caption_coco.yaml')
     parser.add_argument('--output_dir', default='output/Caption_coco')        
-    parser.add_argument('--evaluate', action='store_true')    
+    parser.add_argument('--evaluate', action='store_true')    # 스토어 트루가 evaluate=True하라는 뜻임 오오..
     parser.add_argument('--device', default='cuda')
     parser.add_argument('--seed', default=42, type=int)
     parser.add_argument('--world_size', default=1, type=int, help='number of distributed processes')    
@@ -194,13 +200,22 @@ if __name__ == '__main__':
     parser.add_argument('--distributed', default=True, type=bool)
     args = parser.parse_args()
 
-    config = yaml.load(open(args.config, 'r'), Loader=yaml.Loader)
+    # config = yaml.load(open(args.config, 'r'), Loader=yaml.Loader)
+    with open(args.config, 'r') as f: # pyYAML사용
+        config = yaml.safe_load(f)
 
     args.result_dir = os.path.join(args.output_dir, 'result')
 
     Path(args.output_dir).mkdir(parents=True, exist_ok=True)
     Path(args.result_dir).mkdir(parents=True, exist_ok=True)
         
-    yaml.dump(config, open(os.path.join(args.output_dir, 'config.yaml'), 'w'))    
+    # yaml.dump(config, open(os.path.join(args.output_dir, 'config.yaml'), 'w'))  
+    with open(os.path.join(args.output_dir, 'config.yaml'), 'w') as f:
+        yaml.dump(config, f)  
+    
+    Path(args.output_dir).mkdir(parents=True, exist_ok=True)
+    
+    # yaml.dump(config, open(os.path.join(args.output_dir, 'config.yaml'), 'w'))   dep in yaml 
+
     
     main(args, config)

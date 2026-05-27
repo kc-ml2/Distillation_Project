@@ -45,10 +45,14 @@ runs/
 # ========================
 # personal files
 # =========================
+output/test_results # 테스트 결과들
 프로젝트_유의사항
 ignore_files
 
 # =========================
 # output logs
+output
 output/Pretrain/log.txt
+current_log.txt
 loss_curve.png
+loss_curve_epoch.png
