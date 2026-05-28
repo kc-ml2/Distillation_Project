@@ -9,15 +9,15 @@ coco_gt_root: '/home/minwoo/Distillation_Project/datasets/vision/coco/annotation
 # pretrained: '/home/minwoo/Distillation_Project/output/oficial_models/pretrained/model_base_14M.pth' # 공식 사이트에서 다운받은 같은 사양 모델
 # pretrained: '/home/minwoo/Distillation_Project/output/oficial_models/pretrained/model_large_129M.pth' # 공식 라지
 pretrained: '/home/minwoo/Distillation_Project/output/Caption_coco/finetune_base_model/checkpoint_best.pth' # 09번 5회 파인튜닝시 받은 결과물
-
+output_dir: 'output/Caption_coco'
 # size of vit model; base or large
 # added small model or other option
 # ===========option for vit size===============
-# vit: 'small'
+# vit: 'small_reg'
 # vit_ckpt_layer: False
 # vit_ckpt_layer: 0
 # batch_size: 32
-# init_lr: 1e-5
+# init_lr: 1.0e-5
 
 
 vit: 'base'
@@ -33,6 +33,12 @@ init_lr: 1.0e-5
 # batch_size: 16
 # init_lr: 2.0e-6
 # ===========================
+
+# size of language model: base, medium, minilm 중 하나로 설정
+my_bert_size: 'minilm'
+# my_bert_size: 'base'
+
+# ==========================
 image_size: 384
 
 # generation configs

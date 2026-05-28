@@ -3,8 +3,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # 1. 파일 이름 설정
-log_file = 'current_log.txt'
+# log_file = 'current_log.txt'
 # log_file = 'output/Pretrain/log.txt'
+log_file = '/home/minwoo/Distillation_Project/output/Pretrain_minilm_dinov3_model/log.txt'
 
 # 2. 로스 값을 담을 빈 리스트 준비
 loss_ita_list = []
@@ -12,12 +13,12 @@ loss_itm_list = []
 loss_lm_list = []
 
 # 3. 정규식(Regex) 패턴: 터미널 로그 라인에서 세 가지 로스 숫자만 정확히 낚아챕니다.
-pattern = re.compile(r"loss_ita:\s+([\d\.]+)\s+loss_itm:\s+([\d\.]+)\s+loss_lm:\s+([\d\.]+)")
-# pattern = re.compile(
-#     r'"train_loss_ita":\s*"?([\d\.]+)"?,\s*'
-#     r'"train_loss_itm":\s*"?([\d\.]+)"?,\s*'
-#     r'"train_loss_lm":\s*"?([\d\.]+)"?'
-# )
+# pattern = re.compile(r"loss_ita:\s+([\d\.]+)\s+loss_itm:\s+([\d\.]+)\s+loss_lm:\s+([\d\.]+)")
+pattern = re.compile(
+    r'"train_loss_ita":\s*"?([\d\.]+)"?,\s*'
+    r'"train_loss_itm":\s*"?([\d\.]+)"?,\s*'
+    r'"train_loss_lm":\s*"?([\d\.]+)"?'
+)
 
 print("🔍 로그 파일을 분석하는 중...")
 with open(log_file, 'r', encoding='utf-8', errors='ignore') as f:
@@ -49,13 +50,13 @@ plt.plot(loss_lm_list, label='Loss LM (Language Model)', color='orange', alpha=0
 plt.plot(loss_total, label='Loss ToT (sum of all losses)', color='red', alpha=0.7, linewidth=0.5)
 
 # 5. 디자인 (제목, 축, 격자무늬)
-plt.title('Training Loss Trend (Over 13 Hours)', fontsize=16, fontweight='bold')
+plt.title('Training Loss Trend', fontsize=16, fontweight='bold')
 plt.xlabel('Training Steps(x50)', fontsize=12)
 plt.ylabel('Loss Value', fontsize=12)
 plt.legend(loc='upper right', fontsize=11)
 plt.grid(True, linestyle='--', alpha=0.5)
 
 # 6. 이미지 파일로 저장 (서버 환경 필수)
-output_filename = 'loss_curve.png'
+output_filename = 'loss_curve_dinov3_minilm.png'
 plt.savefig(output_filename, dpi=300, bbox_inches='tight')
 print(f"🎉 성공! '{output_filename}' 파일이 생성되었습니다.")

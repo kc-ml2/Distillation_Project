@@ -38,9 +38,9 @@ def train(model, data_loader, optimizer, epoch, device, config):
     
     metric_logger = utils.MetricLogger(delimiter="  ")
     metric_logger.add_meter('lr', utils.SmoothedValue(window_size=50, fmt='{value:.6f}'))
-    metric_logger.add_meter('loss_ita', utils.SmoothedValue(window_size=50, fmt='{value:.4f}'))
-    metric_logger.add_meter('loss_itm', utils.SmoothedValue(window_size=50, fmt='{value:.4f}'))    
-    metric_logger.add_meter('loss_lm', utils.SmoothedValue(window_size=50, fmt='{value:.4f}'))
+    metric_logger.add_meter('loss_ita', utils.SmoothedValue(window_size=50, fmt='{value:.6f}'))
+    metric_logger.add_meter('loss_itm', utils.SmoothedValue(window_size=50, fmt='{value:.6f}'))    
+    metric_logger.add_meter('loss_lm', utils.SmoothedValue(window_size=50, fmt='{value:.6f}'))
     
     header = 'Train Epoch: [{}]'.format(epoch)
     print_freq = 50   

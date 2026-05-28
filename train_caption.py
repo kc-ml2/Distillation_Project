@@ -191,7 +191,7 @@ def main(args, config):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--config', default='./configs/caption_coco.yaml')
-    parser.add_argument('--output_dir', default='output/Caption_coco')        
+    # parser.add_argument('--output_dir', default='output/Caption_coco')        
     parser.add_argument('--evaluate', action='store_true')    # 스토어 트루가 evaluate=True하라는 뜻임 오오..
     parser.add_argument('--device', default='cuda')
     parser.add_argument('--seed', default=42, type=int)
@@ -203,6 +203,7 @@ if __name__ == '__main__':
     # config = yaml.load(open(args.config, 'r'), Loader=yaml.Loader)
     with open(args.config, 'r') as f: # pyYAML사용
         config = yaml.safe_load(f)
+    args.output_dir = config['output_dir'] # 컨피그로 입력
 
     args.result_dir = os.path.join(args.output_dir, 'result')
 

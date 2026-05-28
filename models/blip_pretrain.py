@@ -33,7 +33,7 @@ class BLIP_Pretrain(nn.Module):
                  # add option for language model
                  my_bert_size = "base", # default = bert (original)
                  med_bert_medium_config = 'configs/bert_medium_config.json',
-                 med_bert_MiniLM_config = 'configs/bert_minilm_config.json'
+                 med_bert_MiniLM_config = 'configs/bert_minilm_config.json' # med라고 적어놨지만 med가 아닌 일반 버트컨피그임
                  ):
         """
         Args:

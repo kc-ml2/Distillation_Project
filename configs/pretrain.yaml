@@ -5,11 +5,11 @@ laion_path: ''
 image_root: '/home/minwoo/Distillation_Project/datasets/vision/coco/images/'
 
 ######## cc12m을 제거하고 트레인을 돌려본다. vit small로 가보자 ##### 
-# cc12m_tar_path: '/home/minwoo/Distillation_Project/datasets/vision/cc12m/cc12m_dataset'
-cc12m_tar_path: ''
-cc12m_ratio: 5
+cc12m_tar_path: '/home/minwoo/Distillation_Project/datasets/vision/cc12m/cc12m_dataset'
+# cc12m_tar_path: ''
+cc12m_ratio: 10 
 
-output_dir: '/home/minwoo/Distillation_Project/output/Pretrain_minilm_dinov3_model'
+output_dir: '/home/minwoo/Distillation_Project/output/Pretrain_minilm_dinov3_model_cc12m'
 
 # size of vit model; base or large
 vit: 'small_reg' # small로 달아봄. 스몰은 작동을 안하더라
@@ -44,12 +44,12 @@ init_lr: 1.92e-4 # 새로운
 min_lr: 1.0e-6
 warmup_lr: 1.0e-6
 lr_decay_rate: 0.9
-max_epoch: 1 # 테스트용. 원래 얼마더라?
+max_epoch: 10 # 테스트용. 원래 얼마더라?
 # warmup_steps: 3000 # 배치 75 
 # warmup_steps: 6000 # 배치 16 2배 늘림
 # warmup_steps: 4500 #배치 32
 # warmup_steps: 4000
-warmup_steps: 5000
+warmup_steps: 8000
 
 
 
