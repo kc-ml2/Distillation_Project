@@ -201,7 +201,7 @@ def main(args, config): # configs.pretrain.yaml
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--config', default='./configs/pretrain.yaml') # 세팅을 바꿔놨음
-    parser.add_argument('--output_dir', default='output/Pretrain_base_model')  
+    # parser.add_argument('--output_dir', default='')   # 여기서 계속 문제가 생기네
     parser.add_argument('--checkpoint', default='')    
     parser.add_argument('--evaluate', action='store_true')    
     parser.add_argument('--device', default='cuda')
@@ -214,12 +214,12 @@ if __name__ == '__main__':
     # config = yaml.load(open(args.config, 'r'), Loader=yaml.Loader) depreciated in yaml
     with open(args.config, 'r') as f: # pyYAML사용
         config = yaml.safe_load(f)
-
-    Path(args.output_dir).mkdir(parents=True, exist_ok=True)
+    args.output_dir = config["output_dir"]
+    Path(args.output_dir).mkdir(parents=True, exist_ok=True) # 있으면 경고내도록
     
     # yaml.dump(config, open(os.path.join(args.output_dir, 'config.yaml'), 'w'))   dep in yaml 
     with open(os.path.join(args.output_dir, 'config.yaml'), 'w') as f:
         yaml.dump(config, f)
-    
+    print(f"output_dir: {args.output_dir}")    
     
     main(args, config)

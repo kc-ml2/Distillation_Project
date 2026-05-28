@@ -27,7 +27,7 @@ image_size: 224
 # batch_size: 16 # 4.68배 작음
 # batch_size: 32 # 2.4배 작음
 # batch_size: 48
-batch_size: 128
+batch_size: 96
 
 queue_size: 57600
 alpha: 0.4
@@ -39,17 +39,17 @@ weight_decay: 0.05
 # init_lr: 1.5e-4 # 배치 32
 # init_lr: 2.0e-4
 # init_lr: 2.5e-4
-init_lr: 1.6e-5 # 새로운
+init_lr: 1.92e-4 # 새로운
 
 min_lr: 1.0e-6
 warmup_lr: 1.0e-6
 lr_decay_rate: 0.9
-max_epoch: 10 # 테스트용. 원래 얼마더라?
+max_epoch: 1 # 테스트용. 원래 얼마더라?
 # warmup_steps: 3000 # 배치 75 
 # warmup_steps: 6000 # 배치 16 2배 늘림
 # warmup_steps: 4500 #배치 32
 # warmup_steps: 4000
-warmup_steps: 3500
+warmup_steps: 5000
 
 
 
