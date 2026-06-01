@@ -214,8 +214,6 @@ if __name__ == '__main__':
     with open(os.path.join(args.output_dir, 'config.yaml'), 'w') as f:
         yaml.dump(config, f)  
     
-    Path(args.output_dir).mkdir(parents=True, exist_ok=True)
-    
     # yaml.dump(config, open(os.path.join(args.output_dir, 'config.yaml'), 'w'))   dep in yaml 
 
     

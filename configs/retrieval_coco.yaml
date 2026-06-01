@@ -5,16 +5,23 @@ image_root: '/home/minwoo/Distillation_Project/datasets/vision/coco/images/'
 ann_root: '/home/minwoo/Distillation_Project/datasets/vision/coco/annotations/'
 coco_gt_root: '/home/minwoo/Distillation_Project/datasets/vision/coco/annotation/coco_gt'
 # set pretrained as a file path or an url
-pretrained: '/home/minwoo/Distillation_Project/output/Pretrain_minilm_dinov3_model/checkpoint_09.pth'
+pretrained: '/home/minwoo/Distillation_Project/output/pretrain_coco_only_small/checkpoint_09.pth'
+output_dir: ''
 
 # size of vit model; base or large
-
-vit: 'base'
+vit: 'small'
 batch_size_train: 32
 batch_size_test: 64
 vit_grad_ckpt: True
 vit_ckpt_layer: 4
 init_lr: 1e-5
+
+# vit: 'base'
+# batch_size_train: 32
+# batch_size_test: 64
+# vit_grad_ckpt: True
+# vit_ckpt_layer: 4
+# init_lr: 1e-5
 
 # vit: 'large'
 # batch_size_train: 16
@@ -23,7 +30,8 @@ init_lr: 1e-5
 # vit_ckpt_layer: 12
 # init_lr: 5e-6
 
-image_size: 384
+image_size: 384 # finetune opt
+# image_size: 224 # zero shot opt
 queue_size: 57600
 alpha: 0.4
 k_test: 256

@@ -7,7 +7,8 @@
 '''
 import argparse
 import os
-import ruamel.yaml as yaml
+# import ruamel.yaml as yaml
+import yaml
 import numpy as np
 import random
 import time
@@ -39,7 +40,7 @@ def train(model, data_loader, optimizer, epoch, device, config):
     header = 'Train Epoch: [{}]'.format(epoch)
     print_freq = 50
 
-    for i,(image, caption, idx) in enumerate(metric_logger.log_every(data_loader, print_freq, header)):
+    for i,(image, caption, idx) in enumerate(metric_logger.log_every(data_loader, print_freq, header)): # enumerate는 리스트를 번호매겨서 출력한다
         image = image.to(device,non_blocking=True)   
         idx = idx.to(device,non_blocking=True)   
        
@@ -48,8 +49,16 @@ def train(model, data_loader, optimizer, epoch, device, config):
         else:
             alpha = config['alpha']*min(1,i/len(data_loader))
 
-        loss_ita, loss_itm = model(image, caption, alpha=alpha, idx=idx)                  
-        loss = loss_ita + loss_itm
+        # 오토캐스트 사용하도록 코드 수정
+        if device == "cuda":
+            with torch.amp.autocast(device_type='cuda', dtype=torch.bfloat16):
+                loss_ita, loss_itm = model(image, caption, alpha=alpha, idx=idx)
+                loss = loss_ita + loss_itm
+        else:
+            loss_ita, loss_itm = model(image, caption, alpha=alpha, idx=idx)
+            loss = loss_ita + loss_itm
+        # loss_ita, loss_itm = model(image, caption, alpha=alpha, idx=idx)                  
+        # loss = loss_ita + loss_itm
         
         optimizer.zero_grad()
         loss.backward()
@@ -62,7 +71,7 @@ def train(model, data_loader, optimizer, epoch, device, config):
     # gather the stats from all processes
     metric_logger.synchronize_between_processes()
     print("Averaged stats:", metric_logger.global_avg())     
-    return {k: "{:.3f}".format(meter.global_avg) for k, meter in metric_logger.meters.items()}  
+    return {k: "{:.6f}".format(meter.global_avg) for k, meter in metric_logger.meters.items()}  
 
 
 @torch.no_grad()
@@ -86,15 +95,18 @@ def evaluation(model, data_loader, device, config):
         text = texts[i: min(num_text, i+text_bs)]
         text_input = model.tokenizer(text, padding='max_length', truncation=True, max_length=35, return_tensors="pt").to(device) 
         text_output = model.text_encoder(text_input.input_ids, attention_mask = text_input.attention_mask, mode='text')  
-        text_embed = F.normalize(model.text_proj(text_output.last_hidden_state[:,0,:]))
+        text_embed = model.text_proj(text_output.last_hidden_state[:,0,:]) # 이전에도 잘 작동하긴 했음
+        text_embed = F.normalize(text_embed,dim=-1) # 이렇게 로직 변경했음 체크도 한번 해보자
+        # text_embed = F.normalize(model.text_proj(text_output.last_hidden_state[:,0,:])) # 지정한 차원을 합하면서 그걸로 노말라이즈하기.
         text_embeds.append(text_embed)   
         text_ids.append(text_input.input_ids)
         text_atts.append(text_input.attention_mask)
-    
+    print(f"check embed refactoring: {text_embeds[0]}") # 테스트를 위해서 앞의 하나만 뽑아 온다
+
     text_embeds = torch.cat(text_embeds,dim=0)
     text_ids = torch.cat(text_ids,dim=0)
     text_atts = torch.cat(text_atts,dim=0)
-    text_ids[:,0] = model.tokenizer.enc_token_id
+    text_ids[:,0] = model.tokenizer.enc_token_id # enc 토큰으로 바꾸어서 심사에 들어가도록 변경
     
     image_feats = []
     image_embeds = []
@@ -114,8 +126,8 @@ def evaluation(model, data_loader, device, config):
     score_matrix_i2t = torch.full((len(data_loader.dataset.image),len(texts)),-100.0).to(device)
     
     num_tasks = utils.get_world_size()
-    rank = utils.get_rank() 
-    step = sims_matrix.size(0)//num_tasks + 1
+    rank = utils.get_rank() # 여기서 각 gpu별로 번호를 가져간다.
+    step = sims_matrix.size(0)//num_tasks + 1 
     start = rank*step
     end = min(sims_matrix.size(0),start+step)
 
@@ -327,7 +339,7 @@ def main(args, config):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()     
     parser.add_argument('--config', default='./configs/retrieval_flickr.yaml')
-    parser.add_argument('--output_dir', default='output/Retrieval_flickr')        
+    # parser.add_argument('--output_dir', default='output/Retrieval_flickr')        
     parser.add_argument('--evaluate', action='store_true')
     parser.add_argument('--device', default='cuda')
     parser.add_argument('--seed', default=42, type=int)
@@ -336,10 +348,16 @@ if __name__ == '__main__':
     parser.add_argument('--distributed', default=True, type=bool)
     args = parser.parse_args()
 
-    config = yaml.load(open(args.config, 'r'), Loader=yaml.Loader)
-
-    Path(args.output_dir).mkdir(parents=True, exist_ok=True)
-        
-    yaml.dump(config, open(os.path.join(args.output_dir, 'config.yaml'), 'w'))    
+    with open(args.config, 'r') as f: # pyYAML사용
+        config = yaml.safe_load(f)
     
+    args.output_dir = config['output_dir'] # 컨피그로 output dir을 받아낸다.
+    Path(args.output_dir).mkdir(parents=True, exist_ok=True) # 생성
+
+    # args.result_dir = os.path.join(args.output_dir, 'result') # 이건 해야되는지 체크가 필요할거같은데
+    # Path(args.result_dir).mkdir(parents=True, exist_ok=True)
+
+    with open(os.path.join(args.output_dir, 'config.yaml'), 'w') as f:
+        yaml.dump(config, f)  
+
     main(args, config)
