@@ -6,7 +6,8 @@ image_root: '/home/minwoo/Distillation_Project/datasets/vision/coco/images/'
 
 ######## cc12m을 제거하고 트레인을 돌려본다. vit small로 가보자 ##### 
 ## 이 부분 두개를 모두 바꿔줘야함
-cc12m_tar_path: '/home/minwoo/Distillation_Project/datasets/vision/cc12m/cc12m_dataset'
+# cc12m_tar_path: '/home/minwoo/Distillation_Project/datasets/vision/cc12m/cc12m_dataset'
+cc12m_tar_path: '/data4/minwoo/cc12m/cc12m_dataset'
 # cc12m_tar_path: ''
 cc12m_ratio: 5
 output_dir: '/home/minwoo/Distillation_Project/output/pretrain_coco_cc12m_small'
