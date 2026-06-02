@@ -96,12 +96,12 @@ def evaluation(model, data_loader, device, config):
         text_input = model.tokenizer(text, padding='max_length', truncation=True, max_length=35, return_tensors="pt").to(device) 
         text_output = model.text_encoder(text_input.input_ids, attention_mask = text_input.attention_mask, mode='text')  
         text_embed = model.text_proj(text_output.last_hidden_state[:,0,:]) # 이전에도 잘 작동하긴 했음
-        text_embed = F.normalize(text_embed,dim=-1) # 이렇게 로직 변경했음 체크도 한번 해보자
+        text_embed = F.normalize(text_embed,dim=-1) # 이렇게 로직 변경했음 체크도 한번 해보자. 되는구만
         # text_embed = F.normalize(model.text_proj(text_output.last_hidden_state[:,0,:])) # 지정한 차원을 합하면서 그걸로 노말라이즈하기.
         text_embeds.append(text_embed)   
         text_ids.append(text_input.input_ids)
         text_atts.append(text_input.attention_mask)
-    print(f"check embed refactoring: {text_embeds[0]}") # 테스트를 위해서 앞의 하나만 뽑아 온다
+    # print(f"check embed refactoring: {text_embeds[0]}") # 테스트를 위해서 앞의 하나만 뽑아 온다
 
     text_embeds = torch.cat(text_embeds,dim=0)
     text_ids = torch.cat(text_ids,dim=0)
@@ -338,7 +338,7 @@ def main(args, config):
     
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()     
-    parser.add_argument('--config', default='./configs/retrieval_flickr.yaml')
+    parser.add_argument('--config', default='./configs/retrieval_coco.yaml')
     # parser.add_argument('--output_dir', default='output/Retrieval_flickr')        
     parser.add_argument('--evaluate', action='store_true')
     parser.add_argument('--device', default='cuda')
