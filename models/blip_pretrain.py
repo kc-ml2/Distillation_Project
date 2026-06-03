@@ -112,7 +112,7 @@ class BLIP_Pretrain(nn.Module):
             
             # model making method is different: small's vs base and large
             vision_width = 384 # hard coded for these model
-        print(f"온라인 모델 비전 width 변수: {vision_width}")
+        print(f"모델 비전 width 변수: {vision_width}")
         #========================================================================================================
         
         ## do we use bert or other generation model?
@@ -150,7 +150,7 @@ class BLIP_Pretrain(nn.Module):
             self.text_encoder.resize_token_embeddings(len(self.tokenizer)) # 컨피그로 만든 임베딩 토큰 수가 다르니깐 다시 하는 것
             text_width = self.text_encoder.config.hidden_size # 768 default 모델 내부의 고유한 벡터 차원.
             print("encoder loading step finish")
-            print(self.text_encoder)
+            # print(self.text_encoder) # 
         else:
             raise ValueError(f"Unknown bert size: {my_bert_size}")
         print(f"bert size: {my_bert_size}")
@@ -230,8 +230,9 @@ class BLIP_Pretrain(nn.Module):
                            ]       
         self.copy_params() # copy paras function -> self.model_pairs loop -> copy and grad off
 
-        print("Online Dim:", self.visual_encoder.model.embed_dim)
-        print("Momentum Dim:", self.visual_encoder_m.model.embed_dim)
+        # 아래 두 코드는 timm import에서만 작동함
+        # print("Online Dim:", self.visual_encoder.model.embed_dim)
+        # print("Momentum Dim:", self.visual_encoder_m.model.embed_dim)
         # # 모델 생성 직후 테스트기
         # print("Checking Layer 0 Cross-Attention:")
         # layer0_ca = self.text_encoder.encoder.layer[0].crossattention
