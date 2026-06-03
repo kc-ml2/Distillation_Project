@@ -19,7 +19,7 @@ def mod_vg_json(annotation_root_vg, annotation_output_vg):
         raw_data = json.load(f)
 
     formatted_data = []
-    caption_id = 0 # 캡션 아이디는 우리 마음대로 조정해버리자고
+    caption_id = 0 # 캡션 아이디는 우리 마음대로 조정해버리자고 근데 형식을 보니깐 coco_번호 이렇게가네 아니다
 
     for item in tqdm(raw_data, desc="Flattening VG Regions"): # 디스크립션은 뭘까
         # 추론 결과 로우데이터는 하나의 이미지에 엄청나게 많은 수의 캡션을 닮

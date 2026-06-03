@@ -33,9 +33,10 @@ def create_dataset(dataset, config, min_scale=0.5):
         ])  
         
     if dataset=='pretrain':
-        dataset = pretrain_dataset(config['train_file'],
-                                   config['laion_path'],
-                                   img_root=config['image_root'],
+        dataset = pretrain_dataset(ann_file=config['train_file'], # 리스트 형태로 2개 들어옴
+                                   laion_path=config['laion_path'],
+                                   img_root_coco=config['image_root_coco'], # added
+                                   img_root_vg=config['image_root_vg'],
                                    transform=transform_train
         )# 이미지 루트 값 추가함.
         return dataset  

@@ -1,5 +1,5 @@
-train_file: ['/home/minwoo/Distillation_Project/datasets/vision/coco/annotations/coco_karpathy_train.json'
-            #  '/export/share/junnan-li/VL_pretrain/annotation/vg_caption.json',
+train_file: ['/home/minwoo/Distillation_Project/datasets/vision/coco/annotations/coco_karpathy_train.json',
+             '/home/minwoo/Distillation_Project/datasets/vision/vg/annotation/vg_train.json'
              ]
 laion_path: ''   
 image_root: '/home/minwoo/Distillation_Project/datasets/vision/coco/images/'
