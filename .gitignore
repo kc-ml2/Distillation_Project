@@ -19,7 +19,6 @@ env/
 *.h5
 
 # Datasets & Logs
-data/
 datasets/
 logs/
 tb_logs/
