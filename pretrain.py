@@ -32,7 +32,22 @@ import utils
 from utils import warmup_lr_schedule, step_lr_schedule
 from data import create_dataset, create_sampler, create_loader
 
-def train(model, data_loader, optimizer, epoch, device, config):
+#### tensorboard scalars ####
+from torch.utils.tensorboard import SummaryWriter
+
+# 텐서보드 이름을 제작해주는 함수. 컨피그만 있으면 알아서 만들 것임
+def make_tb_run_name(config):
+    tb_option_dict = {
+        "experiment": "test_tensorboard",
+        "mode": "pretrain",
+        "vit": config["vit"],
+        "bert": config["my_bert_size"],
+        "batch_size": f"bs{config['batch_size']}x{utils.get_world_size()}eff{config['batch_size'] * utils.get_world_size()}",
+        "dataset": config["used_dataset"], # 주의! 야멜안바꾸면 잘못입력됨.
+    }
+    return "__".join(f"{k}={v}" for k, v in tb_option_dict.items())
+
+def train(model, data_loader, optimizer, epoch, device, config, writer=None): # writer추가
     # train
     model.train()  
     
@@ -50,7 +65,10 @@ def train(model, data_loader, optimizer, epoch, device, config):
     
     data_loader.sampler.set_epoch(epoch)
 
+
     for i, (image, caption) in enumerate(metric_logger.log_every(data_loader, print_freq, header)):
+        # 글로벌 스텝 추가
+        global_step = epoch * len(data_loader) + i
         
         if epoch==0:
             warmup_lr_schedule(optimizer, i, config['warmup_steps'], config['warmup_lr'], config['init_lr'])
@@ -81,6 +99,16 @@ def train(model, data_loader, optimizer, epoch, device, config):
         metric_logger.update(loss_lm=loss_lm.item())
         metric_logger.update(lr=optimizer.param_groups[0]["lr"])  
 
+        # 로컬 기록 이후에 텐서보드 입력, config에 tb_log_interval을 적기
+        if writer is not None and global_step % config["tb_train_log_interval"] == 0:
+            writer.add_scalar("loss/train/ita", loss_ita.item(), global_step)
+            writer.add_scalar("loss/train/itm", loss_itm.item(), global_step)
+            writer.add_scalar("loss/train/lm", loss_lm.item(), global_step)
+            writer.add_scalar("loss/train/total", loss.item(), global_step)
+            writer.add_scalar("optim/lr", optimizer.param_groups[0]["lr"], global_step)
+            writer.add_scalar("train/alpha", alpha, global_step)
+        # 이후 벨리데이션 로그도 여기다 적기
+
         
     # gather the stats from all processes
     metric_logger.synchronize_between_processes()
@@ -90,9 +118,23 @@ def train(model, data_loader, optimizer, epoch, device, config):
 
 def main(args, config): # configs.pretrain.yaml
     utils.init_distributed_mode(args)    
-    
     device = torch.device(args.device)
 
+    # 디스트리뷰트 이후에 라이터 삽입
+    writer = None
+    if utils.is_main_process():
+        run_name = make_tb_run_name(config) # 컨피그 바탕으로 런네임 제작
+        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+
+        tb_log_dir = os.path.join(
+            args.output_dir,
+            "tensorboard",
+            f"{timestamp}__{run_name}"
+        )
+
+        writer = SummaryWriter(log_dir=tb_log_dir)
+        print(f"[TensorBoard] log_dir: {tb_log_dir}")
+    
     # fix the seed for reproducibility
     seed = args.seed + utils.get_rank()
     torch.manual_seed(seed)
@@ -168,34 +210,41 @@ def main(args, config): # configs.pretrain.yaml
     if args.distributed:
         model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[args.gpu])
         model_without_ddp = model.module    
-        
-    print("Start training")
-    start_time = time.time()    
-    for epoch in range(start_epoch, config['max_epoch']):
-        
-        step_lr_schedule(optimizer, epoch, config['init_lr'], config['min_lr'], config['lr_decay_rate'])
-                
-        train_stats = train(model, data_loader, optimizer, epoch, device, config) 
-        if utils.is_main_process():  
-            log_stats = {**{f'train_{k}': v for k, v in train_stats.items()},
-                         'epoch': epoch,
-                        }                     
-            save_obj = {
-                'model': model_without_ddp.state_dict(),
-                'optimizer': optimizer.state_dict(),
-                'config': config,
-                'epoch': epoch,
-            }
-            torch.save(save_obj, os.path.join(args.output_dir, 'checkpoint_%02d.pth'%epoch))  
-            
-            with open(os.path.join(args.output_dir, "log.txt"),"a") as f:
-                f.write(json.dumps(log_stats) + "\n")
 
-        dist.barrier()        
+    # 만약 ddp가 설정됨 -> without ddp와 ddp를 분리시킴. model은 ddp설정된거, w/o ddp는 일반 블립 하나
+
+    try: # writer 자동종료를 위해서
+        print("Start training")
+        start_time = time.time()    
+        for epoch in range(start_epoch, config['max_epoch']):
+            
+            step_lr_schedule(optimizer, epoch, config['init_lr'], config['min_lr'], config['lr_decay_rate'])
+                    
+            train_stats = train(model, data_loader, optimizer, epoch, device, config, writer) # writer추가
+            if utils.is_main_process():  
+                log_stats = {**{f'train_{k}': v for k, v in train_stats.items()},
+                            'epoch': epoch,
+                            }                     
+                save_obj = {
+                    'model': model_without_ddp.state_dict(),
+                    'optimizer': optimizer.state_dict(),
+                    'config': config,
+                    'epoch': epoch,
+                }
+                torch.save(save_obj, os.path.join(args.output_dir, 'checkpoint_%02d.pth'%epoch))  
                 
-    total_time = time.time() - start_time
-    total_time_str = str(datetime.timedelta(seconds=int(total_time)))
-    print('Training time {}'.format(total_time_str)) 
+                with open(os.path.join(args.output_dir, "log.txt"),"a") as f:
+                    f.write(json.dumps(log_stats) + "\n")
+
+            dist.barrier()        
+                    
+        total_time = time.time() - start_time
+        total_time_str = str(datetime.timedelta(seconds=int(total_time)))
+        print('Training time {}'.format(total_time_str)) 
+
+    finally:
+        if writer is not None:
+            writer.close()
 
 
 if __name__ == '__main__':

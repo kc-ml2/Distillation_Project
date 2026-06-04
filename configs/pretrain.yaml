@@ -11,48 +11,50 @@ image_root_vg: '/home/minwoo/Distillation_Project/datasets/vision/vg/images/'
 cc12m_tar_path: ''
 cc12m_ratio: 5
 
+## 데이터셋 명시하기 - 변경필수 혹은 이후에 딕셔너리로?
+used_dataset: 'coco_vg'
+
 # output_dir: '/home/minwoo/Distillation_Project/output/pretrain_coco_cc12m_small'
 output_dir: '/home/minwoo/Distillation_Project/output/pretrain_coco_vg_baseline' # 
 
+# new) tenserboard log interval
+tb_train_log_interval: 50
+tb_val_log_interval: 1000
+
 # size of vit model; base or large
-vit: 'small_reg' # small로 달아봄. 스몰은 작동을 안하더라
+
+vit: 'base'
 vit_grad_ckpt: False
 vit_ckpt_layer: 0
 
+# vit: 'small_reg' # small로 달아봄. 스몰은 작동을 안하더라
+# vit_grad_ckpt: False
+# vit_ckpt_layer: 0
+
 # size of language model: base, medium, minilm 중 하나로 설정
-my_bert_size: 'minilm'
-# my_bert_size: 'base'
+# my_bert_size: 'minilm'
+my_bert_size: 'base'
 
 # batch 작아지면 init lr도 작아지고, 웜업 스텝을 늘려야한다
 
 image_size: 224
-# batch_size: 75 # 변경해야함, 기존
-# batch_size: 16 # 4.68배 작음
-# batch_size: 32 # 2.4배 작음
-# batch_size: 48
-batch_size: 96
+# batch_size: 75 # 최초
+batch_size: 48 # 3분의 1 크기로 줄여버리기
 
 queue_size: 57600
 alpha: 0.4
 
 # optimizer
-weight_decay: 0.05
+weight_decay: 0.05 # 유지
 # init_lr: 3e-4 # 배치 75
-# init_lr: 1.0e-4 # 배치 16 3배 줄임
-# init_lr: 1.5e-4 # 배치 32
-# init_lr: 2.0e-4
-# init_lr: 2.5e-4
-init_lr: 1.92e-4 # 새로운
+init_lr: 1.0e-4 # 3분의1
 
-min_lr: 1.0e-6
-warmup_lr: 1.0e-6
+min_lr: 0.333e-6
+warmup_lr: 0.333e-6
 lr_decay_rate: 0.9
-max_epoch: 10 # 테스트용. 원래 얼마더라?
+max_epoch: 20 # 테스트용. 원래 얼마더라? 20임
 # warmup_steps: 3000 # 배치 75 
-# warmup_steps: 6000 # 배치 16 2배 늘림
-# warmup_steps: 4500 #배치 32
-# warmup_steps: 4000
-warmup_steps: 3000
+warmup_steps: 9000
 
 
 
