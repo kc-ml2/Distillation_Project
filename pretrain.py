@@ -27,10 +27,14 @@ from data.combined_loader import CombinedLoader
 import webdataset as wds # 웹데이터셋용으로 추가
 
 
+
 from models.blip_pretrain import blip_pretrain
 import utils
 from utils import warmup_lr_schedule, step_lr_schedule
-from data import create_dataset, create_sampler, create_loader
+from data import create_dataset, create_sampler, create_loader # init에 있는 놈들임
+#### 수정부분 시작: validation loss 모듈 import ####
+from data import eval_validation_loss
+#### 수정부분 끝 ####
 
 #### tensorboard scalars ####
 from torch.utils.tensorboard import SummaryWriter
@@ -38,7 +42,8 @@ from torch.utils.tensorboard import SummaryWriter
 # 텐서보드 이름을 제작해주는 함수. 컨피그만 있으면 알아서 만들 것임
 def make_tb_run_name(config):
     tb_option_dict = {
-        "experiment": "test_tensorboard",
+        # "experiment": "test_tensorboard",
+        "experiment": "baseline_test",
         "mode": "pretrain",
         "vit": config["vit"],
         "bert": config["my_bert_size"],
@@ -47,7 +52,7 @@ def make_tb_run_name(config):
     }
     return "__".join(f"{k}={v}" for k, v in tb_option_dict.items())
 
-def train(model, data_loader, optimizer, epoch, device, config, writer=None): # writer추가
+def train(model, data_loader, optimizer, epoch, device, config, writer=None, val_loss_runner=None): # writer추가 val loss runner 추가
     # train
     model.train()  
     
@@ -83,11 +88,14 @@ def train(model, data_loader, optimizer, epoch, device, config, writer=None): # 
         # loss_ita, loss_itm, loss_lm = model(image, caption, alpha = alpha)  
         # loss = loss_ita + loss_itm + loss_lm  
         # bp 16 mixed precision
-        if device == "cuda":
+        # if device == "cuda": # 이 부분 수정할 예정
+        if device.type == "cuda": # .type로 수정해봄
+            # print("autocast available")
             with torch.amp.autocast(device_type='cuda', dtype=torch.bfloat16):
                 loss_ita, loss_itm, loss_lm = model(image, caption, alpha = alpha)  
                 loss = loss_ita + loss_itm + loss_lm
         else:
+            # print("autocast failed")
             loss_ita, loss_itm, loss_lm = model(image, caption, alpha = alpha)  
             loss = loss_ita + loss_itm + loss_lm
 
@@ -108,6 +116,17 @@ def train(model, data_loader, optimizer, epoch, device, config, writer=None): # 
             writer.add_scalar("optim/lr", optimizer.param_groups[0]["lr"], global_step)
             writer.add_scalar("train/alpha", alpha, global_step)
         # 이후 벨리데이션 로그도 여기다 적기
+
+        #### 수정부분 시작: train 도중 validation loss optional 실행 ####
+        if val_loss_runner is not None:
+            val_loss_runner.val_loss_during_train(
+                model=model,
+                epoch=epoch,
+                iteration=i,
+                global_step=global_step,
+                train_loader_len=len(data_loader),
+            )
+        #### 수정부분 끝 ####
 
         
     # gather the stats from all processes
@@ -179,6 +198,16 @@ def main(args, config): # configs.pretrain.yaml
     else: # 패스를 빼주면 원래대로 가도록 수정함.
         data_loader = base_loader
     
+    #### 수정부분 시작: validation loss runner 생성 ####
+    # 여기서 COCO Karpathy validation json을 rank별로 한 번 읽고,
+    # 이후 train 중간 / epoch 종료 validation에서 재사용한다.
+    val_loss_runner = eval_validation_loss.build_pretrain_val_loss_runner( # 러너 생성
+        config=config,
+        device=device,
+        writer=writer,
+    )
+    #### 수정부분 끝 ####
+    
 
 
 
@@ -220,7 +249,22 @@ def main(args, config): # configs.pretrain.yaml
             
             step_lr_schedule(optimizer, epoch, config['init_lr'], config['min_lr'], config['lr_decay_rate'])
                     
-            train_stats = train(model, data_loader, optimizer, epoch, device, config, writer) # writer추가
+            train_stats = train(model, data_loader, optimizer, epoch, device, config, writer, val_loss_runner=val_loss_runner) # writer추가
+            
+            #### 수정부분 시작: epoch 종료 validation loss 실행 ####
+            val_stats = {}
+
+            if val_loss_runner is not None:
+                epoch_end_global_step = (epoch + 1) * len(data_loader)
+
+                val_stats = val_loss_runner.run_epoch_end(
+                    model=model,
+                    epoch=epoch,
+                    global_step=epoch_end_global_step,
+                    train_loader_len=len(data_loader),
+                )
+            #### 수정부분 끝 ####
+            
             if utils.is_main_process():  
                 log_stats = {**{f'train_{k}': v for k, v in train_stats.items()},
                             'epoch': epoch,

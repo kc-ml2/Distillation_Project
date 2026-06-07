@@ -13,9 +13,11 @@ cc12m_ratio: 5
 
 ## 데이터셋 명시하기 - 변경필수 혹은 이후에 딕셔너리로?
 used_dataset: 'coco_vg'
+# used_dataset: 'coco_only' # 테스트를 위해
 
 # output_dir: '/home/minwoo/Distillation_Project/output/pretrain_coco_cc12m_small'
-output_dir: '/home/minwoo/Distillation_Project/output/pretrain_coco_vg_baseline' # 
+# output_dir: '/home/minwoo/Distillation_Project/output/pretrain_coco_only_baseline'
+output_dir: '/home/minwoo/Distillation_Project/output/pretrain_coco_vg_baseline'
 
 # new) tenserboard log interval
 tb_train_log_interval: 50
@@ -34,6 +36,36 @@ vit_ckpt_layer: 0
 # size of language model: base, medium, minilm 중 하나로 설정
 # my_bert_size: 'minilm'
 my_bert_size: 'base'
+
+
+## 벨리데이션 과정
+#### 수정부분 시작: COCO Karpathy validation loss ####
+val_loss_enabled: true
+
+val_loss_file: '/home/minwoo/Distillation_Project/datasets/vision/coco/annotations/coco_karpathy_val.json'
+val_loss_image_root: '/home/minwoo/Distillation_Project/datasets/vision/coco/images/'
+
+val_loss_batch_size: 32
+val_loss_num_workers: 4
+val_loss_caption_mode: first
+val_loss_drop_last: true
+val_loss_pin_memory: true
+
+val_loss_print_freq: 50
+
+# 처음에는 중간 validation 끄기
+val_loss_interval_steps: 500
+val_loss_max_batches: 30 # 전체가 39더라
+
+# epoch 끝 validation만 켜기
+val_loss_epoch_end: true
+val_loss_epoch_max_batches: 30 # 똑같은수로 일단 보자고.
+
+val_loss_alpha_mode: current
+val_loss_restore_rng: true
+val_loss_amp: true
+#### 수정부분 끝 ####
+###
 
 # batch 작아지면 init lr도 작아지고, 웜업 스텝을 늘려야한다
 

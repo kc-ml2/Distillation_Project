@@ -35,9 +35,9 @@ class pretrain_dataset(Dataset):
             dataset_len += [len(ann)]
         # 테스트코드
         print(f"0번 소스타입: {self.ann_pretrain[0]['dataset_source']}") # 아마 coco일거임
-        print(f"1번 소스타입: {self.ann_pretrain[dataset_len[0]]['dataset_source']}") # 아마 vg일거임
+        # print(f"1번 소스타입: {self.ann_pretrain[dataset_len[0]]['dataset_source']}") # 아마 vg일거임
         print(f"coco dataset size: {dataset_len[0]}")
-        print(f"vg dataset size: {dataset_len[1]}")
+        # print(f"vg dataset size: {dataset_len[1]}")
         
         self.laion_path = laion_path
         if self.laion_path:

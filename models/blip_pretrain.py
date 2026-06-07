@@ -282,9 +282,36 @@ class BLIP_Pretrain(nn.Module):
         # =========== depreciated ========
         
         
-    def forward(self, image, caption, alpha):
-        with torch.no_grad():
-            self.temp.clamp_(0.001,0.5)
+    def forward(self, image, caption, alpha, update_train_state=None):
+    #### 수정부분 시작: validation-safe forward option 추가 ####
+        """
+        update_train_state:
+            - None  : self.training 값을 따라감
+                    train mode면 True, eval mode면 False
+            - True  : train forward처럼 내부 학습 state 갱신 허용
+                    self.temp clamp_, momentum encoder update, queue enqueue 수행
+            - False : validation forward처럼 loss만 계산
+                    self.temp 직접 변경, momentum update, queue enqueue 금지
+
+        주의:
+            model.eval()은 dropout/batchnorm 동작만 바꾸며,
+            forward 안의 self.temp.clamp_(), _momentum_update(),
+            _dequeue_and_enqueue()를 자동으로 막아주지는 않는다.
+        """
+
+        if update_train_state is None:
+            update_train_state = self.training
+
+        # self.temp는 contrastive loss의 learnable temperature parameter.
+        # train에서는 기존 BLIP처럼 in-place clamp로 parameter 범위를 유지한다.
+        # validation에서는 parameter를 직접 바꾸지 않고 계산용 clamped value만 사용한다.
+        if update_train_state:
+            with torch.no_grad():
+                self.temp.clamp_(0.001, 0.5)
+            contrastive_temperature = self.temp # 이름만 바꿔주기 
+        else:
+            contrastive_temperature = self.temp.clamp(0.001, 0.5)
+    #### 수정부분 끝 ####
         
         image_embeds = self.visual_encoder(image) # 임베딩 벡터 따와
         image_atts = torch.ones(image_embeds.size()[:-1],dtype=torch.long).to(image.device) # 어텐션 마스크 준비물
@@ -299,7 +326,11 @@ class BLIP_Pretrain(nn.Module):
              
         # get momentum features
         with torch.no_grad():
-            self._momentum_update()
+            #### 수정부분 시작: validation에서는 momentum encoder 갱신 금지 ####
+            if update_train_state: # T / F 만 존재
+                self._momentum_update()
+            #### 수정부분 끝 ####
+
             image_embeds_m = self.visual_encoder_m(image) 
             image_feat_m = F.normalize(self.vision_proj_m(image_embeds_m[:,0,:]),dim=-1)  
             image_feat_all = torch.cat([image_feat_m.t(),self.image_queue.clone().detach()],dim=1)                   
@@ -309,8 +340,10 @@ class BLIP_Pretrain(nn.Module):
             text_feat_m = F.normalize(self.text_proj_m(text_output_m.last_hidden_state[:,0,:]),dim=-1) 
             text_feat_all = torch.cat([text_feat_m.t(),self.text_queue.clone().detach()],dim=1)
 
-            sim_i2t_m = image_feat_m @ text_feat_all / self.temp  
-            sim_t2i_m = text_feat_m @ image_feat_all / self.temp 
+            #### 수정부분 시작: contrastive temperature 사용 ####
+            sim_i2t_m = image_feat_m @ text_feat_all / contrastive_temperature
+            sim_t2i_m = text_feat_m @ image_feat_all / contrastive_temperature
+            #### 수정부분 끝 ####
 
             sim_targets = torch.zeros(sim_i2t_m.size()).to(image.device)
             sim_targets.fill_diagonal_(1)          
@@ -318,15 +351,20 @@ class BLIP_Pretrain(nn.Module):
             sim_i2t_targets = alpha * F.softmax(sim_i2t_m, dim=1) + (1 - alpha) * sim_targets
             sim_t2i_targets = alpha * F.softmax(sim_t2i_m, dim=1) + (1 - alpha) * sim_targets        
 
-        sim_i2t = image_feat @ text_feat_all / self.temp
-        sim_t2i = text_feat @ image_feat_all / self.temp
+        #### 수정부분 시작: contrastive temperature 사용 ####
+        sim_i2t = image_feat @ text_feat_all / contrastive_temperature
+        sim_t2i = text_feat @ image_feat_all / contrastive_temperature
+        #### 수정부분 끝 ####
                              
         loss_i2t = -torch.sum(F.log_softmax(sim_i2t, dim=1)*sim_i2t_targets,dim=1).mean()
         loss_t2i = -torch.sum(F.log_softmax(sim_t2i, dim=1)*sim_t2i_targets,dim=1).mean() 
 
         loss_ita = (loss_i2t+loss_t2i)/2 # itc는 평균내서 보는구나 그런데 이상하네 왜 왜 image - text text - image가 다른 거지?
-
-        self._dequeue_and_enqueue(image_feat_m, text_feat_m)        
+    
+        #### 수정부분 시작: validation에서는 queue 업데이트 금지 ####
+        if update_train_state:
+            self._dequeue_and_enqueue(image_feat_m, text_feat_m)
+        #### 수정부분 끝 ####  
 
         ###============== Image-text Matching ===================###
         encoder_input_ids = text.input_ids.clone()
