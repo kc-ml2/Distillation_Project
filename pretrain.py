@@ -117,6 +117,14 @@ def train(model, data_loader, optimizer, epoch, device, config, writer=None, val
             writer.add_scalar("train/alpha", alpha, global_step)
         # 이후 벨리데이션 로그도 여기다 적기
 
+        #### 수정부분 시작: contrastive temperature / logit scale 기록 ####
+            model_for_log = model.module if hasattr(model, "module") else model
+            temp_value = model_for_log.temp.detach().item()
+
+            writer.add_scalar("model/temp", temp_value, global_step)
+            writer.add_scalar("model/logit_scale", 1.0 / temp_value, global_step)
+        #### 수정부분 끝 ####
+
         #### 수정부분 시작: train 도중 validation loss optional 실행 ####
         if val_loss_runner is not None:
             val_loss_runner.val_loss_during_train(

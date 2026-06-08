@@ -71,7 +71,7 @@ val_loss_amp: true
 
 image_size: 224
 # batch_size: 75 # 최초
-batch_size: 48 # 3분의 1 크기로 줄여버리기
+batch_size: 48 # 0.64배, 16의 배수
 
 queue_size: 57600
 alpha: 0.4
@@ -79,14 +79,16 @@ alpha: 0.4
 # optimizer
 weight_decay: 0.05 # 유지
 # init_lr: 3e-4 # 배치 75
-init_lr: 1.0e-4 # 3분의1
+init_lr: 1.92e-4 # 0.64 배
 
-min_lr: 0.333e-6
-warmup_lr: 0.333e-6
+# min_lr: 1.0e-6 최초
+min_lr: 0.64e-6 # 0.64배
+# warmup_lr: 1.0e-6 # 최초
+warmup_lr: 0.64e-6 # 0.64배
 lr_decay_rate: 0.9
 max_epoch: 20 # 테스트용. 원래 얼마더라? 20임
 # warmup_steps: 3000 # 배치 75 
-warmup_steps: 9000
+warmup_steps: 4700 # 배치 64
 
 
 
