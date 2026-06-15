@@ -1,0 +1,317 @@
+Train Epoch: [0]  [11550/31122]  eta: 6:57:12  lr: 0.000192  loss_ita: 4.150876  loss_itm: 0.545021  l
+oss_lm: 3.710905  time: 1.2670  data: 0.0001  max mem: 21724
+[rank1]:[E612 20:19:04.690459913 ProcessGroupNCCL.cpp:629] [Rank 1] Watchdog caught collective operati
+on timeout: WorkNCCL(SeqNum=452386, OpType=ALLGATHER, NumelIn=12288, NumelOut=49152, Timeout(ms)=60000
+0) ran for 600020 milliseconds before timing out.
+[rank1]:[E612 20:19:04.690874731 ProcessGroupNCCL.cpp:2168] [PG ID 0 PG GUID 0(default_pg) Rank 1]  fa
+ilure detected by watchdog at work sequence id: 452386 PG status: last enqueued work: 452387, last com
+pleted work: 452385
+[rank1]:[E612 20:19:04.690900479 ProcessGroupNCCL.cpp:667] Stack trace of the failed collective not fo
+und, potentially because FlightRecorder is disabled. You can enable it by setting TORCH_NCCL_TRACE_BUF
+FER_SIZE to a non-zero value.
+[rank2]:[E612 20:19:04.704378220 ProcessGroupNCCL.cpp:629] [Rank 2] Watchdog caught collective operati
+on timeout: WorkNCCL(SeqNum=452386, OpType=ALLGATHER, NumelIn=12288, NumelOut=49152, Timeout(ms)=60000
+0) ran for 600038 milliseconds before timing out.
+[rank2]:[E612 20:19:04.704785660 ProcessGroupNCCL.cpp:2168] [PG ID 0 PG GUID 0(default_pg) Rank 2]  fa
+ilure detected by watchdog at work sequence id: 452386 PG status: last enqueued work: 452387, last com
+pleted work: 452385
+[rank2]:[E612 20:19:04.704808900 ProcessGroupNCCL.cpp:667] Stack trace of the failed collective not fo
+und, potentially because FlightRecorder is disabled. You can enable it by setting TORCH_NCCL_TRACE_BUF
+FER_SIZE to a non-zero value.
+[rank0]:[E612 20:19:04.718206072 ProcessGroupNCCL.cpp:629] [Rank 0] Watchdog caught collective operati
+on timeout: WorkNCCL(SeqNum=452386, OpType=ALLGATHER, NumelIn=12288, NumelOut=49152, Timeout(ms)=60000
+0) ran for 600051 milliseconds before timing out.
+[rank0]:[E612 20:19:04.718621325 ProcessGroupNCCL.cpp:2168] [PG ID 0 PG GUID 0(default_pg) Rank 0]  fa
+ilure detected by watchdog at work sequence id: 452386 PG status: last enqueued work: 452387, last com
+pleted work: 452385
+[rank0]:[E612 20:19:04.718645304 ProcessGroupNCCL.cpp:667] Stack trace of the failed collective not fo
+und, potentially because FlightRecorder is disabled. You can enable it by setting TORCH_NCCL_TRACE_BUF
+FER_SIZE to a non-zero value.
+[rank0]:[E612 20:19:06.518418572 ProcessGroupNCCL.cpp:681] [Rank 0] Some NCCL operations have failed o
+r timed out. Due to the asynchronous nature of CUDA kernels, subsequent GPU operations might run on co
+rrupted/incomplete data.
+[rank0]:[E612 20:19:06.518433409 ProcessGroupNCCL.cpp:695] [Rank 0] To avoid data inconsistency, we ar
+e taking the entire process down.
+[rank0]:[E612 20:19:06.519672805 ProcessGroupNCCL.cpp:1895] [PG ID 0 PG GUID 0(default_pg) Rank 0] Pro
+cess group watchdog thread terminated with exception: [Rank 0] Watchdog caught collective operation ti
+meout: WorkNCCL(SeqNum=452386, OpType=ALLGATHER, NumelIn=12288, NumelOut=49152, Timeout(ms)=600000) ra
+n for 600051 milliseconds before timing out.
+Exception raised from checkTimeout at /pytorch/torch/csrc/distributed/c10d/ProcessGroupNCCL.cpp:632 (m
+ost recent call first):
+frame #0: c10::Error::Error(c10::SourceLocation, std::string) + 0x96 (0x7fa5b20fd1b6 in /home/minwoo/m
+iniconda3/envs/kd_v4/lib/python3.10/site-packages/torch/lib/libc10.so)
+frame #1: c10d::ProcessGroupNCCL::WorkNCCL::checkTimeout(std::optional<std::chrono::duration<long, std
+::ratio<1l, 1000l> > >) + 0x2b4 (0x7fa5b3446c74 in /home/minwoo/miniconda3/envs/kd_v4/lib/python3.10/s
+ite-packages/torch/lib/libtorch_cuda.so)
+frame #2: c10d::ProcessGroupNCCL::watchdogHandler() + 0x890 (0x7fa5b34487d0 in /home/minwoo/miniconda3
+/envs/kd_v4/lib/python3.10/site-packages/torch/lib/libtorch_cuda.so)
+frame #3: c10d::ProcessGroupNCCL::ncclCommWatchdog() + 0x14d (0x7fa5b34496ed in /home/minwoo/miniconda
+3/envs/kd_v4/lib/python3.10/site-packages/torch/lib/libtorch_cuda.so)
+frame #4: <unknown function> + 0x145c0 (0x7fa5fc4c05c0 in /home/minwoo/miniconda3/envs/kd_v4/lib/pytho
+n3.10/site-packages/torch/lib/libtorch.so)
+frame #5: <unknown function> + 0x8609 (0x7fa60b1cb609 in /lib/x86_64-linux-gnu/libpthread.so.0)
+frame #6: clone + 0x43 (0x7fa60af96133 in /lib/x86_64-linux-gnu/libc.so.6)
+
+terminate called after throwing an instance of 'c10::DistBackendError'
+  what():  [PG ID 0 PG GUID 0(default_pg) Rank 0] Process group watchdog thread terminated with except
+ion: [Rank 0] Watchdog caught collective operation timeout: WorkNCCL(SeqNum=452386, OpType=ALLGATHER,
+NumelIn=12288, NumelOut=49152, Timeout(ms)=600000) ran for 600051 milliseconds before timing out.
+Exception raised from checkTimeout at /pytorch/torch/csrc/distributed/c10d/ProcessGroupNCCL.cpp:632 (m
+ost recent call first):
+frame #0: c10::Error::Error(c10::SourceLocation, std::string) + 0x96 (0x7fa5b20fd1b6 in /home/minwoo/m
+iniconda3/envs/kd_v4/lib/python3.10/site-packages/torch/lib/libc10.so)
+frame #1: c10d::ProcessGroupNCCL::WorkNCCL::checkTimeout(std::optional<std::chrono::duration<long, std
+::ratio<1l, 1000l> > >) + 0x2b4 (0x7fa5b3446c74 in /home/minwoo/miniconda3/envs/kd_v4/lib/python3.10/s
+ite-packages/torch/lib/libtorch_cuda.so)
+frame #2: c10d::ProcessGroupNCCL::watchdogHandler() + 0x890 (0x7fa5b34487d0 in /home/minwoo/miniconda3
+/envs/kd_v4/lib/python3.10/site-packages/torch/lib/libtorch_cuda.so)
+frame #3: c10d::ProcessGroupNCCL::ncclCommWatchdog() + 0x14d (0x7fa5b34496ed in /home/minwoo/miniconda
+3/envs/kd_v4/lib/python3.10/site-packages/torch/lib/libtorch_cuda.so)
+frame #4: <unknown function> + 0x145c0 (0x7fa5fc4c05c0 in /home/minwoo/miniconda3/envs/kd_v4/lib/pytho
+n3.10/site-packages/torch/lib/libtorch.so)
+frame #5: <unknown function> + 0x8609 (0x7fa60b1cb609 in /lib/x86_64-linux-gnu/libpthread.so.0)
+frame #6: clone + 0x43 (0x7fa60af96133 in /lib/x86_64-linux-gnu/libc.so.6)
+
+Exception raised from ncclCommWatchdog at /pytorch/torch/csrc/distributed/c10d/ProcessGroupNCCL.cpp:19
+01 (most recent call first):
+frame #0: c10::Error::Error(c10::SourceLocation, std::string) + 0x96 (0x7fa5b20fd1b6 in /home/minwoo/m
+iniconda3/envs/kd_v4/lib/python3.10/site-packages/torch/lib/libc10.so)
+frame #1: <unknown function> + 0xe5c6fc (0x7fa5b30a46fc in /home/minwoo/miniconda3/envs/kd_v4/lib/pyth
+on3.10/site-packages/torch/lib/libtorch_cuda.so)
+frame #2: <unknown function> + 0x145c0 (0x7fa5fc4c05c0 in /home/minwoo/miniconda3/envs/kd_v4/lib/pytho
+n3.10/site-packages/torch/lib/libtorch.so)
+frame #3: <unknown function> + 0x8609 (0x7fa60b1cb609 in /lib/x86_64-linux-gnu/libpthread.so.0)
+frame #4: clone + 0x43 (0x7fa60af96133 in /lib/x86_64-linux-gnu/libc.so.6)
+
+[rank2]:[E612 20:19:06.527465812 ProcessGroupNCCL.cpp:681] [Rank 2] Some NCCL operations have failed o
+r timed out. Due to the asynchronous nature of CUDA kernels, subsequent GPU operations might run on co
+rrupted/incomplete data.
+[rank2]:[E612 20:19:06.527481318 ProcessGroupNCCL.cpp:695] [Rank 2] To avoid data inconsistency, we ar
+e taking the entire process down.
+[rank2]:[E612 20:19:06.528652167 ProcessGroupNCCL.cpp:1895] [PG ID 0 PG GUID 0(default_pg) Rank 2] Pro
+cess group watchdog thread terminated with exception: [Rank 2] Watchdog caught collective operation ti
+meout: WorkNCCL(SeqNum=452386, OpType=ALLGATHER, NumelIn=12288, NumelOut=49152, Timeout(ms)=600000) ra
+n for 600038 milliseconds before timing out.
+Exception raised from checkTimeout at /pytorch/torch/csrc/distributed/c10d/ProcessGroupNCCL.cpp:632 (m
+ost recent call first):
+frame #0: c10::Error::Error(c10::SourceLocation, std::string) + 0x96 (0x7f67c0b3a1b6 in /home/minwoo/m
+iniconda3/envs/kd_v4/lib/python3.10/site-packages/torch/lib/libc10.so)
+frame #1: c10d::ProcessGroupNCCL::WorkNCCL::checkTimeout(std::optional<std::chrono::duration<long, std
+::ratio<1l, 1000l> > >) + 0x2b4 (0x7f67c1e83c74 in /home/minwoo/miniconda3/envs/kd_v4/lib/python3.10/s
+ite-packages/torch/lib/libtorch_cuda.so)
+frame #2: c10d::ProcessGroupNCCL::watchdogHandler() + 0x890 (0x7f67c1e857d0 in /home/minwoo/miniconda3
+/envs/kd_v4/lib/python3.10/site-packages/torch/lib/libtorch_cuda.so)
+frame #3: c10d::ProcessGroupNCCL::ncclCommWatchdog() + 0x14d (0x7f67c1e866ed in /home/minwoo/miniconda
+3/envs/kd_v4/lib/python3.10/site-packages/torch/lib/libtorch_cuda.so)
+frame #4: <unknown function> + 0x145c0 (0x7f680aefd5c0 in /home/minwoo/miniconda3/envs/kd_v4/lib/pytho
+n3.10/site-packages/torch/lib/libtorch.so)
+frame #5: <unknown function> + 0x8609 (0x7f6819c08609 in /lib/x86_64-linux-gnu/libpthread.so.0)
+frame #6: clone + 0x43 (0x7f68199d3133 in /lib/x86_64-linux-gnu/libc.so.6)
+
+terminate called after throwing an instance of 'c10::DistBackendError'
+  what():  [PG ID 0 PG GUID 0(default_pg) Rank 2] Process group watchdog thread terminated with except
+ion: [Rank 2] Watchdog caught collective operation timeout: WorkNCCL(SeqNum=452386, OpType=ALLGATHER,
+NumelIn=12288, NumelOut=49152, Timeout(ms)=600000) ran for 600038 milliseconds before timing out.
+Exception raised from checkTimeout at /pytorch/torch/csrc/distributed/c10d/ProcessGroupNCCL.cpp:632 (m
+ost recent call first):
+frame #0: c10::Error::Error(c10::SourceLocation, std::string) + 0x96 (0x7f67c0b3a1b6 in /home/minwoo/m
+iniconda3/envs/kd_v4/lib/python3.10/site-packages/torch/lib/libc10.so)
+frame #1: c10d::ProcessGroupNCCL::WorkNCCL::checkTimeout(std::optional<std::chrono::duration<long, std
+::ratio<1l, 1000l> > >) + 0x2b4 (0x7f67c1e83c74 in /home/minwoo/miniconda3/envs/kd_v4/lib/python3.10/s
+ite-packages/torch/lib/libtorch_cuda.so)
+frame #2: c10d::ProcessGroupNCCL::watchdogHandler() + 0x890 (0x7f67c1e857d0 in /home/minwoo/miniconda3
+/envs/kd_v4/lib/python3.10/site-packages/torch/lib/libtorch_cuda.so)
+frame #3: c10d::ProcessGroupNCCL::ncclCommWatchdog() + 0x14d (0x7f67c1e866ed in /home/minwoo/miniconda
+3/envs/kd_v4/lib/python3.10/site-packages/torch/lib/libtorch_cuda.so)
+frame #4: <unknown function> + 0x145c0 (0x7f680aefd5c0 in /home/minwoo/miniconda3/envs/kd_v4/lib/pytho
+n3.10/site-packages/torch/lib/libtorch.so)
+frame #5: <unknown function> + 0x8609 (0x7f6819c08609 in /lib/x86_64-linux-gnu/libpthread.so.0)
+frame #6: clone + 0x43 (0x7f68199d3133 in /lib/x86_64-linux-gnu/libc.so.6)
+
+Exception raised from ncclCommWatchdog at /pytorch/torch/csrc/distributed/c10d/ProcessGroupNCCL.cpp:19
+01 (most recent call first):
+frame #0: c10::Error::Error(c10::SourceLocation, std::string) + 0x96 (0x7f67c0b3a1b6 in /home/minwoo/m
+iniconda3/envs/kd_v4/lib/python3.10/site-packages/torch/lib/libc10.so)
+frame #1: <unknown function> + 0xe5c6fc (0x7f67c1ae16fc in /home/minwoo/miniconda3/envs/kd_v4/lib/pyth
+on3.10/site-packages/torch/lib/libtorch_cuda.so)
+frame #2: <unknown function> + 0x145c0 (0x7f680aefd5c0 in /home/minwoo/miniconda3/envs/kd_v4/lib/pytho
+n3.10/site-packages/torch/lib/libtorch.so)
+frame #3: <unknown function> + 0x8609 (0x7f6819c08609 in /lib/x86_64-linux-gnu/libpthread.so.0)
+frame #4: clone + 0x43 (0x7f68199d3133 in /lib/x86_64-linux-gnu/libc.so.6)
+
+[rank1]:[E612 20:19:06.529872311 ProcessGroupNCCL.cpp:681] [Rank 1] Some NCCL operations have failed o
+r timed out. Due to the asynchronous nature of CUDA kernels, subsequent GPU operations might run on co
+rrupted/incomplete data.
+[rank1]:[E612 20:19:06.529886063 ProcessGroupNCCL.cpp:695] [Rank 1] To avoid data inconsistency, we ar
+e taking the entire process down.
+[rank1]:[E612 20:19:06.530952646 ProcessGroupNCCL.cpp:1895] [PG ID 0 PG GUID 0(default_pg) Rank 1] Pro
+cess group watchdog thread terminated with exception: [Rank 1] Watchdog caught collective operation ti
+meout: WorkNCCL(SeqNum=452386, OpType=ALLGATHER, NumelIn=12288, NumelOut=49152, Timeout(ms)=600000) ra
+n for 600020 milliseconds before timing out.
+Exception raised from checkTimeout at /pytorch/torch/csrc/distributed/c10d/ProcessGroupNCCL.cpp:632 (m
+ost recent call first):
+frame #0: c10::Error::Error(c10::SourceLocation, std::string) + 0x96 (0x7f15557a01b6 in /home/minwoo/m
+iniconda3/envs/kd_v4/lib/python3.10/site-packages/torch/lib/libc10.so)
+frame #1: c10d::ProcessGroupNCCL::WorkNCCL::checkTimeout(std::optional<std::chrono::duration<long, std
+::ratio<1l, 1000l> > >) + 0x2b4 (0x7f1556ae9c74 in /home/minwoo/miniconda3/envs/kd_v4/lib/python3.10/s
+ite-packages/torch/lib/libtorch_cuda.so)
+frame #2: c10d::ProcessGroupNCCL::watchdogHandler() + 0x890 (0x7f1556aeb7d0 in /home/minwoo/miniconda3
+/envs/kd_v4/lib/python3.10/site-packages/torch/lib/libtorch_cuda.so)
+frame #3: c10d::ProcessGroupNCCL::ncclCommWatchdog() + 0x14d (0x7f1556aec6ed in /home/minwoo/miniconda
+3/envs/kd_v4/lib/python3.10/site-packages/torch/lib/libtorch_cuda.so)
+frame #4: <unknown function> + 0x145c0 (0x7f159fb635c0 in /home/minwoo/miniconda3/envs/kd_v4/lib/pytho
+n3.10/site-packages/torch/lib/libtorch.so)
+frame #5: <unknown function> + 0x8609 (0x7f15ae86e609 in /lib/x86_64-linux-gnu/libpthread.so.0)
+frame #6: clone + 0x43 (0x7f15ae639133 in /lib/x86_64-linux-gnu/libc.so.6)
+
+terminate called after throwing an instance of 'c10::DistBackendError'
+  what():  [PG ID 0 PG GUID 0(default_pg) Rank 1] Process group watchdog thread terminated with except
+ion: [Rank 1] Watchdog caught collective operation timeout: WorkNCCL(SeqNum=452386, OpType=ALLGATHER,
+NumelIn=12288, NumelOut=49152, Timeout(ms)=600000) ran for 600020 milliseconds before timing out.
+Exception raised from checkTimeout at /pytorch/torch/csrc/distributed/c10d/ProcessGroupNCCL.cpp:632 (m
+ost recent call first):
+frame #0: c10::Error::Error(c10::SourceLocation, std::string) + 0x96 (0x7f15557a01b6 in /home/minwoo/m
+iniconda3/envs/kd_v4/lib/python3.10/site-packages/torch/lib/libc10.so)
+frame #1: c10d::ProcessGroupNCCL::WorkNCCL::checkTimeout(std::optional<std::chrono::duration<long, std
+::ratio<1l, 1000l> > >) + 0x2b4 (0x7f1556ae9c74 in /home/minwoo/miniconda3/envs/kd_v4/lib/python3.10/s
+ite-packages/torch/lib/libtorch_cuda.so)
+frame #2: c10d::ProcessGroupNCCL::watchdogHandler() + 0x890 (0x7f1556aeb7d0 in /home/minwoo/miniconda3
+/envs/kd_v4/lib/python3.10/site-packages/torch/lib/libtorch_cuda.so)
+frame #3: c10d::ProcessGroupNCCL::ncclCommWatchdog() + 0x14d (0x7f1556aec6ed in /home/minwoo/miniconda
+3/envs/kd_v4/lib/python3.10/site-packages/torch/lib/libtorch_cuda.so)
+frame #4: <unknown function> + 0x145c0 (0x7f159fb635c0 in /home/minwoo/miniconda3/envs/kd_v4/lib/pytho
+n3.10/site-packages/torch/lib/libtorch.so)
+frame #5: <unknown function> + 0x8609 (0x7f15ae86e609 in /lib/x86_64-linux-gnu/libpthread.so.0)
+frame #6: clone + 0x43 (0x7f15ae639133 in /lib/x86_64-linux-gnu/libc.so.6)
+
+Exception raised from ncclCommWatchdog at /pytorch/torch/csrc/distributed/c10d/ProcessGroupNCCL.cpp:19
+01 (most recent call first):
+frame #0: c10::Error::Error(c10::SourceLocation, std::string) + 0x96 (0x7f15557a01b6 in /home/minwoo/m
+iniconda3/envs/kd_v4/lib/python3.10/site-packages/torch/lib/libc10.so)
+frame #1: <unknown function> + 0xe5c6fc (0x7f15567476fc in /home/minwoo/miniconda3/envs/kd_v4/lib/pyth
+on3.10/site-packages/torch/lib/libtorch_cuda.so)
+frame #2: <unknown function> + 0x145c0 (0x7f159fb635c0 in /home/minwoo/miniconda3/envs/kd_v4/lib/pytho
+n3.10/site-packages/torch/lib/libtorch.so)
+frame #3: <unknown function> + 0x8609 (0x7f15ae86e609 in /lib/x86_64-linux-gnu/libpthread.so.0)
+frame #4: clone + 0x43 (0x7f15ae639133 in /lib/x86_64-linux-gnu/libc.so.6)
+
+W0612 20:19:06.499000 14322 site-packages/torch/distributed/elastic/multiprocessing/api.py:897] Sendin
+g process 14408 closing signal SIGTERM
+W0612 20:19:06.500000 14322 site-packages/torch/distributed/elastic/multiprocessing/api.py:897] Sendin
+g process 14409 closing signal SIGTERM
+W0612 20:19:06.500000 14322 site-packages/torch/distributed/elastic/multiprocessing/api.py:897] Sendin
+g process 14410 closing signal SIGTERM
+W0612 20:19:36.501000 14322 site-packages/torch/distributed/elastic/multiprocessing/api.py:916] Unable
+ to shutdown process 14410 via Signals.SIGTERM, forcefully exiting via Signals.SIGKILL
+^[[B^[[A^[[A^[[A^[[A^[[A^[[A^CW0612 23:56:34.875000 14322 site-packages/torch/distributed/elastic/agen
+t/server/api.py:719] Received Signals.SIGINT death signal, shutting down workers
+W0612 23:56:34.875000 14322 site-packages/torch/distributed/elastic/multiprocessing/api.py:897] Sendin
+g process 14410 closing signal SIGINT
+^CW0612 23:56:57.954000 14322 site-packages/torch/distributed/elastic/multiprocessing/api.py:897] Send
+ing process 14410 closing signal SIGTERM
+^CTraceback (most recent call last):
+  File "/home/minwoo/miniconda3/envs/kd_v4/lib/python3.10/site-packages/torch/distributed/elastic/agen
+t/server/api.py", line 711, in run
+    result = self._invoke_run(role)
+  File "/home/minwoo/miniconda3/envs/kd_v4/lib/python3.10/site-packages/torch/distributed/elastic/agen
+t/server/api.py", line 871, in _invoke_run
+    run_result = self._monitor_workers(self._worker_group)
+  File "/home/minwoo/miniconda3/envs/kd_v4/lib/python3.10/site-packages/torch/distributed/elastic/metr
+ics/api.py", line 137, in wrapper
+    result = f(*args, **kwargs)
+  File "/home/minwoo/miniconda3/envs/kd_v4/lib/python3.10/site-packages/torch/distributed/elastic/agen
+t/server/local_elastic_agent.py", line 394, in _monitor_workers
+    result = self._pcontext.wait(0)
+  File "/home/minwoo/miniconda3/envs/kd_v4/lib/python3.10/site-packages/torch/distributed/elastic/mult
+iprocessing/api.py", line 531, in wait
+    return self._poll()
+  File "/home/minwoo/miniconda3/envs/kd_v4/lib/python3.10/site-packages/torch/distributed/elastic/mult
+iprocessing/api.py", line 861, in _poll
+    self.close()  # terminate all running procs
+  File "/home/minwoo/miniconda3/envs/kd_v4/lib/python3.10/site-packages/torch/distributed/elastic/mult
+iprocessing/api.py", line 572, in close
+    self._close(death_sig=death_sig, timeout=timeout)
+  File "/home/minwoo/miniconda3/envs/kd_v4/lib/python3.10/site-packages/torch/distributed/elastic/mult
+iprocessing/api.py", line 923, in _close
+    handler.proc.wait()
+  File "/home/minwoo/miniconda3/envs/kd_v4/lib/python3.10/subprocess.py", line 1209, in wait
+    return self._wait(timeout=timeout)
+  File "/home/minwoo/miniconda3/envs/kd_v4/lib/python3.10/subprocess.py", line 1959, in _wait
+    (pid, sts) = self._try_wait(0)
+  File "/home/minwoo/miniconda3/envs/kd_v4/lib/python3.10/subprocess.py", line 1917, in _try_wait
+    (pid, sts) = os.waitpid(self.pid, wait_flags)
+  File "/home/minwoo/miniconda3/envs/kd_v4/lib/python3.10/site-packages/torch/distributed/elastic/mult
+iprocessing/api.py", line 84, in _terminate_process_handler
+    raise SignalException(f"Process {os.getpid()} got signal: {sigval}", sigval=sigval)
+torch.distributed.elastic.multiprocessing.api.SignalException: Process 14322 got signal: 2
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/minwoo/miniconda3/envs/kd_v4/lib/python3.10/site-packages/torch/distributed/elastic/agen
+t/server/api.py", line 720, in run
+    self._shutdown(e.sigval)
+  File "/home/minwoo/miniconda3/envs/kd_v4/lib/python3.10/site-packages/torch/distributed/elastic/agen
+t/server/local_elastic_agent.py", line 372, in _shutdown
+    self._pcontext.close(death_sig)
+  File "/home/minwoo/miniconda3/envs/kd_v4/lib/python3.10/site-packages/torch/distributed/elastic/mult
+iprocessing/api.py", line 572, in close
+    self._close(death_sig=death_sig, timeout=timeout)
+  File "/home/minwoo/miniconda3/envs/kd_v4/lib/python3.10/site-packages/torch/distributed/elastic/mult
+iprocessing/api.py", line 909, in _close
+    handler.proc.wait(time_to_wait)
+  File "/home/minwoo/miniconda3/envs/kd_v4/lib/python3.10/subprocess.py", line 1209, in wait
+    return self._wait(timeout=timeout)
+  File "/home/minwoo/miniconda3/envs/kd_v4/lib/python3.10/subprocess.py", line 1953, in _wait
+    time.sleep(delay)
+  File "/home/minwoo/miniconda3/envs/kd_v4/lib/python3.10/site-packages/torch/distributed/elastic/mult
+iprocessing/api.py", line 84, in _terminate_process_handler
+    raise SignalException(f"Process {os.getpid()} got signal: {sigval}", sigval=sigval)
+torch.distributed.elastic.multiprocessing.api.SignalException: Process 14322 got signal: 2
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/minwoo/miniconda3/envs/kd_v4/bin/torchrun", line 6, in <module>
+    sys.exit(main())
+  File "/home/minwoo/miniconda3/envs/kd_v4/lib/python3.10/site-packages/torch/distributed/elastic/mult
+iprocessing/errors/__init__.py", line 355, in wrapper
+    return f(*args, **kwargs)
+  File "/home/minwoo/miniconda3/envs/kd_v4/lib/python3.10/site-packages/torch/distributed/run.py", lin
+e 918, in main
+    run(args)
+  File "/home/minwoo/miniconda3/envs/kd_v4/lib/python3.10/site-packages/torch/distributed/run.py", lin
+e 909, in run
+    elastic_launch(
+  File "/home/minwoo/miniconda3/envs/kd_v4/lib/python3.10/site-packages/torch/distributed/launcher/api
+.py", line 138, in __call__
+    return launch_agent(self._config, self._entrypoint, list(args))
+  File "/home/minwoo/miniconda3/envs/kd_v4/lib/python3.10/site-packages/torch/distributed/launcher/api
+.py", line 260, in launch_agent
+    result = agent.run()
+  File "/home/minwoo/miniconda3/envs/kd_v4/lib/python3.10/site-packages/torch/distributed/elastic/metr
+ics/api.py", line 137, in wrapper
+    result = f(*args, **kwargs)
+  File "/home/minwoo/miniconda3/envs/kd_v4/lib/python3.10/site-packages/torch/distributed/elastic/agen
+t/server/api.py", line 725, in run
+    self._shutdown()
+  File "/home/minwoo/miniconda3/envs/kd_v4/lib/python3.10/site-packages/torch/distributed/elastic/agen
+t/server/local_elastic_agent.py", line 372, in _shutdown
+    self._pcontext.close(death_sig)
+  File "/home/minwoo/miniconda3/envs/kd_v4/lib/python3.10/site-packages/torch/distributed/elastic/mult
+iprocessing/api.py", line 572, in close
+    self._close(death_sig=death_sig, timeout=timeout)
+  File "/home/minwoo/miniconda3/envs/kd_v4/lib/python3.10/site-packages/torch/distributed/elastic/mult
+iprocessing/api.py", line 909, in _close
+    handler.proc.wait(time_to_wait)
+  File "/home/minwoo/miniconda3/envs/kd_v4/lib/python3.10/subprocess.py", line 1209, in wait
+    return self._wait(timeout=timeout)
+  File "/home/minwoo/miniconda3/envs/kd_v4/lib/python3.10/subprocess.py", line 1953, in _wait
+    time.sleep(delay)
+  File "/home/minwoo/miniconda3/envs/kd_v4/lib/python3.10/site-packages/torch/distributed/elastic/mult
+iprocessing/api.py", line 84, in _terminate_process_handler
+    raise SignalException(f"Process {os.getpid()} got signal: {sigval}", sigval=sigval)
+torch.distributed.elastic.multiprocessing.api.SignalException: Process 14322 got signal: 2
+(kd_v4) minwoo@ml2-gamma:~/Distillation_Project$ tmux capture-pane -pS -30000 > /home/minwoo/Distillat
+ion_Project/error611.log
+

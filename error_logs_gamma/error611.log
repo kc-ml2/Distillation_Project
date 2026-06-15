@@ -1,0 +1,1698 @@
+(base) minwoo@ml2-gamma:~/Distillation_Project$ conda activate kd_v4
+(kd_v4) minwoo@ml2-gamma:~/Distillation_Project$ CUDA_VISIBLE_DEVICES=0,1,2,3 torchrun --nproc_per_nod
+e=4 -m pretrain
+W0612 16:01:35.752000 14322 site-packages/torch/distributed/run.py:792]
+W0612 16:01:35.752000 14322 site-packages/torch/distributed/run.py:792] ******************************
+***********
+W0612 16:01:35.752000 14322 site-packages/torch/distributed/run.py:792] Setting OMP_NUM_THREADS enviro
+nment variable for each process to be 1 in default, to avoid your system being overloaded, please furt
+her tune the variable for optimal performance in your application as needed.
+W0612 16:01:35.752000 14322 site-packages/torch/distributed/run.py:792] ******************************
+***********
+/home/minwoo/miniconda3/envs/kd_v4/lib/python3.10/site-packages/transformers/utils/generic.py:311: Fut
+ureWarning: `torch.utils._pytree._register_pytree_node` is deprecated. Please use `torch.utils._pytree
+.register_pytree_node` instead.
+  torch.utils._pytree._register_pytree_node(
+/home/minwoo/miniconda3/envs/kd_v4/lib/python3.10/site-packages/transformers/utils/generic.py:311: Fut
+ureWarning: `torch.utils._pytree._register_pytree_node` is deprecated. Please use `torch.utils._pytree
+.register_pytree_node` instead.
+  torch.utils._pytree._register_pytree_node(
+/home/minwoo/miniconda3/envs/kd_v4/lib/python3.10/site-packages/transformers/utils/generic.py:311: Fut
+ureWarning: `torch.utils._pytree._register_pytree_node` is deprecated. Please use `torch.utils._pytree
+.register_pytree_node` instead.
+  torch.utils._pytree._register_pytree_node(
+/home/minwoo/miniconda3/envs/kd_v4/lib/python3.10/site-packages/transformers/utils/generic.py:311: Fut
+ureWarning: `torch.utils._pytree._register_pytree_node` is deprecated. Please use `torch.utils._pytree
+.register_pytree_node` instead.
+  torch.utils._pytree._register_pytree_node(
+output_dir: /home/minwoo/Distillation_Project/output/pretrain_coco_vg_baseline
+output_dir: /home/minwoo/Distillation_Project/output/pretrain_coco_vg_baseline
+output_dir: /home/minwoo/Distillation_Project/output/pretrain_coco_vg_baseline
+output_dir: /home/minwoo/Distillation_Project/output/pretrain_coco_vg_baseline
+| distributed init (rank 0, word 4): env://
+| distributed init (rank 2, word 4): env://
+| distributed init (rank 1, word 4): env://
+| distributed init (rank 3, word 4): env://
+[TensorBoard] log_dir: /home/minwoo/Distillation_Project/output/pretrain_coco_vg_baseline/tensorboard/
+20260612_160140__experiment=baseline_test_no_amp__mode=pretrain__vit=base__bert=base__batch_size=bs48x
+4eff192__dataset=coco_vg
+Creating dataset
+loading /home/minwoo/Distillation_Project/datasets/vision/coco/annotations/coco_karpathy_train.json
+🕵️ '/home/minwoo/Distillation_Project/datasets/vision/coco/annotations/coco_karpathy_train.json'에서 'd
+ataset_source' 태그를 찾지 못했습니다. 실시간 인메모리 태깅 중...
+loading /home/minwoo/Distillation_Project/datasets/vision/vg/annotation/vg_train.json
+🕵️ '/home/minwoo/Distillation_Project/datasets/vision/vg/annotation/vg_train.json'에서 'dataset_source'
+ 태그를 찾지 못했습니다. 실시간 인메모리 태깅 중...
+0번 소스타입: coco
+coco dataset size: 566747
+number of training samples: 5975436
+Creating model
+모델 비전 width 변수: 768
+Some weights of the model checkpoint at bert-base-uncased were not used when initializing BertModel: [
+'cls.seq_relationship.bias', 'cls.predictions.transform.LayerNorm.bias', 'cls.predictions.transform.de
+nse.weight', 'bert.embeddings.token_type_embeddings.weight', 'bert.pooler.dense.weight', 'cls.seq_rela
+tionship.weight', 'cls.predictions.bias', 'cls.predictions.transform.dense.bias', 'bert.pooler.dense.b
+ias', 'cls.predictions.transform.LayerNorm.weight']
+- This IS expected if you are initializing BertModel from the checkpoint of a model trained on another
+ task or with another architecture (e.g. initializing a BertForSequenceClassification model from a Ber
+tForPreTraining model).
+- This IS NOT expected if you are initializing BertModel from the checkpoint of a model that you expec
+t to be exactly identical (initializing a BertForSequenceClassification model from a BertForSequenceCl
+assification model).
+Some weights of BertModel were not initialized from the model checkpoint at bert-base-uncased and are
+newly initialized: ['bert.encoder.layer.0.crossattention.output.dense.bias', 'bert.encoder.layer.0.cro
+ssattention.output.LayerNorm.weight', 'bert.encoder.layer.6.crossattention.self.key.weight', 'bert.enc
+oder.layer.6.crossattention.self.query.weight', 'bert.encoder.layer.3.crossattention.self.query.weight
+', 'bert.encoder.layer.8.crossattention.output.dense.bias', 'bert.encoder.layer.9.crossattention.outpu
+t.dense.bias', 'bert.encoder.layer.10.crossattention.output.dense.bias', 'bert.encoder.layer.4.crossat
+tention.output.dense.bias', 'bert.encoder.layer.11.crossattention.self.key.weight', 'bert.encoder.laye
+r.5.crossattention.self.query.bias', 'bert.encoder.layer.6.crossattention.self.key.bias', 'bert.encode
+r.layer.7.crossattention.self.query.bias', 'bert.encoder.layer.0.crossattention.self.query.bias', 'ber
+t.encoder.layer.0.crossattention.self.key.bias', 'bert.encoder.layer.8.crossattention.self.key.weight'
+, 'bert.encoder.layer.7.crossattention.self.key.bias', 'bert.encoder.layer.8.crossattention.output.Lay
+erNorm.weight', 'bert.encoder.layer.3.crossattention.output.dense.weight', 'bert.encoder.layer.1.cross
+attention.output.LayerNorm.bias', 'bert.encoder.layer.6.crossattention.output.LayerNorm.bias', 'bert.e
+ncoder.layer.11.crossattention.output.LayerNorm.weight', 'bert.encoder.layer.0.crossattention.self.val
+ue.weight', 'bert.encoder.layer.5.crossattention.output.dense.weight', 'bert.encoder.layer.2.crossatte
+ntion.self.value.weight', 'bert.encoder.layer.7.crossattention.self.value.bias', 'bert.encoder.layer.1
+.crossattention.self.query.bias', 'bert.encoder.layer.8.crossattention.self.key.bias', 'bert.encoder.l
+ayer.5.crossattention.self.value.weight', 'bert.encoder.layer.10.crossattention.self.key.bias', 'bert.
+encoder.layer.10.crossattention.self.query.weight', 'bert.encoder.layer.4.crossattention.output.dense.
+weight', 'bert.encoder.layer.0.crossattention.self.query.weight', 'bert.encoder.layer.5.crossattention
+.output.LayerNorm.weight', 'bert.encoder.layer.7.crossattention.output.dense.bias', 'bert.encoder.laye
+r.11.crossattention.self.value.bias', 'bert.encoder.layer.2.crossattention.self.key.weight', 'bert.enc
+oder.layer.1.crossattention.output.LayerNorm.weight', 'bert.encoder.layer.3.crossattention.self.value.
+weight', 'bert.encoder.layer.6.crossattention.self.value.weight', 'bert.encoder.layer.1.crossattention
+.output.dense.bias', 'bert.encoder.layer.11.crossattention.output.dense.weight', 'bert.encoder.layer.7
+.crossattention.self.query.weight', 'bert.encoder.layer.8.crossattention.self.query.weight', 'bert.enc
+oder.layer.8.crossattention.output.LayerNorm.bias', 'bert.encoder.layer.3.crossattention.output.dense.
+bias', 'bert.encoder.layer.9.crossattention.output.dense.weight', 'bert.encoder.layer.2.crossattention
+.output.dense.weight', 'bert.encoder.layer.10.crossattention.self.key.weight', 'bert.encoder.layer.9.c
+rossattention.self.value.weight', 'bert.encoder.layer.5.crossattention.self.query.weight', 'bert.encod
+er.layer.4.crossattention.self.query.weight', 'bert.encoder.layer.10.crossattention.self.value.bias',
+'bert.encoder.layer.6.crossattention.output.dense.weight', 'bert.encoder.layer.9.crossattention.output
+.LayerNorm.weight', 'bert.encoder.layer.4.crossattention.self.query.bias', 'bert.encoder.layer.10.cros
+sattention.output.LayerNorm.weight', 'bert.encoder.layer.3.crossattention.output.LayerNorm.weight', 'b
+ert.encoder.layer.2.crossattention.output.LayerNorm.bias', 'bert.encoder.layer.8.crossattention.self.v
+alue.weight', 'bert.encoder.layer.7.crossattention.output.LayerNorm.bias', 'bert.encoder.layer.5.cross
+attention.output.dense.bias', 'bert.encoder.layer.4.crossattention.output.LayerNorm.weight', 'bert.enc
+oder.layer.11.crossattention.output.LayerNorm.bias', 'bert.encoder.layer.3.crossattention.self.value.b
+ias', 'bert.encoder.layer.1.crossattention.self.key.bias', 'bert.encoder.layer.4.crossattention.self.v
+alue.bias', 'bert.encoder.layer.11.crossattention.self.query.weight', 'bert.encoder.layer.7.crossatten
+tion.self.value.weight', 'bert.encoder.layer.7.crossattention.self.key.weight', 'bert.encoder.layer.2.
+crossattention.self.value.bias', 'bert.encoder.layer.10.crossattention.output.dense.weight', 'bert.enc
+oder.layer.2.crossattention.output.dense.bias', 'bert.encoder.layer.10.crossattention.self.value.weigh
+t', 'bert.encoder.layer.8.crossattention.self.query.bias', 'bert.encoder.layer.1.crossattention.self.v
+alue.weight', 'bert.encoder.layer.6.crossattention.self.query.bias', 'bert.encoder.layer.7.crossattent
+ion.output.LayerNorm.weight', 'bert.encoder.layer.11.crossattention.self.value.weight', 'bert.encoder.
+layer.0.crossattention.self.value.bias', 'bert.encoder.layer.8.crossattention.output.dense.weight', 'b
+ert.encoder.layer.3.crossattention.self.key.bias', 'bert.encoder.layer.9.crossattention.self.query.wei
+ght', 'bert.encoder.layer.2.crossattention.output.LayerNorm.weight', 'bert.encoder.layer.1.crossattent
+ion.self.key.weight', 'bert.encoder.layer.3.crossattention.output.LayerNorm.bias', 'bert.encoder.layer
+.7.crossattention.output.dense.weight', 'bert.encoder.layer.9.crossattention.self.key.weight', 'bert.e
+ncoder.layer.5.crossattention.output.LayerNorm.bias', 'bert.encoder.layer.9.crossattention.self.query.
+bias', 'bert.encoder.layer.9.crossattention.self.value.bias', 'bert.encoder.layer.0.crossattention.out
+put.LayerNorm.bias', 'bert.encoder.layer.2.crossattention.self.key.bias', 'bert.encoder.layer.5.crossa
+ttention.self.key.bias', 'bert.encoder.layer.4.crossattention.self.key.bias', 'bert.encoder.layer.0.cr
+ossattention.self.key.weight', 'bert.encoder.layer.3.crossattention.self.key.weight', 'bert.encoder.la
+yer.5.crossattention.self.key.weight', 'bert.encoder.layer.6.crossattention.output.dense.bias', 'bert.
+encoder.layer.4.crossattention.self.value.weight', 'bert.encoder.layer.3.crossattention.self.query.bia
+s', 'bert.encoder.layer.2.crossattention.self.query.weight', 'bert.encoder.layer.6.crossattention.self
+.value.bias', 'bert.encoder.layer.10.crossattention.self.query.bias', 'bert.encoder.layer.11.crossatte
+ntion.output.dense.bias', 'bert.encoder.layer.2.crossattention.self.query.bias', 'bert.encoder.layer.1
+0.crossattention.output.LayerNorm.bias', 'bert.encoder.layer.11.crossattention.self.query.bias', 'bert
+.encoder.layer.1.crossattention.self.value.bias', 'bert.encoder.layer.9.crossattention.output.LayerNor
+m.bias', 'bert.encoder.layer.0.crossattention.output.dense.weight', 'bert.encoder.layer.4.crossattenti
+on.self.key.weight', 'bert.encoder.layer.11.crossattention.self.key.bias', 'bert.encoder.layer.1.cross
+attention.self.query.weight', 'bert.encoder.layer.1.crossattention.output.dense.weight', 'bert.encoder
+.layer.6.crossattention.output.LayerNorm.weight', 'bert.encoder.layer.4.crossattention.output.LayerNor
+m.bias', 'bert.encoder.layer.8.crossattention.self.value.bias', 'bert.encoder.layer.9.crossattention.s
+elf.key.bias', 'bert.encoder.layer.5.crossattention.self.value.bias']
+You should probably TRAIN this model on a down-stream task to be able to use it for predictions and in
+ference.
+You are resizing the embedding layer without providing a `pad_to_multiple_of` parameter. This means th
+at the new embedding dimension will be 30524. This might induce some performance reduction as *Tensor
+Cores* will not be available. For more details about this, or help on choosing the correct value for r
+esizing, refer to this guide: https://docs.nvidia.com/deeplearning/performance/dl-performance-matrix-m
+ultiplication/index.html#requirements-tc
+Some weights of the model checkpoint at bert-base-uncased were not used when initializing BertModel: [
+'cls.seq_relationship.weight', 'cls.predictions.transform.dense.bias', 'cls.predictions.transform.Laye
+rNorm.bias', 'cls.predictions.transform.LayerNorm.weight', 'bert.pooler.dense.weight', 'bert.pooler.de
+nse.bias', 'cls.predictions.transform.dense.weight', 'bert.embeddings.token_type_embeddings.weight', '
+cls.predictions.bias', 'cls.seq_relationship.bias']
+- This IS expected if you are initializing BertModel from the checkpoint of a model trained on another
+ task or with another architecture (e.g. initializing a BertForSequenceClassification model from a Ber
+tForPreTraining model).
+- This IS NOT expected if you are initializing BertModel from the checkpoint of a model that you expec
+t to be exactly identical (initializing a BertForSequenceClassification model from a BertForSequenceCl
+assification model).
+Some weights of BertModel were not initialized from the model checkpoint at bert-base-uncased and are
+newly initialized: ['bert.encoder.layer.10.crossattention.self.key.bias', 'bert.encoder.layer.5.crossa
+ttention.self.query.bias', 'bert.encoder.layer.3.crossattention.output.LayerNorm.weight', 'bert.encode
+r.layer.9.crossattention.self.key.bias', 'bert.encoder.layer.8.crossattention.self.value.bias', 'bert.
+encoder.layer.11.crossattention.output.dense.bias', 'bert.encoder.layer.1.crossattention.self.query.we
+ight', 'bert.encoder.layer.9.crossattention.self.value.weight', 'bert.encoder.layer.2.crossattention.s
+elf.key.bias', 'bert.encoder.layer.4.crossattention.output.LayerNorm.bias', 'bert.encoder.layer.7.cros
+sattention.output.LayerNorm.weight', 'bert.encoder.layer.10.crossattention.output.dense.bias', 'bert.e
+ncoder.layer.8.crossattention.self.value.weight', 'bert.encoder.layer.4.crossattention.self.value.bias
+', 'bert.encoder.layer.2.crossattention.output.LayerNorm.weight', 'bert.encoder.layer.7.crossattention
+.self.key.weight', 'bert.encoder.layer.1.crossattention.output.dense.bias', 'bert.encoder.layer.6.cros
+sattention.self.query.weight', 'bert.encoder.layer.11.crossattention.output.LayerNorm.weight', 'bert.e
+ncoder.layer.0.crossattention.output.dense.bias', 'bert.encoder.layer.11.crossattention.self.value.wei
+ght', 'bert.encoder.layer.1.crossattention.output.dense.weight', 'bert.encoder.layer.0.crossattention.
+self.value.weight', 'bert.encoder.layer.8.crossattention.self.query.weight', 'bert.encoder.layer.3.cro
+ssattention.self.value.weight', 'bert.encoder.layer.6.crossattention.output.LayerNorm.bias', 'bert.enc
+oder.layer.1.crossattention.output.LayerNorm.bias', 'bert.encoder.layer.4.crossattention.self.key.bias
+', 'bert.encoder.layer.1.crossattention.self.value.bias', 'bert.encoder.layer.4.crossattention.self.ke
+y.weight', 'bert.encoder.layer.3.crossattention.output.dense.weight', 'bert.encoder.layer.10.crossatte
+ntion.self.value.bias', 'bert.encoder.layer.1.crossattention.self.value.weight', 'bert.encoder.layer.3
+.crossattention.self.value.bias', 'bert.encoder.layer.0.crossattention.output.dense.weight', 'bert.enc
+oder.layer.6.crossattention.output.dense.weight', 'bert.encoder.layer.5.crossattention.self.query.weig
+ht', 'bert.encoder.layer.7.crossattention.output.dense.weight', 'bert.encoder.layer.3.crossattention.s
+elf.key.bias', 'bert.encoder.layer.11.crossattention.output.dense.weight', 'bert.encoder.layer.7.cross
+attention.self.key.bias', 'bert.encoder.layer.11.crossattention.self.value.bias', 'bert.encoder.layer.
+4.crossattention.self.value.weight', 'bert.encoder.layer.11.crossattention.self.key.weight', 'bert.enc
+oder.layer.2.crossattention.output.dense.weight', 'bert.encoder.layer.3.crossattention.self.query.weig
+ht', 'bert.encoder.layer.4.crossattention.output.dense.bias', 'bert.encoder.layer.7.crossattention.sel
+f.value.bias', 'bert.encoder.layer.4.crossattention.output.dense.weight', 'bert.encoder.layer.2.crossa
+ttention.output.LayerNorm.bias', 'bert.encoder.layer.7.crossattention.output.dense.bias', 'bert.encode
+r.layer.2.crossattention.self.query.bias', 'bert.encoder.layer.5.crossattention.output.LayerNorm.bias'
+, 'bert.encoder.layer.8.crossattention.output.dense.weight', 'bert.encoder.layer.8.crossattention.outp
+ut.dense.bias', 'bert.encoder.layer.9.crossattention.self.key.weight', 'bert.encoder.layer.2.crossatte
+ntion.self.value.bias', 'bert.encoder.layer.5.crossattention.output.dense.bias', 'bert.encoder.layer.1
+0.crossattention.self.value.weight', 'bert.encoder.layer.6.crossattention.self.value.weight', 'bert.en
+coder.layer.6.crossattention.self.value.bias', 'bert.encoder.layer.4.crossattention.self.query.bias',
+'bert.encoder.layer.6.crossattention.self.query.bias', 'bert.encoder.layer.5.crossattention.output.Lay
+erNorm.weight', 'bert.encoder.layer.10.crossattention.self.query.bias', 'bert.encoder.layer.9.crossatt
+ention.output.dense.bias', 'bert.encoder.layer.10.crossattention.output.LayerNorm.bias', 'bert.encoder
+.layer.3.crossattention.self.query.bias', 'bert.encoder.layer.1.crossattention.self.key.bias', 'bert.e
+ncoder.layer.5.crossattention.self.key.bias', 'bert.encoder.layer.3.crossattention.output.LayerNorm.bi
+as', 'bert.encoder.layer.10.crossattention.self.key.weight', 'bert.encoder.layer.0.crossattention.self
+.key.weight', 'bert.encoder.layer.5.crossattention.self.value.bias', 'bert.encoder.layer.0.crossattent
+ion.self.query.bias', 'bert.encoder.layer.1.crossattention.self.query.bias', 'bert.encoder.layer.2.cro
+ssattention.self.query.weight', 'bert.encoder.layer.7.crossattention.self.value.weight', 'bert.encoder
+.layer.8.crossattention.output.LayerNorm.weight', 'bert.encoder.layer.9.crossattention.self.value.bias
+', 'bert.encoder.layer.6.crossattention.output.LayerNorm.weight', 'bert.encoder.layer.0.crossattention
+.output.LayerNorm.weight', 'bert.encoder.layer.7.crossattention.output.LayerNorm.bias', 'bert.encoder.
+layer.9.crossattention.output.LayerNorm.weight', 'bert.encoder.layer.11.crossattention.self.query.bias
+', 'bert.encoder.layer.4.crossattention.self.query.weight', 'bert.encoder.layer.9.crossattention.self.
+query.bias', 'bert.encoder.layer.11.crossattention.self.key.bias', 'bert.encoder.layer.8.crossattentio
+n.self.key.weight', 'bert.encoder.layer.7.crossattention.self.query.weight', 'bert.encoder.layer.7.cro
+ssattention.self.query.bias', 'bert.encoder.layer.5.crossattention.self.value.weight', 'bert.encoder.l
+ayer.10.crossattention.output.dense.weight', 'bert.encoder.layer.3.crossattention.output.dense.bias',
+'bert.encoder.layer.0.crossattention.self.key.bias', 'bert.encoder.layer.2.crossattention.self.value.w
+eight', 'bert.encoder.layer.4.crossattention.output.LayerNorm.weight', 'bert.encoder.layer.2.crossatte
+ntion.output.dense.bias', 'bert.encoder.layer.1.crossattention.output.LayerNorm.weight', 'bert.encoder
+.layer.9.crossattention.output.LayerNorm.bias', 'bert.encoder.layer.9.crossattention.self.query.weight
+', 'bert.encoder.layer.0.crossattention.self.value.bias', 'bert.encoder.layer.1.crossattention.self.ke
+y.weight', 'bert.encoder.layer.8.crossattention.output.LayerNorm.bias', 'bert.encoder.layer.6.crossatt
+ention.output.dense.bias', 'bert.encoder.layer.0.crossattention.self.query.weight', 'bert.encoder.laye
+r.10.crossattention.output.LayerNorm.weight', 'bert.encoder.layer.9.crossattention.output.dense.weight
+', 'bert.encoder.layer.6.crossattention.self.key.weight', 'bert.encoder.layer.3.crossattention.self.ke
+y.weight', 'bert.encoder.layer.8.crossattention.self.key.bias', 'bert.encoder.layer.10.crossattention.
+self.query.weight', 'bert.encoder.layer.5.crossattention.self.key.weight', 'bert.encoder.layer.11.cros
+sattention.output.LayerNorm.bias', 'bert.encoder.layer.6.crossattention.self.key.bias', 'bert.encoder.
+layer.11.crossattention.self.query.weight', 'bert.encoder.layer.5.crossattention.output.dense.weight',
+ 'bert.encoder.layer.8.crossattention.self.query.bias', 'bert.encoder.layer.0.crossattention.output.La
+yerNorm.bias', 'bert.encoder.layer.2.crossattention.self.key.weight']
+You should probably TRAIN this model on a down-stream task to be able to use it for predictions and in
+ference.
+You are resizing the embedding layer without providing a `pad_to_multiple_of` parameter. This means th
+at the new embedding dimension will be 30524. This might induce some performance reduction as *Tensor
+Cores* will not be available. For more details about this, or help on choosing the correct value for r
+esizing, refer to this guide: https://docs.nvidia.com/deeplearning/performance/dl-performance-matrix-m
+ultiplication/index.html#requirements-tc
+Some weights of the model checkpoint at bert-base-uncased were not used when initializing BertModel: [
+'bert.pooler.dense.bias', 'bert.pooler.dense.weight', 'cls.seq_relationship.weight', 'cls.seq_relation
+ship.bias', 'cls.predictions.transform.LayerNorm.bias', 'cls.predictions.bias', 'cls.predictions.trans
+form.dense.bias', 'cls.predictions.transform.dense.weight', 'bert.embeddings.token_type_embeddings.wei
+ght', 'cls.predictions.transform.LayerNorm.weight']
+- This IS expected if you are initializing BertModel from the checkpoint of a model trained on another
+ task or with another architecture (e.g. initializing a BertForSequenceClassification model from a Ber
+tForPreTraining model).
+- This IS NOT expected if you are initializing BertModel from the checkpoint of a model that you expec
+t to be exactly identical (initializing a BertForSequenceClassification model from a BertForSequenceCl
+assification model).
+Some weights of BertModel were not initialized from the model checkpoint at bert-base-uncased and are
+newly initialized: ['bert.encoder.layer.8.crossattention.self.key.bias', 'bert.encoder.layer.11.crossa
+ttention.output.LayerNorm.weight', 'bert.encoder.layer.8.crossattention.output.LayerNorm.weight', 'ber
+t.encoder.layer.9.crossattention.output.LayerNorm.weight', 'bert.encoder.layer.7.crossattention.self.q
+uery.weight', 'bert.encoder.layer.7.crossattention.self.value.bias', 'bert.encoder.layer.2.crossattent
+ion.self.key.weight', 'bert.encoder.layer.5.crossattention.self.value.weight', 'bert.encoder.layer.8.c
+rossattention.self.value.bias', 'bert.encoder.layer.10.crossattention.self.key.bias', 'bert.encoder.la
+yer.2.crossattention.self.query.weight', 'bert.encoder.layer.8.crossattention.output.dense.bias', 'ber
+t.encoder.layer.9.crossattention.self.query.bias', 'bert.encoder.layer.6.crossattention.output.LayerNo
+rm.weight', 'bert.encoder.layer.6.crossattention.output.LayerNorm.bias', 'bert.encoder.layer.3.crossat
+tention.output.LayerNorm.weight', 'bert.encoder.layer.1.crossattention.output.LayerNorm.bias', 'bert.e
+ncoder.layer.10.crossattention.output.dense.bias', 'bert.encoder.layer.11.crossattention.self.query.we
+ight', 'bert.encoder.layer.7.crossattention.self.key.weight', 'bert.encoder.layer.5.crossattention.sel
+f.query.weight', 'bert.encoder.layer.0.crossattention.output.LayerNorm.bias', 'bert.encoder.layer.2.cr
+ossattention.output.dense.bias', 'bert.encoder.layer.9.crossattention.output.dense.bias', 'bert.encode
+r.layer.10.crossattention.output.LayerNorm.bias', 'bert.encoder.layer.3.crossattention.self.key.weight
+', 'bert.encoder.layer.8.crossattention.self.query.bias', 'bert.encoder.layer.6.crossattention.self.ke
+y.bias', 'bert.encoder.layer.11.crossattention.output.LayerNorm.bias', 'bert.encoder.layer.4.crossatte
+ntion.self.key.bias', 'bert.encoder.layer.6.crossattention.self.query.weight', 'bert.encoder.layer.2.c
+rossattention.self.value.bias', 'bert.encoder.layer.9.crossattention.self.value.bias', 'bert.encoder.l
+ayer.1.crossattention.self.value.weight', 'bert.encoder.layer.2.crossattention.self.query.bias', 'bert
+.encoder.layer.4.crossattention.output.dense.bias', 'bert.encoder.layer.11.crossattention.self.value.w
+eight', 'bert.encoder.layer.10.crossattention.output.LayerNorm.weight', 'bert.encoder.layer.1.crossatt
+ention.self.query.bias', 'bert.encoder.layer.4.crossattention.output.LayerNorm.weight', 'bert.encoder.
+layer.4.crossattention.self.value.bias', 'bert.encoder.layer.11.crossattention.output.dense.bias', 'be
+rt.encoder.layer.3.crossattention.self.value.weight', 'bert.encoder.layer.9.crossattention.self.query.
+weight', 'bert.encoder.layer.7.crossattention.self.query.bias', 'bert.encoder.layer.10.crossattention.
+self.key.weight', 'bert.encoder.layer.0.crossattention.self.key.bias', 'bert.encoder.layer.5.crossatte
+ntion.output.LayerNorm.weight', 'bert.encoder.layer.3.crossattention.self.key.bias', 'bert.encoder.lay
+er.3.crossattention.output.dense.bias', 'bert.encoder.layer.2.crossattention.self.value.weight', 'bert
+.encoder.layer.11.crossattention.self.query.bias', 'bert.encoder.layer.2.crossattention.output.LayerNo
+rm.bias', 'bert.encoder.layer.2.crossattention.output.LayerNorm.weight', 'bert.encoder.layer.8.crossat
+tention.output.LayerNorm.bias', 'bert.encoder.layer.10.crossattention.self.query.bias', 'bert.encoder.
+layer.5.crossattention.output.LayerNorm.bias', 'bert.encoder.layer.11.crossattention.self.key.bias', '
+bert.encoder.layer.8.crossattention.output.dense.weight', 'bert.encoder.layer.1.crossattention.output.
+LayerNorm.weight', 'bert.encoder.layer.0.crossattention.self.value.weight', 'bert.encoder.layer.5.cros
+sattention.output.dense.bias', 'bert.encoder.layer.1.crossattention.self.key.bias', 'bert.encoder.laye
+r.8.crossattention.self.key.weight', 'bert.encoder.layer.9.crossattention.self.key.bias', 'bert.encode
+r.layer.5.crossattention.self.query.bias', 'bert.encoder.layer.11.crossattention.self.key.weight', 'be
+rt.encoder.layer.0.crossattention.output.dense.bias', 'bert.encoder.layer.3.crossattention.self.query.
+bias', 'bert.encoder.layer.9.crossattention.output.dense.weight', 'bert.encoder.layer.7.crossattention
+.output.dense.weight', 'bert.encoder.layer.1.crossattention.self.key.weight', 'bert.encoder.layer.8.cr
+ossattention.self.query.weight', 'bert.encoder.layer.1.crossattention.self.value.bias', 'bert.encoder.
+layer.1.crossattention.output.dense.weight', 'bert.encoder.layer.5.crossattention.self.value.bias', 'b
+ert.encoder.layer.2.crossattention.self.key.bias', 'bert.encoder.layer.4.crossattention.self.query.bia
+s', 'bert.encoder.layer.7.crossattention.output.LayerNorm.weight', 'bert.encoder.layer.0.crossattentio
+n.self.query.bias', 'bert.encoder.layer.10.crossattention.self.query.weight', 'bert.encoder.layer.9.cr
+ossattention.self.value.weight', 'bert.encoder.layer.3.crossattention.self.query.weight', 'bert.encode
+r.layer.0.crossattention.output.dense.weight', 'bert.encoder.layer.4.crossattention.output.LayerNorm.b
+ias', 'bert.encoder.layer.9.crossattention.output.LayerNorm.bias', 'bert.encoder.layer.3.crossattentio
+n.output.LayerNorm.bias', 'bert.encoder.layer.6.crossattention.self.key.weight', 'bert.encoder.layer.6
+.crossattention.output.dense.weight', 'bert.encoder.layer.6.crossattention.output.dense.bias', 'bert.e
+ncoder.layer.9.crossattention.self.key.weight', 'bert.encoder.layer.11.crossattention.self.value.bias'
+, 'bert.encoder.layer.7.crossattention.output.dense.bias', 'bert.encoder.layer.5.crossattention.self.k
+ey.bias', 'bert.encoder.layer.10.crossattention.self.value.bias', 'bert.encoder.layer.4.crossattention
+.output.dense.weight', 'bert.encoder.layer.6.crossattention.self.value.bias', 'bert.encoder.layer.3.cr
+ossattention.self.value.bias', 'bert.encoder.layer.4.crossattention.self.query.weight', 'bert.encoder.
+layer.1.crossattention.self.query.weight', 'bert.encoder.layer.4.crossattention.self.value.weight', 'b
+ert.encoder.layer.11.crossattention.output.dense.weight', 'bert.encoder.layer.8.crossattention.self.va
+lue.weight', 'bert.encoder.layer.0.crossattention.self.key.weight', 'bert.encoder.layer.3.crossattenti
+on.output.dense.weight', 'bert.encoder.layer.7.crossattention.output.LayerNorm.bias', 'bert.encoder.la
+yer.10.crossattention.self.value.weight', 'bert.encoder.layer.0.crossattention.output.LayerNorm.weight
+', 'bert.encoder.layer.0.crossattention.self.query.weight', 'bert.encoder.layer.2.crossattention.outpu
+t.dense.weight', 'bert.encoder.layer.5.crossattention.output.dense.weight', 'bert.encoder.layer.4.cros
+sattention.self.key.weight', 'bert.encoder.layer.6.crossattention.self.value.weight', 'bert.encoder.la
+yer.7.crossattention.self.value.weight', 'bert.encoder.layer.0.crossattention.self.value.bias', 'bert.
+encoder.layer.10.crossattention.output.dense.weight', 'bert.encoder.layer.6.crossattention.self.query.
+bias', 'bert.encoder.layer.1.crossattention.output.dense.bias', 'bert.encoder.layer.7.crossattention.s
+elf.key.bias', 'bert.encoder.layer.5.crossattention.self.key.weight']
+You should probably TRAIN this model on a down-stream task to be able to use it for predictions and in
+ference.
+You are resizing the embedding layer without providing a `pad_to_multiple_of` parameter. This means th
+at the new embedding dimension will be 30524. This might induce some performance reduction as *Tensor
+Cores* will not be available. For more details about this, or help on choosing the correct value for r
+esizing, refer to this guide: https://docs.nvidia.com/deeplearning/performance/dl-performance-matrix-m
+ultiplication/index.html#requirements-tc
+Some weights of the model checkpoint at bert-base-uncased were not used when initializing BertModel: [
+'bert.embeddings.token_type_embeddings.weight', 'cls.seq_relationship.bias', 'bert.pooler.dense.bias',
+ 'cls.seq_relationship.weight', 'cls.predictions.transform.dense.bias', 'cls.predictions.bias', 'cls.p
+redictions.transform.LayerNorm.bias', 'cls.predictions.transform.dense.weight', 'cls.predictions.trans
+form.LayerNorm.weight', 'bert.pooler.dense.weight']
+- This IS expected if you are initializing BertModel from the checkpoint of a model trained on another
+ task or with another architecture (e.g. initializing a BertForSequenceClassification model from a Ber
+tForPreTraining model).
+- This IS NOT expected if you are initializing BertModel from the checkpoint of a model that you expec
+t to be exactly identical (initializing a BertForSequenceClassification model from a BertForSequenceCl
+assification model).
+Some weights of BertModel were not initialized from the model checkpoint at bert-base-uncased and are
+newly initialized: ['bert.encoder.layer.4.crossattention.output.dense.bias', 'bert.encoder.layer.10.cr
+ossattention.self.key.weight', 'bert.encoder.layer.8.crossattention.output.LayerNorm.bias', 'bert.enco
+der.layer.7.crossattention.output.dense.bias', 'bert.encoder.layer.3.crossattention.output.dense.weigh
+t', 'bert.encoder.layer.9.crossattention.self.value.weight', 'bert.encoder.layer.3.crossattention.self
+.value.weight', 'bert.encoder.layer.11.crossattention.output.LayerNorm.bias', 'bert.encoder.layer.5.cr
+ossattention.output.dense.bias', 'bert.encoder.layer.7.crossattention.self.key.weight', 'bert.encoder.
+layer.8.crossattention.self.key.weight', 'bert.encoder.layer.10.crossattention.self.query.bias', 'bert
+.encoder.layer.3.crossattention.output.LayerNorm.weight', 'bert.encoder.layer.0.crossattention.output.
+dense.bias', 'bert.encoder.layer.4.crossattention.self.value.bias', 'bert.encoder.layer.10.crossattent
+ion.output.LayerNorm.weight', 'bert.encoder.layer.0.crossattention.self.key.bias', 'bert.encoder.layer
+.9.crossattention.self.value.bias', 'bert.encoder.layer.6.crossattention.output.LayerNorm.bias', 'bert
+.encoder.layer.5.crossattention.self.query.bias', 'bert.encoder.layer.7.crossattention.self.query.bias
+', 'bert.encoder.layer.7.crossattention.self.query.weight', 'bert.encoder.layer.9.crossattention.self.
+query.weight', 'bert.encoder.layer.5.crossattention.output.LayerNorm.weight', 'bert.encoder.layer.2.cr
+ossattention.output.dense.weight', 'bert.encoder.layer.3.crossattention.self.value.bias', 'bert.encode
+r.layer.4.crossattention.self.key.weight', 'bert.encoder.layer.0.crossattention.self.query.weight', 'b
+ert.encoder.layer.9.crossattention.output.dense.bias', 'bert.encoder.layer.2.crossattention.self.value
+.bias', 'bert.encoder.layer.10.crossattention.self.value.weight', 'bert.encoder.layer.6.crossattention
+.output.dense.bias', 'bert.encoder.layer.11.crossattention.output.LayerNorm.weight', 'bert.encoder.lay
+er.11.crossattention.output.dense.weight', 'bert.encoder.layer.1.crossattention.self.query.bias', 'ber
+t.encoder.layer.3.crossattention.output.dense.bias', 'bert.encoder.layer.7.crossattention.self.value.w
+eight', 'bert.encoder.layer.8.crossattention.output.dense.weight', 'bert.encoder.layer.4.crossattentio
+n.self.query.weight', 'bert.encoder.layer.7.crossattention.output.LayerNorm.bias', 'bert.encoder.layer
+.3.crossattention.self.query.weight', 'bert.encoder.layer.8.crossattention.self.value.weight', 'bert.e
+ncoder.layer.1.crossattention.output.LayerNorm.bias', 'bert.encoder.layer.6.crossattention.output.Laye
+rNorm.weight', 'bert.encoder.layer.11.crossattention.self.query.bias', 'bert.encoder.layer.9.crossatte
+ntion.self.query.bias', 'bert.encoder.layer.11.crossattention.self.key.weight', 'bert.encoder.layer.10
+.crossattention.output.dense.weight', 'bert.encoder.layer.10.crossattention.self.value.bias', 'bert.en
+coder.layer.5.crossattention.self.value.bias', 'bert.encoder.layer.11.crossattention.output.dense.bias
+', 'bert.encoder.layer.1.crossattention.output.dense.weight', 'bert.encoder.layer.5.crossattention.out
+put.dense.weight', 'bert.encoder.layer.2.crossattention.output.LayerNorm.bias', 'bert.encoder.layer.8.
+crossattention.self.value.bias', 'bert.encoder.layer.4.crossattention.self.key.bias', 'bert.encoder.la
+yer.6.crossattention.self.query.bias', 'bert.encoder.layer.6.crossattention.self.key.bias', 'bert.enco
+der.layer.8.crossattention.self.query.bias', 'bert.encoder.layer.8.crossattention.self.query.weight',
+'bert.encoder.layer.2.crossattention.self.value.weight', 'bert.encoder.layer.1.crossattention.output.L
+ayerNorm.weight', 'bert.encoder.layer.1.crossattention.self.value.bias', 'bert.encoder.layer.1.crossat
+tention.output.dense.bias', 'bert.encoder.layer.0.crossattention.self.query.bias', 'bert.encoder.layer
+.6.crossattention.self.value.bias', 'bert.encoder.layer.4.crossattention.self.query.bias', 'bert.encod
+er.layer.9.crossattention.output.dense.weight', 'bert.encoder.layer.9.crossattention.self.key.bias', '
+bert.encoder.layer.3.crossattention.self.key.weight', 'bert.encoder.layer.1.crossattention.self.key.we
+ight', 'bert.encoder.layer.4.crossattention.output.LayerNorm.bias', 'bert.encoder.layer.2.crossattenti
+on.self.key.bias', 'bert.encoder.layer.2.crossattention.output.LayerNorm.weight', 'bert.encoder.layer.
+10.crossattention.output.dense.bias', 'bert.encoder.layer.5.crossattention.self.key.bias', 'bert.encod
+er.layer.3.crossattention.output.LayerNorm.bias', 'bert.encoder.layer.5.crossattention.self.query.weig
+ht', 'bert.encoder.layer.6.crossattention.self.value.weight', 'bert.encoder.layer.4.crossattention.sel
+f.value.weight', 'bert.encoder.layer.11.crossattention.self.value.bias', 'bert.encoder.layer.0.crossat
+tention.output.dense.weight', 'bert.encoder.layer.0.crossattention.self.value.bias', 'bert.encoder.lay
+er.5.crossattention.self.key.weight', 'bert.encoder.layer.6.crossattention.self.query.weight', 'bert.e
+ncoder.layer.0.crossattention.output.LayerNorm.bias', 'bert.encoder.layer.9.crossattention.output.Laye
+rNorm.bias', 'bert.encoder.layer.7.crossattention.self.value.bias', 'bert.encoder.layer.1.crossattenti
+on.self.key.bias', 'bert.encoder.layer.0.crossattention.self.value.weight', 'bert.encoder.layer.10.cro
+ssattention.output.LayerNorm.bias', 'bert.encoder.layer.7.crossattention.output.LayerNorm.weight', 'be
+rt.encoder.layer.0.crossattention.output.LayerNorm.weight', 'bert.encoder.layer.0.crossattention.self.
+key.weight', 'bert.encoder.layer.2.crossattention.self.query.weight', 'bert.encoder.layer.1.crossatten
+tion.self.value.weight', 'bert.encoder.layer.4.crossattention.output.LayerNorm.weight', 'bert.encoder.
+layer.9.crossattention.output.LayerNorm.weight', 'bert.encoder.layer.2.crossattention.output.dense.bia
+s', 'bert.encoder.layer.11.crossattention.self.value.weight', 'bert.encoder.layer.8.crossattention.out
+put.LayerNorm.weight', 'bert.encoder.layer.4.crossattention.output.dense.weight', 'bert.encoder.layer.
+7.crossattention.self.key.bias', 'bert.encoder.layer.3.crossattention.self.key.bias', 'bert.encoder.la
+yer.2.crossattention.self.key.weight', 'bert.encoder.layer.10.crossattention.self.query.weight', 'bert
+.encoder.layer.11.crossattention.self.query.weight', 'bert.encoder.layer.8.crossattention.output.dense
+.bias', 'bert.encoder.layer.11.crossattention.self.key.bias', 'bert.encoder.layer.10.crossattention.se
+lf.key.bias', 'bert.encoder.layer.7.crossattention.output.dense.weight', 'bert.encoder.layer.5.crossat
+tention.output.LayerNorm.bias', 'bert.encoder.layer.9.crossattention.self.key.weight', 'bert.encoder.l
+ayer.2.crossattention.self.query.bias', 'bert.encoder.layer.6.crossattention.self.key.weight', 'bert.e
+ncoder.layer.1.crossattention.self.query.weight', 'bert.encoder.layer.3.crossattention.self.query.bias
+', 'bert.encoder.layer.6.crossattention.output.dense.weight', 'bert.encoder.layer.8.crossattention.sel
+f.key.bias', 'bert.encoder.layer.5.crossattention.self.value.weight']
+You should probably TRAIN this model on a down-stream task to be able to use it for predictions and in
+ference.
+You are resizing the embedding layer without providing a `pad_to_multiple_of` parameter. This means th
+at the new embedding dimension will be 30524. This might induce some performance reduction as *Tensor
+Cores* will not be available. For more details about this, or help on choosing the correct value for r
+esizing, refer to this guide: https://docs.nvidia.com/deeplearning/performance/dl-performance-matrix-m
+ultiplication/index.html#requirements-tc
+encoder loading step finish
+bert size: base
+Some weights of BertLMHeadModel were not initialized from the model checkpoint at bert-base-uncased an
+d are newly initialized: ['bert.encoder.layer.0.crossattention.output.dense.bias', 'bert.encoder.layer
+.0.crossattention.output.LayerNorm.weight', 'bert.encoder.layer.6.crossattention.self.key.weight', 'be
+rt.encoder.layer.6.crossattention.self.query.weight', 'bert.encoder.layer.3.crossattention.self.query.
+weight', 'bert.encoder.layer.8.crossattention.output.dense.bias', 'bert.encoder.layer.9.crossattention
+.output.dense.bias', 'bert.encoder.layer.10.crossattention.output.dense.bias', 'bert.encoder.layer.4.c
+rossattention.output.dense.bias', 'bert.encoder.layer.11.crossattention.self.key.weight', 'bert.encode
+r.layer.5.crossattention.self.query.bias', 'bert.encoder.layer.6.crossattention.self.key.bias', 'bert.
+encoder.layer.7.crossattention.self.query.bias', 'bert.encoder.layer.0.crossattention.self.query.bias'
+, 'bert.encoder.layer.0.crossattention.self.key.bias', 'bert.encoder.layer.8.crossattention.self.key.w
+eight', 'bert.encoder.layer.7.crossattention.self.key.bias', 'bert.encoder.layer.8.crossattention.outp
+ut.LayerNorm.weight', 'bert.encoder.layer.3.crossattention.output.dense.weight', 'bert.encoder.layer.1
+.crossattention.output.LayerNorm.bias', 'bert.encoder.layer.6.crossattention.output.LayerNorm.bias', '
+bert.encoder.layer.11.crossattention.output.LayerNorm.weight', 'bert.encoder.layer.0.crossattention.se
+lf.value.weight', 'bert.encoder.layer.5.crossattention.output.dense.weight', 'bert.encoder.layer.2.cro
+ssattention.self.value.weight', 'bert.encoder.layer.7.crossattention.self.value.bias', 'bert.encoder.l
+ayer.1.crossattention.self.query.bias', 'bert.encoder.layer.8.crossattention.self.key.bias', 'bert.enc
+oder.layer.5.crossattention.self.value.weight', 'bert.encoder.layer.10.crossattention.self.key.bias',
+'bert.encoder.layer.10.crossattention.self.query.weight', 'bert.encoder.layer.4.crossattention.output.
+dense.weight', 'bert.encoder.layer.0.crossattention.self.query.weight', 'bert.encoder.layer.5.crossatt
+ention.output.LayerNorm.weight', 'bert.encoder.layer.7.crossattention.output.dense.bias', 'bert.encode
+r.layer.11.crossattention.self.value.bias', 'bert.encoder.layer.2.crossattention.self.key.weight', 'be
+rt.encoder.layer.1.crossattention.output.LayerNorm.weight', 'bert.encoder.layer.3.crossattention.self.
+value.weight', 'bert.encoder.layer.6.crossattention.self.value.weight', 'bert.encoder.layer.1.crossatt
+ention.output.dense.bias', 'bert.encoder.layer.11.crossattention.output.dense.weight', 'bert.encoder.l
+ayer.7.crossattention.self.query.weight', 'bert.encoder.layer.8.crossattention.self.query.weight', 'be
+rt.encoder.layer.8.crossattention.output.LayerNorm.bias', 'bert.encoder.layer.3.crossattention.output.
+dense.bias', 'bert.encoder.layer.9.crossattention.output.dense.weight', 'bert.encoder.layer.2.crossatt
+ention.output.dense.weight', 'bert.encoder.layer.10.crossattention.self.key.weight', 'bert.encoder.lay
+er.9.crossattention.self.value.weight', 'bert.encoder.layer.5.crossattention.self.query.weight', 'bert
+.encoder.layer.4.crossattention.self.query.weight', 'bert.encoder.layer.10.crossattention.self.value.b
+ias', 'bert.encoder.layer.6.crossattention.output.dense.weight', 'bert.encoder.layer.9.crossattention.
+output.LayerNorm.weight', 'bert.encoder.layer.4.crossattention.self.query.bias', 'bert.encoder.layer.1
+0.crossattention.output.LayerNorm.weight', 'bert.encoder.layer.3.crossattention.output.LayerNorm.weigh
+t', 'bert.encoder.layer.2.crossattention.output.LayerNorm.bias', 'bert.encoder.layer.8.crossattention.
+self.value.weight', 'bert.encoder.layer.7.crossattention.output.LayerNorm.bias', 'bert.encoder.layer.5
+.crossattention.output.dense.bias', 'bert.encoder.layer.4.crossattention.output.LayerNorm.weight', 'be
+rt.encoder.layer.11.crossattention.output.LayerNorm.bias', 'bert.encoder.layer.3.crossattention.self.v
+alue.bias', 'bert.encoder.layer.1.crossattention.self.key.bias', 'bert.encoder.layer.4.crossattention.
+self.value.bias', 'bert.encoder.layer.11.crossattention.self.query.weight', 'bert.encoder.layer.7.cros
+sattention.self.value.weight', 'bert.encoder.layer.7.crossattention.self.key.weight', 'bert.encoder.la
+yer.2.crossattention.self.value.bias', 'bert.encoder.layer.10.crossattention.output.dense.weight', 'be
+rt.encoder.layer.2.crossattention.output.dense.bias', 'bert.encoder.layer.10.crossattention.self.value
+.weight', 'bert.encoder.layer.8.crossattention.self.query.bias', 'bert.encoder.layer.1.crossattention.
+self.value.weight', 'bert.encoder.layer.6.crossattention.self.query.bias', 'bert.encoder.layer.7.cross
+attention.output.LayerNorm.weight', 'bert.encoder.layer.11.crossattention.self.value.weight', 'bert.en
+coder.layer.0.crossattention.self.value.bias', 'bert.encoder.layer.8.crossattention.output.dense.weigh
+t', 'bert.encoder.layer.3.crossattention.self.key.bias', 'bert.encoder.layer.9.crossattention.self.que
+ry.weight', 'bert.encoder.layer.2.crossattention.output.LayerNorm.weight', 'bert.encoder.layer.1.cross
+attention.self.key.weight', 'bert.encoder.layer.3.crossattention.output.LayerNorm.bias', 'bert.encoder
+.layer.7.crossattention.output.dense.weight', 'bert.encoder.layer.9.crossattention.self.key.weight', '
+bert.encoder.layer.5.crossattention.output.LayerNorm.bias', 'bert.encoder.layer.9.crossattention.self.
+query.bias', 'bert.encoder.layer.9.crossattention.self.value.bias', 'bert.encoder.layer.0.crossattenti
+on.output.LayerNorm.bias', 'bert.encoder.layer.2.crossattention.self.key.bias', 'bert.encoder.layer.5.
+crossattention.self.key.bias', 'bert.encoder.layer.4.crossattention.self.key.bias', 'bert.encoder.laye
+r.0.crossattention.self.key.weight', 'bert.encoder.layer.3.crossattention.self.key.weight', 'bert.enco
+der.layer.5.crossattention.self.key.weight', 'bert.encoder.layer.6.crossattention.output.dense.bias',
+'bert.encoder.layer.4.crossattention.self.value.weight', 'bert.encoder.layer.3.crossattention.self.que
+ry.bias', 'bert.encoder.layer.2.crossattention.self.query.weight', 'bert.encoder.layer.6.crossattentio
+n.self.value.bias', 'bert.encoder.layer.10.crossattention.self.query.bias', 'bert.encoder.layer.11.cro
+ssattention.output.dense.bias', 'bert.encoder.layer.2.crossattention.self.query.bias', 'bert.encoder.l
+ayer.10.crossattention.output.LayerNorm.bias', 'bert.encoder.layer.11.crossattention.self.query.bias',
+ 'bert.encoder.layer.1.crossattention.self.value.bias', 'bert.encoder.layer.9.crossattention.output.La
+yerNorm.bias', 'bert.encoder.layer.0.crossattention.output.dense.weight', 'bert.encoder.layer.4.crossa
+ttention.self.key.weight', 'bert.encoder.layer.11.crossattention.self.key.bias', 'bert.encoder.layer.1
+.crossattention.self.query.weight', 'bert.encoder.layer.1.crossattention.output.dense.weight', 'bert.e
+ncoder.layer.6.crossattention.output.LayerNorm.weight', 'bert.encoder.layer.4.crossattention.output.La
+yerNorm.bias', 'bert.encoder.layer.8.crossattention.self.value.bias', 'bert.encoder.layer.9.crossatten
+tion.self.key.bias', 'bert.encoder.layer.5.crossattention.self.value.bias']
+You should probably TRAIN this model on a down-stream task to be able to use it for predictions and in
+ference.
+Some weights of BertLMHeadModel were not initialized from the model checkpoint at bert-base-uncased an
+d are newly initialized: ['bert.encoder.layer.10.crossattention.self.key.bias', 'bert.encoder.layer.5.
+crossattention.self.query.bias', 'bert.encoder.layer.3.crossattention.output.LayerNorm.weight', 'bert.
+encoder.layer.9.crossattention.self.key.bias', 'bert.encoder.layer.8.crossattention.self.value.bias',
+'bert.encoder.layer.11.crossattention.output.dense.bias', 'bert.encoder.layer.1.crossattention.self.qu
+ery.weight', 'bert.encoder.layer.9.crossattention.self.value.weight', 'bert.encoder.layer.2.crossatten
+tion.self.key.bias', 'bert.encoder.layer.4.crossattention.output.LayerNorm.bias', 'bert.encoder.layer.
+7.crossattention.output.LayerNorm.weight', 'bert.encoder.layer.10.crossattention.output.dense.bias', '
+bert.encoder.layer.8.crossattention.self.value.weight', 'bert.encoder.layer.4.crossattention.self.valu
+e.bias', 'bert.encoder.layer.2.crossattention.output.LayerNorm.weight', 'bert.encoder.layer.7.crossatt
+ention.self.key.weight', 'bert.encoder.layer.1.crossattention.output.dense.bias', 'bert.encoder.layer.
+6.crossattention.self.query.weight', 'bert.encoder.layer.11.crossattention.output.LayerNorm.weight', '
+bert.encoder.layer.0.crossattention.output.dense.bias', 'bert.encoder.layer.11.crossattention.self.val
+ue.weight', 'bert.encoder.layer.1.crossattention.output.dense.weight', 'bert.encoder.layer.0.crossatte
+ntion.self.value.weight', 'bert.encoder.layer.8.crossattention.self.query.weight', 'bert.encoder.layer
+.3.crossattention.self.value.weight', 'bert.encoder.layer.6.crossattention.output.LayerNorm.bias', 'be
+rt.encoder.layer.1.crossattention.output.LayerNorm.bias', 'bert.encoder.layer.4.crossattention.self.ke
+y.bias', 'bert.encoder.layer.1.crossattention.self.value.bias', 'bert.encoder.layer.4.crossattention.s
+elf.key.weight', 'bert.encoder.layer.3.crossattention.output.dense.weight', 'bert.encoder.layer.10.cro
+ssattention.self.value.bias', 'bert.encoder.layer.1.crossattention.self.value.weight', 'bert.encoder.l
+ayer.3.crossattention.self.value.bias', 'bert.encoder.layer.0.crossattention.output.dense.weight', 'be
+rt.encoder.layer.6.crossattention.output.dense.weight', 'bert.encoder.layer.5.crossattention.self.quer
+y.weight', 'bert.encoder.layer.7.crossattention.output.dense.weight', 'bert.encoder.layer.3.crossatten
+tion.self.key.bias', 'bert.encoder.layer.11.crossattention.output.dense.weight', 'bert.encoder.layer.7
+.crossattention.self.key.bias', 'bert.encoder.layer.11.crossattention.self.value.bias', 'bert.encoder.
+layer.4.crossattention.self.value.weight', 'bert.encoder.layer.11.crossattention.self.key.weight', 'be
+rt.encoder.layer.2.crossattention.output.dense.weight', 'bert.encoder.layer.3.crossattention.self.quer
+y.weight', 'bert.encoder.layer.4.crossattention.output.dense.bias', 'bert.encoder.layer.7.crossattenti
+on.self.value.bias', 'bert.encoder.layer.4.crossattention.output.dense.weight', 'bert.encoder.layer.2.
+crossattention.output.LayerNorm.bias', 'bert.encoder.layer.7.crossattention.output.dense.bias', 'bert.
+encoder.layer.2.crossattention.self.query.bias', 'bert.encoder.layer.5.crossattention.output.LayerNorm
+.bias', 'bert.encoder.layer.8.crossattention.output.dense.weight', 'bert.encoder.layer.8.crossattentio
+n.output.dense.bias', 'bert.encoder.layer.9.crossattention.self.key.weight', 'bert.encoder.layer.2.cro
+ssattention.self.value.bias', 'bert.encoder.layer.5.crossattention.output.dense.bias', 'bert.encoder.l
+ayer.10.crossattention.self.value.weight', 'bert.encoder.layer.6.crossattention.self.value.weight', 'b
+ert.encoder.layer.6.crossattention.self.value.bias', 'bert.encoder.layer.4.crossattention.self.query.b
+ias', 'bert.encoder.layer.6.crossattention.self.query.bias', 'bert.encoder.layer.5.crossattention.outp
+ut.LayerNorm.weight', 'bert.encoder.layer.10.crossattention.self.query.bias', 'bert.encoder.layer.9.cr
+ossattention.output.dense.bias', 'bert.encoder.layer.10.crossattention.output.LayerNorm.bias', 'bert.e
+ncoder.layer.3.crossattention.self.query.bias', 'bert.encoder.layer.1.crossattention.self.key.bias', '
+bert.encoder.layer.5.crossattention.self.key.bias', 'bert.encoder.layer.3.crossattention.output.LayerN
+orm.bias', 'bert.encoder.layer.10.crossattention.self.key.weight', 'bert.encoder.layer.0.crossattentio
+n.self.key.weight', 'bert.encoder.layer.5.crossattention.self.value.bias', 'bert.encoder.layer.0.cross
+attention.self.query.bias', 'bert.encoder.layer.1.crossattention.self.query.bias', 'bert.encoder.layer
+.2.crossattention.self.query.weight', 'bert.encoder.layer.7.crossattention.self.value.weight', 'bert.e
+ncoder.layer.8.crossattention.output.LayerNorm.weight', 'bert.encoder.layer.9.crossattention.self.valu
+e.bias', 'bert.encoder.layer.6.crossattention.output.LayerNorm.weight', 'bert.encoder.layer.0.crossatt
+ention.output.LayerNorm.weight', 'bert.encoder.layer.7.crossattention.output.LayerNorm.bias', 'bert.en
+coder.layer.9.crossattention.output.LayerNorm.weight', 'bert.encoder.layer.11.crossattention.self.quer
+y.bias', 'bert.encoder.layer.4.crossattention.self.query.weight', 'bert.encoder.layer.9.crossattention
+.self.query.bias', 'bert.encoder.layer.11.crossattention.self.key.bias', 'bert.encoder.layer.8.crossat
+tention.self.key.weight', 'bert.encoder.layer.7.crossattention.self.query.weight', 'bert.encoder.layer
+.7.crossattention.self.query.bias', 'bert.encoder.layer.5.crossattention.self.value.weight', 'bert.enc
+oder.layer.10.crossattention.output.dense.weight', 'bert.encoder.layer.3.crossattention.output.dense.b
+ias', 'bert.encoder.layer.0.crossattention.self.key.bias', 'bert.encoder.layer.2.crossattention.self.v
+alue.weight', 'bert.encoder.layer.4.crossattention.output.LayerNorm.weight', 'bert.encoder.layer.2.cro
+ssattention.output.dense.bias', 'bert.encoder.layer.1.crossattention.output.LayerNorm.weight', 'bert.e
+ncoder.layer.9.crossattention.output.LayerNorm.bias', 'bert.encoder.layer.9.crossattention.self.query.
+weight', 'bert.encoder.layer.0.crossattention.self.value.bias', 'bert.encoder.layer.1.crossattention.s
+elf.key.weight', 'bert.encoder.layer.8.crossattention.output.LayerNorm.bias', 'bert.encoder.layer.6.cr
+ossattention.output.dense.bias', 'bert.encoder.layer.0.crossattention.self.query.weight', 'bert.encode
+r.layer.10.crossattention.output.LayerNorm.weight', 'bert.encoder.layer.9.crossattention.output.dense.
+weight', 'bert.encoder.layer.6.crossattention.self.key.weight', 'bert.encoder.layer.3.crossattention.s
+elf.key.weight', 'bert.encoder.layer.8.crossattention.self.key.bias', 'bert.encoder.layer.10.crossatte
+ntion.self.query.weight', 'bert.encoder.layer.5.crossattention.self.key.weight', 'bert.encoder.layer.1
+1.crossattention.output.LayerNorm.bias', 'bert.encoder.layer.6.crossattention.self.key.bias', 'bert.en
+coder.layer.11.crossattention.self.query.weight', 'bert.encoder.layer.5.crossattention.output.dense.we
+ight', 'bert.encoder.layer.8.crossattention.self.query.bias', 'bert.encoder.layer.0.crossattention.out
+put.LayerNorm.bias', 'bert.encoder.layer.2.crossattention.self.key.weight']
+You should probably TRAIN this model on a down-stream task to be able to use it for predictions and in
+ference.
+Some weights of BertLMHeadModel were not initialized from the model checkpoint at bert-base-uncased an
+d are newly initialized: ['bert.encoder.layer.8.crossattention.self.key.bias', 'bert.encoder.layer.11.
+crossattention.output.LayerNorm.weight', 'bert.encoder.layer.8.crossattention.output.LayerNorm.weight'
+, 'bert.encoder.layer.9.crossattention.output.LayerNorm.weight', 'bert.encoder.layer.7.crossattention.
+self.query.weight', 'bert.encoder.layer.7.crossattention.self.value.bias', 'bert.encoder.layer.2.cross
+attention.self.key.weight', 'bert.encoder.layer.5.crossattention.self.value.weight', 'bert.encoder.lay
+er.8.crossattention.self.value.bias', 'bert.encoder.layer.10.crossattention.self.key.bias', 'bert.enco
+der.layer.2.crossattention.self.query.weight', 'bert.encoder.layer.8.crossattention.output.dense.bias'
+, 'bert.encoder.layer.9.crossattention.self.query.bias', 'bert.encoder.layer.6.crossattention.output.L
+ayerNorm.weight', 'bert.encoder.layer.6.crossattention.output.LayerNorm.bias', 'bert.encoder.layer.3.c
+rossattention.output.LayerNorm.weight', 'bert.encoder.layer.1.crossattention.output.LayerNorm.bias', '
+bert.encoder.layer.10.crossattention.output.dense.bias', 'bert.encoder.layer.11.crossattention.self.qu
+ery.weight', 'bert.encoder.layer.7.crossattention.self.key.weight', 'bert.encoder.layer.5.crossattenti
+on.self.query.weight', 'bert.encoder.layer.0.crossattention.output.LayerNorm.bias', 'bert.encoder.laye
+r.2.crossattention.output.dense.bias', 'bert.encoder.layer.9.crossattention.output.dense.bias', 'bert.
+encoder.layer.10.crossattention.output.LayerNorm.bias', 'bert.encoder.layer.3.crossattention.self.key.
+weight', 'bert.encoder.layer.8.crossattention.self.query.bias', 'bert.encoder.layer.6.crossattention.s
+elf.key.bias', 'bert.encoder.layer.11.crossattention.output.LayerNorm.bias', 'bert.encoder.layer.4.cro
+ssattention.self.key.bias', 'bert.encoder.layer.6.crossattention.self.query.weight', 'bert.encoder.lay
+er.2.crossattention.self.value.bias', 'bert.encoder.layer.9.crossattention.self.value.bias', 'bert.enc
+oder.layer.1.crossattention.self.value.weight', 'bert.encoder.layer.2.crossattention.self.query.bias',
+ 'bert.encoder.layer.4.crossattention.output.dense.bias', 'bert.encoder.layer.11.crossattention.self.v
+alue.weight', 'bert.encoder.layer.10.crossattention.output.LayerNorm.weight', 'bert.encoder.layer.1.cr
+ossattention.self.query.bias', 'bert.encoder.layer.4.crossattention.output.LayerNorm.weight', 'bert.en
+coder.layer.4.crossattention.self.value.bias', 'bert.encoder.layer.11.crossattention.output.dense.bias
+', 'bert.encoder.layer.3.crossattention.self.value.weight', 'bert.encoder.layer.9.crossattention.self.
+query.weight', 'bert.encoder.layer.7.crossattention.self.query.bias', 'bert.encoder.layer.10.crossatte
+ntion.self.key.weight', 'bert.encoder.layer.0.crossattention.self.key.bias', 'bert.encoder.layer.5.cro
+ssattention.output.LayerNorm.weight', 'bert.encoder.layer.3.crossattention.self.key.bias', 'bert.encod
+er.layer.3.crossattention.output.dense.bias', 'bert.encoder.layer.2.crossattention.self.value.weight',
+ 'bert.encoder.layer.11.crossattention.self.query.bias', 'bert.encoder.layer.2.crossattention.output.L
+ayerNorm.bias', 'bert.encoder.layer.2.crossattention.output.LayerNorm.weight', 'bert.encoder.layer.8.c
+rossattention.output.LayerNorm.bias', 'bert.encoder.layer.10.crossattention.self.query.bias', 'bert.en
+coder.layer.5.crossattention.output.LayerNorm.bias', 'bert.encoder.layer.11.crossattention.self.key.bi
+as', 'bert.encoder.layer.8.crossattention.output.dense.weight', 'bert.encoder.layer.1.crossattention.o
+utput.LayerNorm.weight', 'bert.encoder.layer.0.crossattention.self.value.weight', 'bert.encoder.layer.
+5.crossattention.output.dense.bias', 'bert.encoder.layer.1.crossattention.self.key.bias', 'bert.encode
+r.layer.8.crossattention.self.key.weight', 'bert.encoder.layer.9.crossattention.self.key.bias', 'bert.
+encoder.layer.5.crossattention.self.query.bias', 'bert.encoder.layer.11.crossattention.self.key.weight
+', 'bert.encoder.layer.0.crossattention.output.dense.bias', 'bert.encoder.layer.3.crossattention.self.
+query.bias', 'bert.encoder.layer.9.crossattention.output.dense.weight', 'bert.encoder.layer.7.crossatt
+ention.output.dense.weight', 'bert.encoder.layer.1.crossattention.self.key.weight', 'bert.encoder.laye
+r.8.crossattention.self.query.weight', 'bert.encoder.layer.1.crossattention.self.value.bias', 'bert.en
+coder.layer.1.crossattention.output.dense.weight', 'bert.encoder.layer.5.crossattention.self.value.bia
+s', 'bert.encoder.layer.2.crossattention.self.key.bias', 'bert.encoder.layer.4.crossattention.self.que
+ry.bias', 'bert.encoder.layer.7.crossattention.output.LayerNorm.weight', 'bert.encoder.layer.0.crossat
+tention.self.query.bias', 'bert.encoder.layer.10.crossattention.self.query.weight', 'bert.encoder.laye
+r.9.crossattention.self.value.weight', 'bert.encoder.layer.3.crossattention.self.query.weight', 'bert.
+encoder.layer.0.crossattention.output.dense.weight', 'bert.encoder.layer.4.crossattention.output.Layer
+Norm.bias', 'bert.encoder.layer.9.crossattention.output.LayerNorm.bias', 'bert.encoder.layer.3.crossat
+tention.output.LayerNorm.bias', 'bert.encoder.layer.6.crossattention.self.key.weight', 'bert.encoder.l
+ayer.6.crossattention.output.dense.weight', 'bert.encoder.layer.6.crossattention.output.dense.bias', '
+bert.encoder.layer.9.crossattention.self.key.weight', 'bert.encoder.layer.11.crossattention.self.value
+.bias', 'bert.encoder.layer.7.crossattention.output.dense.bias', 'bert.encoder.layer.5.crossattention.
+self.key.bias', 'bert.encoder.layer.10.crossattention.self.value.bias', 'bert.encoder.layer.4.crossatt
+ention.output.dense.weight', 'bert.encoder.layer.6.crossattention.self.value.bias', 'bert.encoder.laye
+r.3.crossattention.self.value.bias', 'bert.encoder.layer.4.crossattention.self.query.weight', 'bert.en
+coder.layer.1.crossattention.self.query.weight', 'bert.encoder.layer.4.crossattention.self.value.weigh
+t', 'bert.encoder.layer.11.crossattention.output.dense.weight', 'bert.encoder.layer.8.crossattention.s
+elf.value.weight', 'bert.encoder.layer.0.crossattention.self.key.weight', 'bert.encoder.layer.3.crossa
+ttention.output.dense.weight', 'bert.encoder.layer.7.crossattention.output.LayerNorm.bias', 'bert.enco
+der.layer.10.crossattention.self.value.weight', 'bert.encoder.layer.0.crossattention.output.LayerNorm.
+weight', 'bert.encoder.layer.0.crossattention.self.query.weight', 'bert.encoder.layer.2.crossattention
+.output.dense.weight', 'bert.encoder.layer.5.crossattention.output.dense.weight', 'bert.encoder.layer.
+4.crossattention.self.key.weight', 'bert.encoder.layer.6.crossattention.self.value.weight', 'bert.enco
+der.layer.7.crossattention.self.value.weight', 'bert.encoder.layer.0.crossattention.self.value.bias',
+'bert.encoder.layer.10.crossattention.output.dense.weight', 'bert.encoder.layer.6.crossattention.self.
+query.bias', 'bert.encoder.layer.1.crossattention.output.dense.bias', 'bert.encoder.layer.7.crossatten
+tion.self.key.bias', 'bert.encoder.layer.5.crossattention.self.key.weight']
+You should probably TRAIN this model on a down-stream task to be able to use it for predictions and in
+ference.
+You are resizing the embedding layer without providing a `pad_to_multiple_of` parameter. This means th
+at the new embedding dimension will be 30524. This might induce some performance reduction as *Tensor
+Cores* will not be available. For more details about this, or help on choosing the correct value for r
+esizing, refer to this guide: https://docs.nvidia.com/deeplearning/performance/dl-performance-matrix-m
+ultiplication/index.html#requirements-tc
+You are resizing the embedding layer without providing a `pad_to_multiple_of` parameter. This means th
+at the new embedding dimension will be 30524. This might induce some performance reduction as *Tensor
+Cores* will not be available. For more details about this, or help on choosing the correct value for r
+esizing, refer to this guide: https://docs.nvidia.com/deeplearning/performance/dl-performance-matrix-m
+ultiplication/index.html#requirements-tc
+You are resizing the embedding layer without providing a `pad_to_multiple_of` parameter. This means th
+at the new embedding dimension will be 30524. This might induce some performance reduction as *Tensor
+Cores* will not be available. For more details about this, or help on choosing the correct value for r
+esizing, refer to this guide: https://docs.nvidia.com/deeplearning/performance/dl-performance-matrix-m
+ultiplication/index.html#requirements-tc
+Some weights of BertLMHeadModel were not initialized from the model checkpoint at bert-base-uncased an
+d are newly initialized: ['bert.encoder.layer.4.crossattention.output.dense.bias', 'bert.encoder.layer
+.10.crossattention.self.key.weight', 'bert.encoder.layer.8.crossattention.output.LayerNorm.bias', 'ber
+t.encoder.layer.7.crossattention.output.dense.bias', 'bert.encoder.layer.3.crossattention.output.dense
+.weight', 'bert.encoder.layer.9.crossattention.self.value.weight', 'bert.encoder.layer.3.crossattentio
+n.self.value.weight', 'bert.encoder.layer.11.crossattention.output.LayerNorm.bias', 'bert.encoder.laye
+r.5.crossattention.output.dense.bias', 'bert.encoder.layer.7.crossattention.self.key.weight', 'bert.en
+coder.layer.8.crossattention.self.key.weight', 'bert.encoder.layer.10.crossattention.self.query.bias',
+ 'bert.encoder.layer.3.crossattention.output.LayerNorm.weight', 'bert.encoder.layer.0.crossattention.o
+utput.dense.bias', 'bert.encoder.layer.4.crossattention.self.value.bias', 'bert.encoder.layer.10.cross
+attention.output.LayerNorm.weight', 'bert.encoder.layer.0.crossattention.self.key.bias', 'bert.encoder
+.layer.9.crossattention.self.value.bias', 'bert.encoder.layer.6.crossattention.output.LayerNorm.bias',
+ 'bert.encoder.layer.5.crossattention.self.query.bias', 'bert.encoder.layer.7.crossattention.self.quer
+y.bias', 'bert.encoder.layer.7.crossattention.self.query.weight', 'bert.encoder.layer.9.crossattention
+.self.query.weight', 'bert.encoder.layer.5.crossattention.output.LayerNorm.weight', 'bert.encoder.laye
+r.2.crossattention.output.dense.weight', 'bert.encoder.layer.3.crossattention.self.value.bias', 'bert.
+encoder.layer.4.crossattention.self.key.weight', 'bert.encoder.layer.0.crossattention.self.query.weigh
+t', 'bert.encoder.layer.9.crossattention.output.dense.bias', 'bert.encoder.layer.2.crossattention.self
+.value.bias', 'bert.encoder.layer.10.crossattention.self.value.weight', 'bert.encoder.layer.6.crossatt
+ention.output.dense.bias', 'bert.encoder.layer.11.crossattention.output.LayerNorm.weight', 'bert.encod
+er.layer.11.crossattention.output.dense.weight', 'bert.encoder.layer.1.crossattention.self.query.bias'
+, 'bert.encoder.layer.3.crossattention.output.dense.bias', 'bert.encoder.layer.7.crossattention.self.v
+alue.weight', 'bert.encoder.layer.8.crossattention.output.dense.weight', 'bert.encoder.layer.4.crossat
+tention.self.query.weight', 'bert.encoder.layer.7.crossattention.output.LayerNorm.bias', 'bert.encoder
+.layer.3.crossattention.self.query.weight', 'bert.encoder.layer.8.crossattention.self.value.weight', '
+bert.encoder.layer.1.crossattention.output.LayerNorm.bias', 'bert.encoder.layer.6.crossattention.outpu
+t.LayerNorm.weight', 'bert.encoder.layer.11.crossattention.self.query.bias', 'bert.encoder.layer.9.cro
+ssattention.self.query.bias', 'bert.encoder.layer.11.crossattention.self.key.weight', 'bert.encoder.la
+yer.10.crossattention.output.dense.weight', 'bert.encoder.layer.10.crossattention.self.value.bias', 'b
+ert.encoder.layer.5.crossattention.self.value.bias', 'bert.encoder.layer.11.crossattention.output.dens
+e.bias', 'bert.encoder.layer.1.crossattention.output.dense.weight', 'bert.encoder.layer.5.crossattenti
+on.output.dense.weight', 'bert.encoder.layer.2.crossattention.output.LayerNorm.bias', 'bert.encoder.la
+yer.8.crossattention.self.value.bias', 'bert.encoder.layer.4.crossattention.self.key.bias', 'bert.enco
+der.layer.6.crossattention.self.query.bias', 'bert.encoder.layer.6.crossattention.self.key.bias', 'ber
+t.encoder.layer.8.crossattention.self.query.bias', 'bert.encoder.layer.8.crossattention.self.query.wei
+ght', 'bert.encoder.layer.2.crossattention.self.value.weight', 'bert.encoder.layer.1.crossattention.ou
+tput.LayerNorm.weight', 'bert.encoder.layer.1.crossattention.self.value.bias', 'bert.encoder.layer.1.c
+rossattention.output.dense.bias', 'bert.encoder.layer.0.crossattention.self.query.bias', 'bert.encoder
+.layer.6.crossattention.self.value.bias', 'bert.encoder.layer.4.crossattention.self.query.bias', 'bert
+.encoder.layer.9.crossattention.output.dense.weight', 'bert.encoder.layer.9.crossattention.self.key.bi
+as', 'bert.encoder.layer.3.crossattention.self.key.weight', 'bert.encoder.layer.1.crossattention.self.
+key.weight', 'bert.encoder.layer.4.crossattention.output.LayerNorm.bias', 'bert.encoder.layer.2.crossa
+ttention.self.key.bias', 'bert.encoder.layer.2.crossattention.output.LayerNorm.weight', 'bert.encoder.
+layer.10.crossattention.output.dense.bias', 'bert.encoder.layer.5.crossattention.self.key.bias', 'bert
+.encoder.layer.3.crossattention.output.LayerNorm.bias', 'bert.encoder.layer.5.crossattention.self.quer
+y.weight', 'bert.encoder.layer.6.crossattention.self.value.weight', 'bert.encoder.layer.4.crossattenti
+on.self.value.weight', 'bert.encoder.layer.11.crossattention.self.value.bias', 'bert.encoder.layer.0.c
+rossattention.output.dense.weight', 'bert.encoder.layer.0.crossattention.self.value.bias', 'bert.encod
+er.layer.5.crossattention.self.key.weight', 'bert.encoder.layer.6.crossattention.self.query.weight', '
+bert.encoder.layer.0.crossattention.output.LayerNorm.bias', 'bert.encoder.layer.9.crossattention.outpu
+t.LayerNorm.bias', 'bert.encoder.layer.7.crossattention.self.value.bias', 'bert.encoder.layer.1.crossa
+ttention.self.key.bias', 'bert.encoder.layer.0.crossattention.self.value.weight', 'bert.encoder.layer.
+10.crossattention.output.LayerNorm.bias', 'bert.encoder.layer.7.crossattention.output.LayerNorm.weight
+', 'bert.encoder.layer.0.crossattention.output.LayerNorm.weight', 'bert.encoder.layer.0.crossattention
+.self.key.weight', 'bert.encoder.layer.2.crossattention.self.query.weight', 'bert.encoder.layer.1.cros
+sattention.self.value.weight', 'bert.encoder.layer.4.crossattention.output.LayerNorm.weight', 'bert.en
+coder.layer.9.crossattention.output.LayerNorm.weight', 'bert.encoder.layer.2.crossattention.output.den
+se.bias', 'bert.encoder.layer.11.crossattention.self.value.weight', 'bert.encoder.layer.8.crossattenti
+on.output.LayerNorm.weight', 'bert.encoder.layer.4.crossattention.output.dense.weight', 'bert.encoder.
+layer.7.crossattention.self.key.bias', 'bert.encoder.layer.3.crossattention.self.key.bias', 'bert.enco
+der.layer.2.crossattention.self.key.weight', 'bert.encoder.layer.10.crossattention.self.query.weight',
+ 'bert.encoder.layer.8.crossattention.output.dense.bias', 'bert.encoder.layer.11.crossattention.self.k
+ey.bias', 'bert.encoder.layer.11.crossattention.self.query.weight', 'bert.encoder.layer.10.crossattent
+ion.self.key.bias', 'bert.encoder.layer.7.crossattention.output.dense.weight', 'bert.encoder.layer.5.c
+rossattention.output.LayerNorm.bias', 'bert.encoder.layer.9.crossattention.self.key.weight', 'bert.enc
+oder.layer.2.crossattention.self.query.bias', 'bert.encoder.layer.6.crossattention.self.key.weight', '
+bert.encoder.layer.1.crossattention.self.query.weight', 'bert.encoder.layer.3.crossattention.self.quer
+y.bias', 'bert.encoder.layer.6.crossattention.output.dense.weight', 'bert.encoder.layer.8.crossattenti
+on.self.key.bias', 'bert.encoder.layer.5.crossattention.self.value.weight']
+You should probably TRAIN this model on a down-stream task to be able to use it for predictions and in
+ference.
+/embeddings/word_embeddings is tied
+/embeddings/position_embeddings is tied
+/embeddings/LayerNorm is tied
+/encoder/layer/0/crossattention/self/query is tied
+/encoder/layer/0/crossattention/self/key is tied
+/encoder/layer/0/crossattention/self/value is tied
+/encoder/layer/0/crossattention/output/dense is tied
+/encoder/layer/0/crossattention/output/LayerNorm is tied
+/encoder/layer/0/intermediate/dense is tied
+/encoder/layer/0/output/dense is tied
+/encoder/layer/0/output/LayerNorm is tied
+/encoder/layer/1/crossattention/self/query is tied
+/encoder/layer/1/crossattention/self/key is tied
+/encoder/layer/1/crossattention/self/value is tied
+/encoder/layer/1/crossattention/output/dense is tied
+/encoder/layer/1/crossattention/output/LayerNorm is tied
+/encoder/layer/1/intermediate/dense is tied
+/encoder/layer/1/output/dense is tied
+/encoder/layer/1/output/LayerNorm is tied
+/encoder/layer/2/crossattention/self/query is tied
+/encoder/layer/2/crossattention/self/key is tied
+/encoder/layer/2/crossattention/self/value is tied
+/encoder/layer/2/crossattention/output/dense is tied
+/encoder/layer/2/crossattention/output/LayerNorm is tied
+/encoder/layer/2/intermediate/dense is tied
+/encoder/layer/2/output/dense is tied
+/encoder/layer/2/output/LayerNorm is tied
+/encoder/layer/3/crossattention/self/query is tied
+/encoder/layer/3/crossattention/self/key is tied
+/encoder/layer/3/crossattention/self/value is tied
+/encoder/layer/3/crossattention/output/dense is tied
+/encoder/layer/3/crossattention/output/LayerNorm is tied
+/encoder/layer/3/intermediate/dense is tied
+/encoder/layer/3/output/dense is tied
+/encoder/layer/3/output/LayerNorm is tied
+/encoder/layer/4/crossattention/self/query is tied
+/encoder/layer/4/crossattention/self/key is tied
+/encoder/layer/4/crossattention/self/value is tied
+/encoder/layer/4/crossattention/output/dense is tied
+/encoder/layer/4/crossattention/output/LayerNorm is tied
+/encoder/layer/4/intermediate/dense is tied
+/encoder/layer/4/output/dense is tied
+/encoder/layer/4/output/LayerNorm is tied
+/encoder/layer/5/crossattention/self/query is tied
+/encoder/layer/5/crossattention/self/key is tied
+/encoder/layer/5/crossattention/self/value is tied
+/encoder/layer/5/crossattention/output/dense is tied
+/encoder/layer/5/crossattention/output/LayerNorm is tied
+/encoder/layer/5/intermediate/dense is tied
+/encoder/layer/5/output/dense is tied
+/encoder/layer/5/output/LayerNorm is tied
+/encoder/layer/6/crossattention/self/query is tied
+/encoder/layer/6/crossattention/self/key is tied
+/encoder/layer/6/crossattention/self/value is tied
+/encoder/layer/6/crossattention/output/dense is tied
+/encoder/layer/6/crossattention/output/LayerNorm is tied
+/encoder/layer/6/intermediate/dense is tied
+/encoder/layer/6/output/dense is tied
+/encoder/layer/6/output/LayerNorm is tied
+/encoder/layer/7/crossattention/self/query is tied
+/encoder/layer/7/crossattention/self/key is tied
+/encoder/layer/7/crossattention/self/value is tied
+/encoder/layer/7/crossattention/output/dense is tied
+/encoder/layer/7/crossattention/output/LayerNorm is tied
+/encoder/layer/7/intermediate/dense is tied
+/encoder/layer/7/output/dense is tied
+/encoder/layer/7/output/LayerNorm is tied
+/encoder/layer/8/crossattention/self/query is tied
+/encoder/layer/8/crossattention/self/key is tied
+/encoder/layer/8/crossattention/self/value is tied
+/encoder/layer/8/crossattention/output/dense is tied
+/encoder/layer/8/crossattention/output/LayerNorm is tied
+/encoder/layer/8/intermediate/dense is tied
+/encoder/layer/8/output/dense is tied
+/encoder/layer/8/output/LayerNorm is tied
+/encoder/layer/9/crossattention/self/query is tied
+/encoder/layer/9/crossattention/self/key is tied
+/encoder/layer/9/crossattention/self/value is tied
+/encoder/layer/9/crossattention/output/dense is tied
+/encoder/layer/9/crossattention/output/LayerNorm is tied
+/encoder/layer/9/intermediate/dense is tied
+/encoder/layer/9/output/dense is tied
+/encoder/layer/9/output/LayerNorm is tied
+/encoder/layer/10/crossattention/self/query is tied
+/encoder/layer/10/crossattention/self/key is tied
+/encoder/layer/10/crossattention/self/value is tied
+/encoder/layer/10/crossattention/output/dense is tied
+/encoder/layer/10/crossattention/output/LayerNorm is tied
+/encoder/layer/10/intermediate/dense is tied
+/encoder/layer/10/output/dense is tied
+/encoder/layer/10/output/LayerNorm is tied
+/encoder/layer/11/crossattention/self/query is tied
+/encoder/layer/11/crossattention/self/key is tied
+/encoder/layer/11/crossattention/self/value is tied
+/encoder/layer/11/crossattention/output/dense is tied
+/encoder/layer/11/crossattention/output/LayerNorm is tied
+/encoder/layer/11/intermediate/dense is tied
+/encoder/layer/11/output/dense is tied
+/encoder/layer/11/output/LayerNorm is tied
+You are resizing the embedding layer without providing a `pad_to_multiple_of` parameter. This means th
+at the new embedding dimension will be 30524. This might induce some performance reduction as *Tensor
+Cores* will not be available. For more details about this, or help on choosing the correct value for r
+esizing, refer to this guide: https://docs.nvidia.com/deeplearning/performance/dl-performance-matrix-m
+ultiplication/index.html#requirements-tc
+Start training
+Train Epoch: [0]  [    0/31122]  eta: 1 day, 7:51:28  lr: 0.000001  loss_ita: 11.323992  loss_itm: 0.8
+04539  loss_lm: 10.941692  time: 3.6851  data: 1.1276  max mem: 19716
+Train Epoch: [0]  [   50/31122]  eta: 10:49:48  lr: 0.000003  loss_ita: 10.527137  loss_itm: 0.637661
+ loss_lm: 8.474438  time: 1.2297  data: 0.0001  max mem: 21690
+Train Epoch: [0]  [  100/31122]  eta: 10:50:06  lr: 0.000005  loss_ita: 10.026396  loss_itm: 0.636426
+ loss_lm: 7.092238  time: 1.2644  data: 0.0001  max mem: 21693
+Train Epoch: [0]  [  150/31122]  eta: 10:50:01  lr: 0.000007  loss_ita: 9.768819  loss_itm: 0.642405
+loss_lm: 6.854101  time: 1.2629  data: 0.0001  max mem: 21698
+Train Epoch: [0]  [  200/31122]  eta: 10:49:05  lr: 0.000009  loss_ita: 9.297971  loss_itm: 0.637113
+loss_lm: 6.410203  time: 1.2602  data: 0.0002  max mem: 21698
+Train Epoch: [0]  [  250/31122]  eta: 10:48:12  lr: 0.000011  loss_ita: 8.831186  loss_itm: 0.634800
+loss_lm: 5.800472  time: 1.2631  data: 0.0001  max mem: 21698
+Train Epoch: [0]  [  300/31122]  eta: 10:47:29  lr: 0.000013  loss_ita: 8.666911  loss_itm: 0.638644
+loss_lm: 5.511819  time: 1.2659  data: 0.0001  max mem: 21698
+Train Epoch: [0]  [  350/31122]  eta: 10:46:29  lr: 0.000015  loss_ita: 8.284611  loss_itm: 0.625346
+loss_lm: 4.946810  time: 1.2592  data: 0.0001  max mem: 21698
+Train Epoch: [0]  [  400/31122]  eta: 10:45:36  lr: 0.000017  loss_ita: 7.676654  loss_itm: 0.644945
+loss_lm: 5.037717  time: 1.2636  data: 0.0002  max mem: 21698
+Train Epoch: [0]  [  450/31122]  eta: 10:44:31  lr: 0.000019  loss_ita: 7.433578  loss_itm: 0.629724
+loss_lm: 5.058208  time: 1.2622  data: 0.0002  max mem: 21698
+Val Loss Step: [epoch 0 | step 500 | global 500]  [ 0/39]  eta: 0:00:54  loss_ita: 5.955833  loss_itm:
+ 0.625102  loss_lm: 4.755407  loss_retrieval: 6.580935  loss_captioning: 4.755407  loss_total: 11.3363
+42  time: 1.3985  data: 0.5768  max mem: 21698
+Averaged validation stats: loss_ita: 6.193019  loss_itm: 0.620287  loss_lm: 4.915625  loss_retrieval:
+6.813306  loss_captioning: 4.915625  loss_total: 11.728931
+Train Epoch: [0]  [  500/31122]  eta: 10:50:55  lr: 0.000021  loss_ita: 7.125923  loss_itm: 0.634295
+loss_lm: 4.679195  time: 1.6162  data: 0.0001  max mem: 21698
+Train Epoch: [0]  [  550/31122]  eta: 10:49:02  lr: 0.000023  loss_ita: 6.676622  loss_itm: 0.628510
+loss_lm: 4.871868  time: 1.2612  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [  600/31122]  eta: 10:47:21  lr: 0.000025  loss_ita: 5.893403  loss_itm: 0.615314
+loss_lm: 4.193025  time: 1.2638  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [  650/31122]  eta: 10:46:06  lr: 0.000027  loss_ita: 6.615663  loss_itm: 0.627566
+loss_lm: 4.629044  time: 1.2798  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [  700/31122]  eta: 10:45:04  lr: 0.000029  loss_ita: 6.007497  loss_itm: 0.634244
+loss_lm: 4.244239  time: 1.2686  data: 0.0002  max mem: 21724
+Train Epoch: [0]  [  750/31122]  eta: 10:43:55  lr: 0.000031  loss_ita: 6.458808  loss_itm: 0.637650
+loss_lm: 4.316714  time: 1.2689  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [  800/31122]  eta: 10:42:49  lr: 0.000033  loss_ita: 6.060700  loss_itm: 0.616650
+loss_lm: 4.546270  time: 1.2625  data: 0.0002  max mem: 21724
+Train Epoch: [0]  [  850/31122]  eta: 10:41:25  lr: 0.000035  loss_ita: 5.985459  loss_itm: 0.624091
+loss_lm: 4.276464  time: 1.2633  data: 0.0002  max mem: 21724
+Train Epoch: [0]  [  900/31122]  eta: 10:40:21  lr: 0.000037  loss_ita: 5.825245  loss_itm: 0.624603
+loss_lm: 4.140559  time: 1.2735  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [  950/31122]  eta: 10:39:12  lr: 0.000039  loss_ita: 5.557194  loss_itm: 0.617081
+loss_lm: 4.037243  time: 1.2686  data: 0.0001  max mem: 21724
+Val Loss Step: [epoch 0 | step 1000 | global 1000]  [ 0/39]  eta: 0:00:32  loss_ita: 3.922144  loss_it
+m: 0.612406  loss_lm: 4.222712  loss_retrieval: 4.534551  loss_captioning: 4.222712  loss_total: 8.757
+263  time: 0.8365  data: 0.5119  max mem: 21724
+Averaged validation stats: loss_ita: 4.070794  loss_itm: 0.601380  loss_lm: 4.429675  loss_retrieval:
+4.672174  loss_captioning: 4.429675  loss_total: 9.101849
+Train Epoch: [0]  [ 1000/31122]  eta: 10:40:55  lr: 0.000041  loss_ita: 5.686393  loss_itm: 0.628472
+loss_lm: 4.542250  time: 1.5621  data: 0.0002  max mem: 21724
+Train Epoch: [0]  [ 1050/31122]  eta: 10:39:23  lr: 0.000043  loss_ita: 5.830109  loss_itm: 0.632746
+loss_lm: 4.059136  time: 1.2585  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 1100/31122]  eta: 10:38:01  lr: 0.000045  loss_ita: 5.158806  loss_itm: 0.600746
+loss_lm: 4.123731  time: 1.2618  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 1150/31122]  eta: 10:36:37  lr: 0.000047  loss_ita: 5.371681  loss_itm: 0.632288
+loss_lm: 4.243854  time: 1.2586  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 1200/31122]  eta: 10:35:20  lr: 0.000049  loss_ita: 5.420970  loss_itm: 0.631318
+loss_lm: 4.189810  time: 1.2671  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 1250/31122]  eta: 10:34:04  lr: 0.000052  loss_ita: 4.834582  loss_itm: 0.629371
+loss_lm: 3.960950  time: 1.2615  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 1300/31122]  eta: 10:32:47  lr: 0.000054  loss_ita: 4.766509  loss_itm: 0.604453
+loss_lm: 4.033055  time: 1.2625  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 1350/31122]  eta: 10:31:31  lr: 0.000056  loss_ita: 4.999545  loss_itm: 0.634997
+loss_lm: 4.320078  time: 1.2613  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 1400/31122]  eta: 10:30:13  lr: 0.000058  loss_ita: 5.042488  loss_itm: 0.617958
+loss_lm: 4.089355  time: 1.2588  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 1450/31122]  eta: 10:29:04  lr: 0.000060  loss_ita: 4.355180  loss_itm: 0.614571
+loss_lm: 3.815952  time: 1.2594  data: 0.0001  max mem: 21724
+Val Loss Step: [epoch 0 | step 1500 | global 1500]  [ 0/39]  eta: 0:00:32  loss_ita: 2.989438  loss_it
+m: 0.610850  loss_lm: 4.120421  loss_retrieval: 3.600288  loss_captioning: 4.120421  loss_total: 7.720
+710  time: 0.8243  data: 0.5109  max mem: 21724
+Averaged validation stats: loss_ita: 2.928825  loss_itm: 0.573932  loss_lm: 4.328995  loss_retrieval:
+3.502758  loss_captioning: 4.328995  loss_total: 7.831752
+Train Epoch: [0]  [ 1500/31122]  eta: 10:29:57  lr: 0.000062  loss_ita: 5.035344  loss_itm: 0.633937
+loss_lm: 3.764305  time: 1.5815  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 1550/31122]  eta: 10:28:33  lr: 0.000064  loss_ita: 4.531826  loss_itm: 0.601507
+loss_lm: 4.113307  time: 1.2632  data: 0.0002  max mem: 21724
+Train Epoch: [0]  [ 1600/31122]  eta: 10:27:15  lr: 0.000066  loss_ita: 4.587712  loss_itm: 0.624194
+loss_lm: 4.154327  time: 1.2606  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 1650/31122]  eta: 10:26:01  lr: 0.000068  loss_ita: 4.587765  loss_itm: 0.626756
+loss_lm: 4.133775  time: 1.2638  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 1700/31122]  eta: 10:24:49  lr: 0.000070  loss_ita: 4.248433  loss_itm: 0.596599
+loss_lm: 3.821716  time: 1.2660  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 1750/31122]  eta: 10:23:38  lr: 0.000072  loss_ita: 4.790925  loss_itm: 0.639927
+loss_lm: 4.268256  time: 1.2632  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 1800/31122]  eta: 10:22:27  lr: 0.000074  loss_ita: 4.238502  loss_itm: 0.615684
+loss_lm: 3.558836  time: 1.2635  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 1850/31122]  eta: 10:21:15  lr: 0.000076  loss_ita: 4.949362  loss_itm: 0.619795
+loss_lm: 3.739158  time: 1.2622  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 1900/31122]  eta: 10:20:08  lr: 0.000078  loss_ita: 4.889771  loss_itm: 0.630662
+loss_lm: 3.984746  time: 1.2734  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 1950/31122]  eta: 10:19:06  lr: 0.000080  loss_ita: 4.229708  loss_itm: 0.622575
+loss_lm: 3.992545  time: 1.2724  data: 0.0001  max mem: 21724
+Val Loss Step: [epoch 0 | step 2000 | global 2000]  [ 0/39]  eta: 0:00:31  loss_ita: 2.848196  loss_it
+m: 0.562470  loss_lm: 3.961805  loss_retrieval: 3.410666  loss_captioning: 3.961805  loss_total: 7.372
+471  time: 0.8087  data: 0.5443  max mem: 21724
+Averaged validation stats: loss_ita: 2.667298  loss_itm: 0.531426  loss_lm: 4.189581  loss_retrieval:
+3.198723  loss_captioning: 4.189581  loss_total: 7.388304
+Train Epoch: [0]  [ 2000/31122]  eta: 10:19:25  lr: 0.000082  loss_ita: 4.130341  loss_itm: 0.577123
+loss_lm: 4.272900  time: 1.5701  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 2050/31122]  eta: 10:18:11  lr: 0.000084  loss_ita: 4.074231  loss_itm: 0.576542
+loss_lm: 3.861133  time: 1.2623  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 2100/31122]  eta: 10:17:00  lr: 0.000086  loss_ita: 4.357482  loss_itm: 0.598456
+loss_lm: 4.181438  time: 1.2677  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 2150/31122]  eta: 10:15:54  lr: 0.000088  loss_ita: 4.699670  loss_itm: 0.623191
+loss_lm: 3.937143  time: 1.2787  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 2200/31122]  eta: 10:14:45  lr: 0.000090  loss_ita: 4.417671  loss_itm: 0.602944
+loss_lm: 3.933253  time: 1.2666  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 2250/31122]  eta: 10:13:35  lr: 0.000092  loss_ita: 4.108079  loss_itm: 0.628837
+loss_lm: 3.741474  time: 1.2698  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 2300/31122]  eta: 10:12:24  lr: 0.000094  loss_ita: 4.178046  loss_itm: 0.605960
+loss_lm: 3.990098  time: 1.2595  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 2350/31122]  eta: 10:11:14  lr: 0.000096  loss_ita: 4.276336  loss_itm: 0.618023
+loss_lm: 4.104852  time: 1.2661  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 2400/31122]  eta: 10:10:04  lr: 0.000098  loss_ita: 4.166971  loss_itm: 0.611491
+loss_lm: 4.083349  time: 1.2641  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 2450/31122]  eta: 10:08:55  lr: 0.000100  loss_ita: 4.491790  loss_itm: 0.602301
+loss_lm: 4.067242  time: 1.2693  data: 0.0001  max mem: 21724
+Val Loss Step: [epoch 0 | step 2500 | global 2500]  [ 0/39]  eta: 0:00:30  loss_ita: 3.076988  loss_it
+m: 0.556197  loss_lm: 4.012580  loss_retrieval: 3.633185  loss_captioning: 4.012580  loss_total: 7.645
+765  time: 0.7795  data: 0.5124  max mem: 21724
+Averaged validation stats: loss_ita: 2.857825  loss_itm: 0.518770  loss_lm: 4.223792  loss_retrieval:
+3.376595  loss_captioning: 4.223792  loss_total: 7.600387
+Train Epoch: [0]  [ 2500/31122]  eta: 10:08:54  lr: 0.000102  loss_ita: 4.556956  loss_itm: 0.630638
+loss_lm: 3.892792  time: 1.5591  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 2550/31122]  eta: 10:07:44  lr: 0.000104  loss_ita: 4.053474  loss_itm: 0.592994
+loss_lm: 3.630185  time: 1.2674  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 2600/31122]  eta: 10:06:33  lr: 0.000106  loss_ita: 4.661384  loss_itm: 0.595257
+loss_lm: 4.005351  time: 1.2699  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 2650/31122]  eta: 10:05:22  lr: 0.000109  loss_ita: 4.073795  loss_itm: 0.580480
+loss_lm: 4.083969  time: 1.2614  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 2700/31122]  eta: 10:04:12  lr: 0.000111  loss_ita: 4.734089  loss_itm: 0.648314
+loss_lm: 4.000271  time: 1.2678  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 2750/31122]  eta: 10:03:03  lr: 0.000113  loss_ita: 4.896036  loss_itm: 0.598684
+loss_lm: 4.192541  time: 1.2680  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 2800/31122]  eta: 10:01:56  lr: 0.000115  loss_ita: 4.073112  loss_itm: 0.548182
+loss_lm: 3.866071  time: 1.2707  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 2850/31122]  eta: 10:00:48  lr: 0.000117  loss_ita: 4.174076  loss_itm: 0.565121
+loss_lm: 3.747461  time: 1.2654  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 2900/31122]  eta: 9:59:40  lr: 0.000119  loss_ita: 3.898943  loss_itm: 0.584130  l
+oss_lm: 3.814549  time: 1.2679  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 2950/31122]  eta: 9:58:33  lr: 0.000121  loss_ita: 4.279473  loss_itm: 0.589864  l
+oss_lm: 3.863882  time: 1.2707  data: 0.0001  max mem: 21724
+Val Loss Step: [epoch 0 | step 3000 | global 3000]  [ 0/39]  eta: 0:00:30  loss_ita: 2.970613  loss_it
+m: 0.506916  loss_lm: 3.983481  loss_retrieval: 3.477529  loss_captioning: 3.983481  loss_total: 7.461
+010  time: 0.7939  data: 0.5417  max mem: 21724
+Averaged validation stats: loss_ita: 2.862189  loss_itm: 0.476976  loss_lm: 4.156902  loss_retrieval:
+3.339164  loss_captioning: 4.156902  loss_total: 7.496066
+Train Epoch: [0]  [ 3000/31122]  eta: 9:58:22  lr: 0.000123  loss_ita: 4.510647  loss_itm: 0.590192  l
+oss_lm: 3.806943  time: 1.5704  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 3050/31122]  eta: 9:57:11  lr: 0.000125  loss_ita: 4.417876  loss_itm: 0.621211  l
+oss_lm: 4.206240  time: 1.2619  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 3100/31122]  eta: 9:56:01  lr: 0.000127  loss_ita: 4.514986  loss_itm: 0.600322  l
+oss_lm: 3.689319  time: 1.2647  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 3150/31122]  eta: 9:54:54  lr: 0.000129  loss_ita: 3.945650  loss_itm: 0.564150  l
+oss_lm: 3.876721  time: 1.2731  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 3200/31122]  eta: 9:53:45  lr: 0.000131  loss_ita: 4.478823  loss_itm: 0.622804  l
+oss_lm: 3.821754  time: 1.2667  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 3250/31122]  eta: 9:52:35  lr: 0.000133  loss_ita: 4.284368  loss_itm: 0.564814  l
+oss_lm: 3.649371  time: 1.2596  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 3300/31122]  eta: 9:51:26  lr: 0.000135  loss_ita: 4.663413  loss_itm: 0.597604  l
+oss_lm: 3.839554  time: 1.2642  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 3350/31122]  eta: 9:50:16  lr: 0.000137  loss_ita: 3.954722  loss_itm: 0.572347  l
+oss_lm: 3.670861  time: 1.2626  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 3400/31122]  eta: 9:49:07  lr: 0.000139  loss_ita: 4.206668  loss_itm: 0.597836  l
+oss_lm: 3.615343  time: 1.2569  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 3450/31122]  eta: 9:47:59  lr: 0.000141  loss_ita: 4.416448  loss_itm: 0.611825  l
+oss_lm: 3.772180  time: 1.2635  data: 0.0001  max mem: 21724
+Val Loss Step: [epoch 0 | step 3500 | global 3500]  [ 0/39]  eta: 0:00:31  loss_ita: 2.727426  loss_it
+m: 0.485657  loss_lm: 4.061066  loss_retrieval: 3.213084  loss_captioning: 4.061066  loss_total: 7.274
+149  time: 0.8178  data: 0.5380  max mem: 21724
+Averaged validation stats: loss_ita: 2.705615  loss_itm: 0.457430  loss_lm: 4.224150  loss_retrieval:
+3.163045  loss_captioning: 4.224150  loss_total: 7.387195
+Train Epoch: [0]  [ 3500/31122]  eta: 9:47:38  lr: 0.000143  loss_ita: 4.360425  loss_itm: 0.573234  l
+oss_lm: 3.856638  time: 1.5647  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 3550/31122]  eta: 9:46:28  lr: 0.000145  loss_ita: 4.479230  loss_itm: 0.599033  l
+oss_lm: 3.866024  time: 1.2630  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 3600/31122]  eta: 9:45:19  lr: 0.000147  loss_ita: 4.330491  loss_itm: 0.584383  l
+oss_lm: 3.697625  time: 1.2654  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 3650/31122]  eta: 9:44:13  lr: 0.000149  loss_ita: 4.591216  loss_itm: 0.606716  l
+oss_lm: 3.746212  time: 1.2606  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 3700/31122]  eta: 9:43:06  lr: 0.000151  loss_ita: 4.335545  loss_itm: 0.594041  l
+oss_lm: 3.692018  time: 1.2655  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 3750/31122]  eta: 9:41:59  lr: 0.000153  loss_ita: 4.367435  loss_itm: 0.593167  l
+oss_lm: 3.950404  time: 1.2633  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 3800/31122]  eta: 9:40:49  lr: 0.000155  loss_ita: 4.052670  loss_itm: 0.595151  l
+oss_lm: 3.871350  time: 1.2630  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 3850/31122]  eta: 9:39:40  lr: 0.000157  loss_ita: 4.086185  loss_itm: 0.593465  l
+oss_lm: 3.766032  time: 1.2570  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 3900/31122]  eta: 9:38:33  lr: 0.000159  loss_ita: 3.915560  loss_itm: 0.538007  l
+oss_lm: 3.710896  time: 1.2663  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 3950/31122]  eta: 9:37:25  lr: 0.000161  loss_ita: 4.149080  loss_itm: 0.610032  l
+oss_lm: 3.977361  time: 1.2632  data: 0.0001  max mem: 21724
+Val Loss Step: [epoch 0 | step 4000 | global 4000]  [ 0/39]  eta: 0:00:30  loss_ita: 2.806111  loss_it
+m: 0.503028  loss_lm: 4.025972  loss_retrieval: 3.309138  loss_captioning: 4.025972  loss_total: 7.335
+111  time: 0.7904  data: 0.5413  max mem: 21724
+Averaged validation stats: loss_ita: 2.592726  loss_itm: 0.455045  loss_lm: 4.174475  loss_retrieval:
+3.047770  loss_captioning: 4.174475  loss_total: 7.222246
+Train Epoch: [0]  [ 4000/31122]  eta: 9:36:59  lr: 0.000163  loss_ita: 4.302153  loss_itm: 0.525195  l
+oss_lm: 3.956945  time: 1.5657  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 4050/31122]  eta: 9:35:49  lr: 0.000166  loss_ita: 4.191430  loss_itm: 0.589902  l
+oss_lm: 3.768333  time: 1.2586  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 4100/31122]  eta: 9:34:40  lr: 0.000168  loss_ita: 4.317303  loss_itm: 0.563637  l
+oss_lm: 3.662093  time: 1.2670  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 4150/31122]  eta: 9:33:32  lr: 0.000170  loss_ita: 4.305162  loss_itm: 0.599000  l
+oss_lm: 4.085342  time: 1.2650  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 4200/31122]  eta: 9:32:25  lr: 0.000172  loss_ita: 4.422116  loss_itm: 0.558684  l
+oss_lm: 3.756639  time: 1.2671  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 4250/31122]  eta: 9:31:17  lr: 0.000174  loss_ita: 4.493548  loss_itm: 0.581235  l
+oss_lm: 3.760919  time: 1.2621  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 4300/31122]  eta: 9:30:09  lr: 0.000176  loss_ita: 4.297596  loss_itm: 0.560530  l
+oss_lm: 3.814492  time: 1.2632  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 4350/31122]  eta: 9:29:03  lr: 0.000178  loss_ita: 3.689352  loss_itm: 0.590812  l
+oss_lm: 3.688619  time: 1.2799  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 4400/31122]  eta: 9:27:55  lr: 0.000180  loss_ita: 4.129622  loss_itm: 0.612199  l
+oss_lm: 3.843290  time: 1.2629  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 4450/31122]  eta: 9:26:49  lr: 0.000182  loss_ita: 4.198910  loss_itm: 0.591240  l
+oss_lm: 3.814002  time: 1.2682  data: 0.0001  max mem: 21724
+Val Loss Step: [epoch 0 | step 4500 | global 4500]  [ 0/39]  eta: 0:00:30  loss_ita: 2.766323  loss_it
+m: 0.425845  loss_lm: 3.998990  loss_retrieval: 3.192169  loss_captioning: 3.998990  loss_total: 7.191
+158  time: 0.7906  data: 0.5164  max mem: 21724
+Averaged validation stats: loss_ita: 2.668944  loss_itm: 0.433890  loss_lm: 4.158128  loss_retrieval:
+3.102833  loss_captioning: 4.158128  loss_total: 7.260962
+Train Epoch: [0]  [ 4500/31122]  eta: 9:26:17  lr: 0.000184  loss_ita: 4.398721  loss_itm: 0.578578  l
+oss_lm: 3.965210  time: 1.5601  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 4550/31122]  eta: 9:25:09  lr: 0.000186  loss_ita: 4.475492  loss_itm: 0.596375  l
+oss_lm: 3.875548  time: 1.2612  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 4600/31122]  eta: 9:24:01  lr: 0.000188  loss_ita: 4.399438  loss_itm: 0.586798  l
+oss_lm: 3.843977  time: 1.2675  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 4650/31122]  eta: 9:22:55  lr: 0.000190  loss_ita: 3.975611  loss_itm: 0.585835  l
+oss_lm: 3.970678  time: 1.2674  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 4700/31122]  eta: 9:21:49  lr: 0.000192  loss_ita: 4.146104  loss_itm: 0.599876  l
+oss_lm: 3.784345  time: 1.2672  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 4750/31122]  eta: 9:20:43  lr: 0.000192  loss_ita: 4.397331  loss_itm: 0.607746  l
+oss_lm: 3.721585  time: 1.2672  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 4800/31122]  eta: 9:19:38  lr: 0.000192  loss_ita: 4.315065  loss_itm: 0.581364  l
+oss_lm: 4.131631  time: 1.2711  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 4850/31122]  eta: 9:18:32  lr: 0.000192  loss_ita: 4.033595  loss_itm: 0.572430  l
+oss_lm: 3.957901  time: 1.2736  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 4900/31122]  eta: 9:17:27  lr: 0.000192  loss_ita: 4.634851  loss_itm: 0.574563  l
+oss_lm: 4.196484  time: 1.2665  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 4950/31122]  eta: 9:16:22  lr: 0.000192  loss_ita: 4.244907  loss_itm: 0.584780  l
+oss_lm: 3.972101  time: 1.2679  data: 0.0001  max mem: 21724
+Val Loss Step: [epoch 0 | step 5000 | global 5000]  [ 0/39]  eta: 0:00:29  loss_ita: 2.544887  loss_it
+m: 0.474000  loss_lm: 4.039818  loss_retrieval: 3.018887  loss_captioning: 4.039818  loss_total: 7.058
+705  time: 0.7614  data: 0.5410  max mem: 21724
+Averaged validation stats: loss_ita: 2.561974  loss_itm: 0.423990  loss_lm: 4.196751  loss_retrieval:
+2.985965  loss_captioning: 4.196751  loss_total: 7.182715
+Train Epoch: [0]  [ 5000/31122]  eta: 9:15:47  lr: 0.000192  loss_ita: 4.491248  loss_itm: 0.585063  l
+oss_lm: 3.551680  time: 1.5664  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 5050/31122]  eta: 9:14:41  lr: 0.000192  loss_ita: 3.794317  loss_itm: 0.533044  l
+oss_lm: 3.690326  time: 1.2673  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 5100/31122]  eta: 9:13:36  lr: 0.000192  loss_ita: 4.593345  loss_itm: 0.590863  l
+oss_lm: 3.824841  time: 1.2662  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 5150/31122]  eta: 9:12:31  lr: 0.000192  loss_ita: 3.877329  loss_itm: 0.542192  l
+oss_lm: 3.688946  time: 1.2774  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 5200/31122]  eta: 9:11:25  lr: 0.000192  loss_ita: 3.629631  loss_itm: 0.560589  l
+oss_lm: 3.818741  time: 1.2649  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 5250/31122]  eta: 9:10:20  lr: 0.000192  loss_ita: 3.811893  loss_itm: 0.555339  l
+oss_lm: 3.582924  time: 1.2749  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 5300/31122]  eta: 9:09:14  lr: 0.000192  loss_ita: 4.122433  loss_itm: 0.565594  l
+oss_lm: 3.813318  time: 1.2606  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 5350/31122]  eta: 9:08:08  lr: 0.000192  loss_ita: 4.277379  loss_itm: 0.614597  l
+oss_lm: 3.533772  time: 1.2672  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 5400/31122]  eta: 9:07:02  lr: 0.000192  loss_ita: 3.959115  loss_itm: 0.543142  l
+oss_lm: 3.737011  time: 1.2682  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 5450/31122]  eta: 9:05:56  lr: 0.000192  loss_ita: 4.272595  loss_itm: 0.564728  l
+oss_lm: 4.055608  time: 1.2660  data: 0.0001  max mem: 21724
+Val Loss Step: [epoch 0 | step 5500 | global 5500]  [ 0/39]  eta: 0:00:31  loss_ita: 2.599213  loss_it
+m: 0.383703  loss_lm: 3.999747  loss_retrieval: 2.982916  loss_captioning: 3.999747  loss_total: 6.982
+662  time: 0.8172  data: 0.5395  max mem: 21724
+Averaged validation stats: loss_ita: 2.573678  loss_itm: 0.426730  loss_lm: 4.210686  loss_retrieval:
+3.000409  loss_captioning: 4.210686  loss_total: 7.211094
+Train Epoch: [0]  [ 5500/31122]  eta: 9:05:19  lr: 0.000192  loss_ita: 3.482846  loss_itm: 0.560815  l
+oss_lm: 3.859437  time: 1.5869  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 5550/31122]  eta: 9:04:11  lr: 0.000192  loss_ita: 4.391220  loss_itm: 0.639163  l
+oss_lm: 3.867132  time: 1.2626  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 5600/31122]  eta: 9:03:05  lr: 0.000192  loss_ita: 3.950948  loss_itm: 0.572906  l
+oss_lm: 3.913721  time: 1.2652  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 5650/31122]  eta: 9:01:59  lr: 0.000192  loss_ita: 4.269075  loss_itm: 0.566935  l
+oss_lm: 3.693643  time: 1.2598  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 5700/31122]  eta: 9:00:53  lr: 0.000192  loss_ita: 4.104428  loss_itm: 0.599645  l
+oss_lm: 3.938203  time: 1.2666  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 5750/31122]  eta: 8:59:46  lr: 0.000192  loss_ita: 3.866093  loss_itm: 0.531747  l
+oss_lm: 3.591915  time: 1.2658  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 5800/31122]  eta: 8:58:40  lr: 0.000192  loss_ita: 4.826672  loss_itm: 0.658165  l
+oss_lm: 3.817977  time: 1.2716  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 5850/31122]  eta: 8:57:36  lr: 0.000192  loss_ita: 4.017056  loss_itm: 0.566740  l
+oss_lm: 3.584000  time: 1.2671  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 5900/31122]  eta: 8:56:30  lr: 0.000192  loss_ita: 3.932326  loss_itm: 0.567952  l
+oss_lm: 3.730522  time: 1.2625  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 5950/31122]  eta: 8:55:24  lr: 0.000192  loss_ita: 3.940344  loss_itm: 0.584515  l
+oss_lm: 3.825513  time: 1.2613  data: 0.0001  max mem: 21724
+Val Loss Step: [epoch 0 | step 6000 | global 6000]  [ 0/39]  eta: 0:00:30  loss_ita: 2.611283  loss_it
+m: 0.478897  loss_lm: 4.086518  loss_retrieval: 3.090180  loss_captioning: 4.086518  loss_total: 7.176
+699  time: 0.7871  data: 0.5323  max mem: 21724
+Averaged validation stats: loss_ita: 2.638015  loss_itm: 0.408585  loss_lm: 4.293671  loss_retrieval:
+3.046601  loss_captioning: 4.293671  loss_total: 7.340272
+Train Epoch: [0]  [ 6000/31122]  eta: 8:54:45  lr: 0.000192  loss_ita: 4.157413  loss_itm: 0.654667  l
+oss_lm: 3.792625  time: 1.5934  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 6050/31122]  eta: 8:53:41  lr: 0.000192  loss_ita: 4.961157  loss_itm: 0.597362  l
+oss_lm: 3.686012  time: 1.2719  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 6100/31122]  eta: 8:52:35  lr: 0.000192  loss_ita: 4.184591  loss_itm: 0.554354  l
+oss_lm: 3.821780  time: 1.2783  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 6150/31122]  eta: 8:51:29  lr: 0.000192  loss_ita: 4.245099  loss_itm: 0.571546  l
+oss_lm: 3.941424  time: 1.2619  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 6200/31122]  eta: 8:50:23  lr: 0.000192  loss_ita: 3.631821  loss_itm: 0.542943  l
+oss_lm: 3.816218  time: 1.2648  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 6250/31122]  eta: 8:49:16  lr: 0.000192  loss_ita: 4.560888  loss_itm: 0.574351  l
+oss_lm: 3.495797  time: 1.2653  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 6300/31122]  eta: 8:48:10  lr: 0.000192  loss_ita: 3.937827  loss_itm: 0.579282  l
+oss_lm: 3.765753  time: 1.2627  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 6350/31122]  eta: 8:47:04  lr: 0.000192  loss_ita: 4.766486  loss_itm: 0.589265  l
+oss_lm: 3.782467  time: 1.2661  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 6400/31122]  eta: 8:45:58  lr: 0.000192  loss_ita: 4.157932  loss_itm: 0.546211  l
+oss_lm: 4.037554  time: 1.2630  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 6450/31122]  eta: 8:44:52  lr: 0.000192  loss_ita: 4.426304  loss_itm: 0.584979  l
+oss_lm: 3.679298  time: 1.2653  data: 0.0001  max mem: 21724
+Val Loss Step: [epoch 0 | step 6500 | global 6500]  [ 0/39]  eta: 0:00:35  loss_ita: 2.880476  loss_it
+m: 0.420042  loss_lm: 4.182097  loss_retrieval: 3.300518  loss_captioning: 4.182097  loss_total: 7.482
+615  time: 0.9116  data: 0.5392  max mem: 21724
+Averaged validation stats: loss_ita: 2.595824  loss_itm: 0.403699  loss_lm: 4.277086  loss_retrieval:
+2.999523  loss_captioning: 4.277086  loss_total: 7.276609
+Train Epoch: [0]  [ 6500/31122]  eta: 8:44:09  lr: 0.000192  loss_ita: 3.892153  loss_itm: 0.568841  l
+oss_lm: 3.770016  time: 1.5706  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 6550/31122]  eta: 8:43:04  lr: 0.000192  loss_ita: 4.281691  loss_itm: 0.565282  l
+oss_lm: 3.705274  time: 1.2797  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 6600/31122]  eta: 8:41:58  lr: 0.000192  loss_ita: 4.423896  loss_itm: 0.588442  l
+oss_lm: 3.749754  time: 1.2641  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 6650/31122]  eta: 8:40:52  lr: 0.000192  loss_ita: 4.542172  loss_itm: 0.589832  l
+oss_lm: 3.786351  time: 1.2632  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 6700/31122]  eta: 8:39:45  lr: 0.000192  loss_ita: 4.159200  loss_itm: 0.545723  l
+oss_lm: 3.675721  time: 1.2622  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 6750/31122]  eta: 8:38:38  lr: 0.000192  loss_ita: 4.055922  loss_itm: 0.565338  l
+oss_lm: 3.754960  time: 1.2578  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 6800/31122]  eta: 8:37:32  lr: 0.000192  loss_ita: 4.003233  loss_itm: 0.549810  l
+oss_lm: 3.843655  time: 1.2678  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 6850/31122]  eta: 8:36:27  lr: 0.000192  loss_ita: 3.876281  loss_itm: 0.567665  l
+oss_lm: 3.607909  time: 1.2719  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 6900/31122]  eta: 8:35:23  lr: 0.000192  loss_ita: 4.309142  loss_itm: 0.611135  l
+oss_lm: 3.848943  time: 1.2677  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 6950/31122]  eta: 8:34:18  lr: 0.000192  loss_ita: 4.153591  loss_itm: 0.580892  l
+oss_lm: 3.668624  time: 1.2715  data: 0.0001  max mem: 21724
+Val Loss Step: [epoch 0 | step 7000 | global 7000]  [ 0/39]  eta: 0:00:31  loss_ita: 2.722270  loss_it
+m: 0.420003  loss_lm: 4.052756  loss_retrieval: 3.142273  loss_captioning: 4.052756  loss_total: 7.195
+029  time: 0.8201  data: 0.5407  max mem: 21724
+Averaged validation stats: loss_ita: 2.559404  loss_itm: 0.379236  loss_lm: 4.188168  loss_retrieval:
+2.938640  loss_captioning: 4.188168  loss_total: 7.126808
+Train Epoch: [0]  [ 7000/31122]  eta: 8:33:34  lr: 0.000192  loss_ita: 4.047536  loss_itm: 0.533885  l
+oss_lm: 3.939838  time: 1.5696  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 7050/31122]  eta: 8:32:28  lr: 0.000192  loss_ita: 3.932482  loss_itm: 0.573692  l
+oss_lm: 3.660929  time: 1.2721  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 7100/31122]  eta: 8:31:23  lr: 0.000192  loss_ita: 4.699606  loss_itm: 0.590267  l
+oss_lm: 4.052312  time: 1.2790  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 7150/31122]  eta: 8:30:18  lr: 0.000192  loss_ita: 4.025834  loss_itm: 0.555164  l
+oss_lm: 3.745874  time: 1.2749  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 7200/31122]  eta: 8:29:13  lr: 0.000192  loss_ita: 4.206878  loss_itm: 0.536476  l
+oss_lm: 3.776117  time: 1.2719  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 7250/31122]  eta: 8:28:08  lr: 0.000192  loss_ita: 3.918692  loss_itm: 0.529335  l
+oss_lm: 3.918090  time: 1.2685  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 7300/31122]  eta: 8:27:05  lr: 0.000192  loss_ita: 4.496515  loss_itm: 0.571877  l
+oss_lm: 4.017033  time: 1.2867  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 7350/31122]  eta: 8:26:00  lr: 0.000192  loss_ita: 4.184159  loss_itm: 0.580537  l
+oss_lm: 3.799736  time: 1.2696  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 7400/31122]  eta: 8:24:56  lr: 0.000192  loss_ita: 3.759614  loss_itm: 0.548250  l
+oss_lm: 3.461123  time: 1.2689  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 7450/31122]  eta: 8:23:50  lr: 0.000192  loss_ita: 3.668783  loss_itm: 0.542330  l
+oss_lm: 3.608458  time: 1.2688  data: 0.0001  max mem: 21724
+Val Loss Step: [epoch 0 | step 7500 | global 7500]  [ 0/39]  eta: 0:00:30  loss_ita: 2.593246  loss_it
+m: 0.367163  loss_lm: 4.142255  loss_retrieval: 2.960409  loss_captioning: 4.142255  loss_total: 7.102
+664  time: 0.7930  data: 0.5480  max mem: 21724
+Averaged validation stats: loss_ita: 2.651661  loss_itm: 0.367497  loss_lm: 4.257133  loss_retrieval:
+3.019158  loss_captioning: 4.257133  loss_total: 7.276290
+Train Epoch: [0]  [ 7500/31122]  eta: 8:23:04  lr: 0.000192  loss_ita: 3.561543  loss_itm: 0.529768  l
+oss_lm: 3.683718  time: 1.5728  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 7550/31122]  eta: 8:21:58  lr: 0.000192  loss_ita: 4.156942  loss_itm: 0.571777  l
+oss_lm: 3.765493  time: 1.2613  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 7600/31122]  eta: 8:20:53  lr: 0.000192  loss_ita: 4.596029  loss_itm: 0.549187  l
+oss_lm: 3.709438  time: 1.2681  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 7650/31122]  eta: 8:19:48  lr: 0.000192  loss_ita: 3.959958  loss_itm: 0.524744  l
+oss_lm: 3.618707  time: 1.2764  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 7700/31122]  eta: 8:18:43  lr: 0.000192  loss_ita: 3.716570  loss_itm: 0.544266  l
+oss_lm: 3.820417  time: 1.2690  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 7750/31122]  eta: 8:17:39  lr: 0.000192  loss_ita: 4.062696  loss_itm: 0.582993  l
+oss_lm: 3.624220  time: 1.2690  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 7800/31122]  eta: 8:16:34  lr: 0.000192  loss_ita: 3.950836  loss_itm: 0.536637  l
+oss_lm: 3.687243  time: 1.2680  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 7850/31122]  eta: 8:15:28  lr: 0.000192  loss_ita: 4.238141  loss_itm: 0.588454  l
+oss_lm: 3.708592  time: 1.2718  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 7900/31122]  eta: 8:14:23  lr: 0.000192  loss_ita: 4.200607  loss_itm: 0.528108  l
+oss_lm: 3.654366  time: 1.2649  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 7950/31122]  eta: 8:13:17  lr: 0.000192  loss_ita: 4.148194  loss_itm: 0.574225  l
+oss_lm: 3.569405  time: 1.2675  data: 0.0001  max mem: 21724
+Val Loss Step: [epoch 0 | step 8000 | global 8000]  [ 0/39]  eta: 0:00:30  loss_ita: 2.743273  loss_it
+m: 0.398576  loss_lm: 4.077418  loss_retrieval: 3.141849  loss_captioning: 4.077418  loss_total: 7.219
+267  time: 0.7937  data: 0.5429  max mem: 21724
+Averaged validation stats: loss_ita: 2.734950  loss_itm: 0.344485  loss_lm: 4.236029  loss_retrieval:
+3.079435  loss_captioning: 4.236029  loss_total: 7.315464
+Train Epoch: [0]  [ 8000/31122]  eta: 8:12:30  lr: 0.000192  loss_ita: 4.254754  loss_itm: 0.531744  l
+oss_lm: 3.772069  time: 1.5763  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 8050/31122]  eta: 8:11:25  lr: 0.000192  loss_ita: 4.275467  loss_itm: 0.573494  l
+oss_lm: 3.889858  time: 1.2750  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 8100/31122]  eta: 8:10:20  lr: 0.000192  loss_ita: 4.543951  loss_itm: 0.525250  l
+oss_lm: 3.691760  time: 1.2690  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 8150/31122]  eta: 8:09:15  lr: 0.000192  loss_ita: 4.753668  loss_itm: 0.601547  l
+oss_lm: 3.667653  time: 1.2757  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 8200/31122]  eta: 8:08:09  lr: 0.000192  loss_ita: 4.658198  loss_itm: 0.567881  l
+oss_lm: 3.857014  time: 1.2630  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 8250/31122]  eta: 8:07:04  lr: 0.000192  loss_ita: 4.182323  loss_itm: 0.535151  l
+oss_lm: 3.615727  time: 1.2664  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 8300/31122]  eta: 8:05:58  lr: 0.000192  loss_ita: 4.102590  loss_itm: 0.576436  l
+oss_lm: 3.412632  time: 1.2670  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 8350/31122]  eta: 8:04:53  lr: 0.000192  loss_ita: 4.482368  loss_itm: 0.563068  l
+oss_lm: 3.526711  time: 1.2653  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 8400/31122]  eta: 8:03:48  lr: 0.000192  loss_ita: 4.384964  loss_itm: 0.546172  l
+oss_lm: 3.663981  time: 1.2652  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 8450/31122]  eta: 8:02:42  lr: 0.000192  loss_ita: 4.469641  loss_itm: 0.529719  l
+oss_lm: 3.883411  time: 1.2641  data: 0.0001  max mem: 21724
+Val Loss Step: [epoch 0 | step 8500 | global 8500]  [ 0/39]  eta: 0:00:31  loss_ita: 3.185461  loss_it
+m: 0.351805  loss_lm: 4.077384  loss_retrieval: 3.537266  loss_captioning: 4.077384  loss_total: 7.614
+650  time: 0.8113  data: 0.5426  max mem: 21724
+Averaged validation stats: loss_ita: 2.771763  loss_itm: 0.351748  loss_lm: 4.231806  loss_retrieval:
+3.123511  loss_captioning: 4.231806  loss_total: 7.355317
+Train Epoch: [0]  [ 8500/31122]  eta: 8:01:53  lr: 0.000192  loss_ita: 4.525434  loss_itm: 0.626609  l
+oss_lm: 3.863867  time: 1.5749  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 8550/31122]  eta: 8:00:48  lr: 0.000192  loss_ita: 4.070685  loss_itm: 0.532826  l
+oss_lm: 3.796655  time: 1.2704  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 8600/31122]  eta: 7:59:43  lr: 0.000192  loss_ita: 4.799979  loss_itm: 0.567872  l
+oss_lm: 3.705165  time: 1.2672  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 8650/31122]  eta: 7:58:38  lr: 0.000192  loss_ita: 4.197807  loss_itm: 0.615646  l
+oss_lm: 3.963757  time: 1.2688  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 8700/31122]  eta: 7:57:33  lr: 0.000192  loss_ita: 4.405038  loss_itm: 0.564470  l
+oss_lm: 3.436556  time: 1.2669  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 8750/31122]  eta: 7:56:28  lr: 0.000192  loss_ita: 4.312160  loss_itm: 0.500888  l
+oss_lm: 3.622388  time: 1.2793  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 8800/31122]  eta: 7:55:24  lr: 0.000192  loss_ita: 3.922196  loss_itm: 0.514753  l
+oss_lm: 3.745239  time: 1.2763  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 8850/31122]  eta: 7:54:19  lr: 0.000192  loss_ita: 3.626394  loss_itm: 0.533513  l
+oss_lm: 3.803805  time: 1.2730  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 8900/31122]  eta: 7:53:15  lr: 0.000192  loss_ita: 4.406363  loss_itm: 0.607251  l
+oss_lm: 3.786540  time: 1.2742  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 8950/31122]  eta: 7:52:10  lr: 0.000192  loss_ita: 4.498670  loss_itm: 0.571775  l
+oss_lm: 3.806793  time: 1.2695  data: 0.0001  max mem: 21724
+Val Loss Step: [epoch 0 | step 9000 | global 9000]  [ 0/39]  eta: 0:00:30  loss_ita: 2.637838  loss_it
+m: 0.420125  loss_lm: 4.030320  loss_retrieval: 3.057962  loss_captioning: 4.030320  loss_total: 7.088
+282  time: 0.7697  data: 0.5396  max mem: 21724
+Averaged validation stats: loss_ita: 2.551816  loss_itm: 0.337162  loss_lm: 4.198919  loss_retrieval:
+2.888978  loss_captioning: 4.198919  loss_total: 7.087897
+Train Epoch: [0]  [ 9000/31122]  eta: 7:51:20  lr: 0.000192  loss_ita: 4.484526  loss_itm: 0.577937  l
+oss_lm: 3.785786  time: 1.5715  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 9050/31122]  eta: 7:50:15  lr: 0.000192  loss_ita: 3.867062  loss_itm: 0.534548  l
+oss_lm: 3.491761  time: 1.2671  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 9100/31122]  eta: 7:49:10  lr: 0.000192  loss_ita: 4.405719  loss_itm: 0.587967  l
+oss_lm: 3.325051  time: 1.2698  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 9150/31122]  eta: 7:48:05  lr: 0.000192  loss_ita: 4.142173  loss_itm: 0.566390  l
+oss_lm: 3.424756  time: 1.2658  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 9200/31122]  eta: 7:47:00  lr: 0.000192  loss_ita: 4.102829  loss_itm: 0.508069  l
+oss_lm: 3.374839  time: 1.2687  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 9250/31122]  eta: 7:45:54  lr: 0.000192  loss_ita: 4.469864  loss_itm: 0.549586  l
+oss_lm: 3.880105  time: 1.2639  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 9300/31122]  eta: 7:44:49  lr: 0.000192  loss_ita: 4.250142  loss_itm: 0.535713  l
+oss_lm: 3.723059  time: 1.2702  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 9350/31122]  eta: 7:43:44  lr: 0.000192  loss_ita: 3.938058  loss_itm: 0.581959  l
+oss_lm: 3.567568  time: 1.2682  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 9400/31122]  eta: 7:42:40  lr: 0.000192  loss_ita: 4.366852  loss_itm: 0.561344  l
+oss_lm: 3.744195  time: 1.2740  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 9450/31122]  eta: 7:41:35  lr: 0.000192  loss_ita: 4.220349  loss_itm: 0.516300  l
+oss_lm: 3.891894  time: 1.2724  data: 0.0001  max mem: 21724
+Val Loss Step: [epoch 0 | step 9500 | global 9500]  [ 0/39]  eta: 0:00:31  loss_ita: 3.031945  loss_it
+m: 0.397971  loss_lm: 3.979968  loss_retrieval: 3.429916  loss_captioning: 3.979968  loss_total: 7.409
+883  time: 0.8071  data: 0.5298  max mem: 21724
+Averaged validation stats: loss_ita: 2.969675  loss_itm: 0.344252  loss_lm: 4.166631  loss_retrieval:
+3.313927  loss_captioning: 4.166631  loss_total: 7.480558
+Train Epoch: [0]  [ 9500/31122]  eta: 7:40:45  lr: 0.000192  loss_ita: 4.158731  loss_itm: 0.563379  l
+oss_lm: 3.798924  time: 1.5942  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 9550/31122]  eta: 7:39:39  lr: 0.000192  loss_ita: 4.350179  loss_itm: 0.554432  l
+oss_lm: 3.609130  time: 1.2643  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 9600/31122]  eta: 7:38:34  lr: 0.000192  loss_ita: 4.014723  loss_itm: 0.537165  l
+oss_lm: 3.926210  time: 1.2692  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 9650/31122]  eta: 7:37:29  lr: 0.000192  loss_ita: 4.093811  loss_itm: 0.534972  l
+oss_lm: 3.788563  time: 1.2650  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 9700/31122]  eta: 7:36:24  lr: 0.000192  loss_ita: 4.140645  loss_itm: 0.557757  l
+oss_lm: 3.640101  time: 1.2688  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 9750/31122]  eta: 7:35:19  lr: 0.000192  loss_ita: 4.163064  loss_itm: 0.611848  l
+oss_lm: 3.714035  time: 1.2737  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 9800/31122]  eta: 7:34:14  lr: 0.000192  loss_ita: 4.169826  loss_itm: 0.542371  l
+oss_lm: 3.584743  time: 1.2661  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 9850/31122]  eta: 7:33:09  lr: 0.000192  loss_ita: 4.176085  loss_itm: 0.616676  l
+oss_lm: 3.561893  time: 1.2687  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 9900/31122]  eta: 7:32:04  lr: 0.000192  loss_ita: 4.120665  loss_itm: 0.537605  l
+oss_lm: 3.887857  time: 1.2660  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [ 9950/31122]  eta: 7:30:59  lr: 0.000192  loss_ita: 4.476149  loss_itm: 0.607075  l
+oss_lm: 3.696202  time: 1.2709  data: 0.0001  max mem: 21724
+Val Loss Step: [epoch 0 | step 10000 | global 10000]  [ 0/39]  eta: 0:00:30  loss_ita: 3.014270  loss_
+itm: 0.387465  loss_lm: 4.053758  loss_retrieval: 3.401735  loss_captioning: 4.053758  loss_total: 7.4
+55493  time: 0.7910  data: 0.5417  max mem: 21724
+Averaged validation stats: loss_ita: 2.839838  loss_itm: 0.331106  loss_lm: 4.179556  loss_retrieval:
+3.170944  loss_captioning: 4.179556  loss_total: 7.350500
+Train Epoch: [0]  [10000/31122]  eta: 7:30:08  lr: 0.000192  loss_ita: 4.097205  loss_itm: 0.529824  l
+oss_lm: 3.588179  time: 1.5744  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [10050/31122]  eta: 7:29:02  lr: 0.000192  loss_ita: 4.444599  loss_itm: 0.572093  l
+oss_lm: 3.804525  time: 1.2716  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [10100/31122]  eta: 7:27:57  lr: 0.000192  loss_ita: 3.775432  loss_itm: 0.527969  l
+oss_lm: 3.704455  time: 1.2646  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [10150/31122]  eta: 7:26:53  lr: 0.000192  loss_ita: 3.877983  loss_itm: 0.507194  l
+oss_lm: 3.689553  time: 1.2676  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [10200/31122]  eta: 7:25:48  lr: 0.000192  loss_ita: 3.872669  loss_itm: 0.552747  l
+oss_lm: 3.693885  time: 1.2693  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [10250/31122]  eta: 7:24:44  lr: 0.000192  loss_ita: 4.141392  loss_itm: 0.630112  l
+oss_lm: 3.962277  time: 1.2770  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [10300/31122]  eta: 7:23:40  lr: 0.000192  loss_ita: 4.251490  loss_itm: 0.545928  l
+oss_lm: 3.718383  time: 1.2658  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [10350/31122]  eta: 7:22:35  lr: 0.000192  loss_ita: 4.233910  loss_itm: 0.575658  l
+oss_lm: 3.769284  time: 1.2727  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [10400/31122]  eta: 7:21:31  lr: 0.000192  loss_ita: 4.428183  loss_itm: 0.599507  l
+oss_lm: 3.749757  time: 1.2688  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [10450/31122]  eta: 7:20:26  lr: 0.000192  loss_ita: 4.454560  loss_itm: 0.574468  l
+oss_lm: 3.430255  time: 1.2695  data: 0.0001  max mem: 21724
+Val Loss Step: [epoch 0 | step 10500 | global 10500]  [ 0/39]  eta: 0:00:31  loss_ita: 2.912574  loss_
+itm: 0.416856  loss_lm: 4.102733  loss_retrieval: 3.329430  loss_captioning: 4.102733  loss_total: 7.4
+32163  time: 0.8071  data: 0.5465  max mem: 21724
+Averaged validation stats: loss_ita: 2.881799  loss_itm: 0.343310  loss_lm: 4.216660  loss_retrieval:
+3.225109  loss_captioning: 4.216660  loss_total: 7.441769
+Train Epoch: [0]  [10500/31122]  eta: 7:19:34  lr: 0.000192  loss_ita: 4.124233  loss_itm: 0.536256  l
+oss_lm: 3.590510  time: 1.5782  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [10550/31122]  eta: 7:18:28  lr: 0.000192  loss_ita: 4.350173  loss_itm: 0.546788  l
+oss_lm: 3.646735  time: 1.2659  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [10600/31122]  eta: 7:17:23  lr: 0.000192  loss_ita: 4.701478  loss_itm: 0.646333  l
+oss_lm: 3.718236  time: 1.2676  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [10650/31122]  eta: 7:16:19  lr: 0.000192  loss_ita: 4.475685  loss_itm: 0.552152  l
+oss_lm: 3.899583  time: 1.2698  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [10700/31122]  eta: 7:15:14  lr: 0.000192  loss_ita: 4.146819  loss_itm: 0.563032  l
+oss_lm: 3.602962  time: 1.2695  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [10750/31122]  eta: 7:14:09  lr: 0.000192  loss_ita: 4.386930  loss_itm: 0.558386  l
+oss_lm: 3.777380  time: 1.2693  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [10800/31122]  eta: 7:13:04  lr: 0.000192  loss_ita: 4.260170  loss_itm: 0.475253  l
+oss_lm: 3.652863  time: 1.2702  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [10850/31122]  eta: 7:12:00  lr: 0.000192  loss_ita: 4.377237  loss_itm: 0.526925  l
+oss_lm: 3.635507  time: 1.2650  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [10900/31122]  eta: 7:10:55  lr: 0.000192  loss_ita: 3.948401  loss_itm: 0.486685  l
+oss_lm: 3.700465  time: 1.2631  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [10950/31122]  eta: 7:09:50  lr: 0.000192  loss_ita: 4.667615  loss_itm: 0.565578  l
+oss_lm: 3.753879  time: 1.2864  data: 0.0001  max mem: 21724
+Val Loss Step: [epoch 0 | step 11000 | global 11000]  [ 0/39]  eta: 0:00:31  loss_ita: 2.898381  loss_
+itm: 0.356311  loss_lm: 3.986075  loss_retrieval: 3.254691  loss_captioning: 3.986075  loss_total: 7.2
+40767  time: 0.8107  data: 0.5283  max mem: 21724
+Averaged validation stats: loss_ita: 2.751779  loss_itm: 0.331737  loss_lm: 4.139654  loss_retrieval:
+3.083516  loss_captioning: 4.139654  loss_total: 7.223170
+Train Epoch: [0]  [11000/31122]  eta: 7:08:57  lr: 0.000192  loss_ita: 4.656238  loss_itm: 0.596378  l
+oss_lm: 3.533658  time: 1.5759  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [11050/31122]  eta: 7:07:51  lr: 0.000192  loss_ita: 4.941911  loss_itm: 0.611418  l
+oss_lm: 3.886646  time: 1.2694  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [11100/31122]  eta: 7:06:46  lr: 0.000192  loss_ita: 4.939969  loss_itm: 0.566611  l
+oss_lm: 3.776837  time: 1.2630  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [11150/31122]  eta: 7:05:42  lr: 0.000192  loss_ita: 4.564060  loss_itm: 0.565345  l
+oss_lm: 3.606733  time: 1.2751  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [11200/31122]  eta: 7:04:37  lr: 0.000192  loss_ita: 4.013687  loss_itm: 0.516584  l
+oss_lm: 3.421889  time: 1.2687  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [11250/31122]  eta: 7:03:32  lr: 0.000192  loss_ita: 4.358018  loss_itm: 0.609469  l
+oss_lm: 3.634680  time: 1.2679  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [11300/31122]  eta: 7:02:27  lr: 0.000192  loss_ita: 4.560930  loss_itm: 0.553824  l
+oss_lm: 3.632133  time: 1.2684  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [11350/31122]  eta: 7:01:22  lr: 0.000192  loss_ita: 4.557678  loss_itm: 0.530723  l
+oss_lm: 3.954020  time: 1.2725  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [11400/31122]  eta: 7:00:17  lr: 0.000192  loss_ita: 4.285955  loss_itm: 0.529615  l
+oss_lm: 3.809089  time: 1.2651  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [11450/31122]  eta: 6:59:12  lr: 0.000192  loss_ita: 4.408919  loss_itm: 0.561228  l
+oss_lm: 3.924673  time: 1.2623  data: 0.0001  max mem: 21724
+Val Loss Step: [epoch 0 | step 11500 | global 11500]  [ 0/39]  eta: 0:00:29  loss_ita: 2.585792  loss_
+itm: 0.369630  loss_lm: 3.945034  loss_retrieval: 2.955422  loss_captioning: 3.945034  loss_total: 6.9
+00455  time: 0.7637  data: 0.5180  max mem: 21724
+Averaged validation stats: loss_ita: 2.620264  loss_itm: 0.317507  loss_lm: 4.105472  loss_retrieval:
+2.937771  loss_captioning: 4.105472  loss_total: 7.043243
+Train Epoch: [0]  [11500/31122]  eta: 6:58:17  lr: 0.000192  loss_ita: 4.113937  loss_itm: 0.586361  l
+oss_lm: 3.637830  time: 1.5658  data: 0.0001  max mem: 21724
+Train Epoch: [0]  [11550/31122]  eta: 6:57:12  lr: 0.000192  loss_ita: 4.150876  loss_itm: 0.545021  l
+oss_lm: 3.710905  time: 1.2670  data: 0.0001  max mem: 21724
+[rank1]:[E612 20:19:04.690459913 ProcessGroupNCCL.cpp:629] [Rank 1] Watchdog caught collective operati
+on timeout: WorkNCCL(SeqNum=452386, OpType=ALLGATHER, NumelIn=12288, NumelOut=49152, Timeout(ms)=60000
+0) ran for 600020 milliseconds before timing out.
+[rank1]:[E612 20:19:04.690874731 ProcessGroupNCCL.cpp:2168] [PG ID 0 PG GUID 0(default_pg) Rank 1]  fa
+ilure detected by watchdog at work sequence id: 452386 PG status: last enqueued work: 452387, last com
+pleted work: 452385
+[rank1]:[E612 20:19:04.690900479 ProcessGroupNCCL.cpp:667] Stack trace of the failed collective not fo
+und, potentially because FlightRecorder is disabled. You can enable it by setting TORCH_NCCL_TRACE_BUF
+FER_SIZE to a non-zero value.
+[rank2]:[E612 20:19:04.704378220 ProcessGroupNCCL.cpp:629] [Rank 2] Watchdog caught collective operati
+on timeout: WorkNCCL(SeqNum=452386, OpType=ALLGATHER, NumelIn=12288, NumelOut=49152, Timeout(ms)=60000
+0) ran for 600038 milliseconds before timing out.
+[rank2]:[E612 20:19:04.704785660 ProcessGroupNCCL.cpp:2168] [PG ID 0 PG GUID 0(default_pg) Rank 2]  fa
+ilure detected by watchdog at work sequence id: 452386 PG status: last enqueued work: 452387, last com
+pleted work: 452385
+[rank2]:[E612 20:19:04.704808900 ProcessGroupNCCL.cpp:667] Stack trace of the failed collective not fo
+und, potentially because FlightRecorder is disabled. You can enable it by setting TORCH_NCCL_TRACE_BUF
+FER_SIZE to a non-zero value.
+[rank0]:[E612 20:19:04.718206072 ProcessGroupNCCL.cpp:629] [Rank 0] Watchdog caught collective operati
+on timeout: WorkNCCL(SeqNum=452386, OpType=ALLGATHER, NumelIn=12288, NumelOut=49152, Timeout(ms)=60000
+0) ran for 600051 milliseconds before timing out.
+[rank0]:[E612 20:19:04.718621325 ProcessGroupNCCL.cpp:2168] [PG ID 0 PG GUID 0(default_pg) Rank 0]  fa
+ilure detected by watchdog at work sequence id: 452386 PG status: last enqueued work: 452387, last com
+pleted work: 452385
+[rank0]:[E612 20:19:04.718645304 ProcessGroupNCCL.cpp:667] Stack trace of the failed collective not fo
+und, potentially because FlightRecorder is disabled. You can enable it by setting TORCH_NCCL_TRACE_BUF
+FER_SIZE to a non-zero value.
+[rank0]:[E612 20:19:06.518418572 ProcessGroupNCCL.cpp:681] [Rank 0] Some NCCL operations have failed o
+r timed out. Due to the asynchronous nature of CUDA kernels, subsequent GPU operations might run on co
+rrupted/incomplete data.
+[rank0]:[E612 20:19:06.518433409 ProcessGroupNCCL.cpp:695] [Rank 0] To avoid data inconsistency, we ar
+e taking the entire process down.
+[rank0]:[E612 20:19:06.519672805 ProcessGroupNCCL.cpp:1895] [PG ID 0 PG GUID 0(default_pg) Rank 0] Pro
+cess group watchdog thread terminated with exception: [Rank 0] Watchdog caught collective operation ti
+meout: WorkNCCL(SeqNum=452386, OpType=ALLGATHER, NumelIn=12288, NumelOut=49152, Timeout(ms)=600000) ra
+n for 600051 milliseconds before timing out.
+Exception raised from checkTimeout at /pytorch/torch/csrc/distributed/c10d/ProcessGroupNCCL.cpp:632 (m
+ost recent call first):
+frame #0: c10::Error::Error(c10::SourceLocation, std::string) + 0x96 (0x7fa5b20fd1b6 in /home/minwoo/m
+iniconda3/envs/kd_v4/lib/python3.10/site-packages/torch/lib/libc10.so)
+frame #1: c10d::ProcessGroupNCCL::WorkNCCL::checkTimeout(std::optional<std::chrono::duration<long, std
+::ratio<1l, 1000l> > >) + 0x2b4 (0x7fa5b3446c74 in /home/minwoo/miniconda3/envs/kd_v4/lib/python3.10/s
+ite-packages/torch/lib/libtorch_cuda.so)
+frame #2: c10d::ProcessGroupNCCL::watchdogHandler() + 0x890 (0x7fa5b34487d0 in /home/minwoo/miniconda3
+/envs/kd_v4/lib/python3.10/site-packages/torch/lib/libtorch_cuda.so)
+frame #3: c10d::ProcessGroupNCCL::ncclCommWatchdog() + 0x14d (0x7fa5b34496ed in /home/minwoo/miniconda
+3/envs/kd_v4/lib/python3.10/site-packages/torch/lib/libtorch_cuda.so)
+frame #4: <unknown function> + 0x145c0 (0x7fa5fc4c05c0 in /home/minwoo/miniconda3/envs/kd_v4/lib/pytho
+n3.10/site-packages/torch/lib/libtorch.so)
+frame #5: <unknown function> + 0x8609 (0x7fa60b1cb609 in /lib/x86_64-linux-gnu/libpthread.so.0)
+frame #6: clone + 0x43 (0x7fa60af96133 in /lib/x86_64-linux-gnu/libc.so.6)
+
+terminate called after throwing an instance of 'c10::DistBackendError'
+  what():  [PG ID 0 PG GUID 0(default_pg) Rank 0] Process group watchdog thread terminated with except
+ion: [Rank 0] Watchdog caught collective operation timeout: WorkNCCL(SeqNum=452386, OpType=ALLGATHER,
+NumelIn=12288, NumelOut=49152, Timeout(ms)=600000) ran for 600051 milliseconds before timing out.
+Exception raised from checkTimeout at /pytorch/torch/csrc/distributed/c10d/ProcessGroupNCCL.cpp:632 (m
+ost recent call first):
+frame #0: c10::Error::Error(c10::SourceLocation, std::string) + 0x96 (0x7fa5b20fd1b6 in /home/minwoo/m
+iniconda3/envs/kd_v4/lib/python3.10/site-packages/torch/lib/libc10.so)
+frame #1: c10d::ProcessGroupNCCL::WorkNCCL::checkTimeout(std::optional<std::chrono::duration<long, std
+::ratio<1l, 1000l> > >) + 0x2b4 (0x7fa5b3446c74 in /home/minwoo/miniconda3/envs/kd_v4/lib/python3.10/s
+ite-packages/torch/lib/libtorch_cuda.so)
+frame #2: c10d::ProcessGroupNCCL::watchdogHandler() + 0x890 (0x7fa5b34487d0 in /home/minwoo/miniconda3
+/envs/kd_v4/lib/python3.10/site-packages/torch/lib/libtorch_cuda.so)
+frame #3: c10d::ProcessGroupNCCL::ncclCommWatchdog() + 0x14d (0x7fa5b34496ed in /home/minwoo/miniconda
+3/envs/kd_v4/lib/python3.10/site-packages/torch/lib/libtorch_cuda.so)
+frame #4: <unknown function> + 0x145c0 (0x7fa5fc4c05c0 in /home/minwoo/miniconda3/envs/kd_v4/lib/pytho
+n3.10/site-packages/torch/lib/libtorch.so)
+frame #5: <unknown function> + 0x8609 (0x7fa60b1cb609 in /lib/x86_64-linux-gnu/libpthread.so.0)
+frame #6: clone + 0x43 (0x7fa60af96133 in /lib/x86_64-linux-gnu/libc.so.6)
+
+Exception raised from ncclCommWatchdog at /pytorch/torch/csrc/distributed/c10d/ProcessGroupNCCL.cpp:19
+01 (most recent call first):
+frame #0: c10::Error::Error(c10::SourceLocation, std::string) + 0x96 (0x7fa5b20fd1b6 in /home/minwoo/m
+iniconda3/envs/kd_v4/lib/python3.10/site-packages/torch/lib/libc10.so)
+frame #1: <unknown function> + 0xe5c6fc (0x7fa5b30a46fc in /home/minwoo/miniconda3/envs/kd_v4/lib/pyth
+on3.10/site-packages/torch/lib/libtorch_cuda.so)
+frame #2: <unknown function> + 0x145c0 (0x7fa5fc4c05c0 in /home/minwoo/miniconda3/envs/kd_v4/lib/pytho
+n3.10/site-packages/torch/lib/libtorch.so)
+frame #3: <unknown function> + 0x8609 (0x7fa60b1cb609 in /lib/x86_64-linux-gnu/libpthread.so.0)
+frame #4: clone + 0x43 (0x7fa60af96133 in /lib/x86_64-linux-gnu/libc.so.6)
+
+[rank2]:[E612 20:19:06.527465812 ProcessGroupNCCL.cpp:681] [Rank 2] Some NCCL operations have failed o
+r timed out. Due to the asynchronous nature of CUDA kernels, subsequent GPU operations might run on co
+rrupted/incomplete data.
+[rank2]:[E612 20:19:06.527481318 ProcessGroupNCCL.cpp:695] [Rank 2] To avoid data inconsistency, we ar
+e taking the entire process down.
+[rank2]:[E612 20:19:06.528652167 ProcessGroupNCCL.cpp:1895] [PG ID 0 PG GUID 0(default_pg) Rank 2] Pro
+cess group watchdog thread terminated with exception: [Rank 2] Watchdog caught collective operation ti
+meout: WorkNCCL(SeqNum=452386, OpType=ALLGATHER, NumelIn=12288, NumelOut=49152, Timeout(ms)=600000) ra
+n for 600038 milliseconds before timing out.
+Exception raised from checkTimeout at /pytorch/torch/csrc/distributed/c10d/ProcessGroupNCCL.cpp:632 (m
+ost recent call first):
+frame #0: c10::Error::Error(c10::SourceLocation, std::string) + 0x96 (0x7f67c0b3a1b6 in /home/minwoo/m
+iniconda3/envs/kd_v4/lib/python3.10/site-packages/torch/lib/libc10.so)
+frame #1: c10d::ProcessGroupNCCL::WorkNCCL::checkTimeout(std::optional<std::chrono::duration<long, std
+::ratio<1l, 1000l> > >) + 0x2b4 (0x7f67c1e83c74 in /home/minwoo/miniconda3/envs/kd_v4/lib/python3.10/s
+ite-packages/torch/lib/libtorch_cuda.so)
+frame #2: c10d::ProcessGroupNCCL::watchdogHandler() + 0x890 (0x7f67c1e857d0 in /home/minwoo/miniconda3
+/envs/kd_v4/lib/python3.10/site-packages/torch/lib/libtorch_cuda.so)
+frame #3: c10d::ProcessGroupNCCL::ncclCommWatchdog() + 0x14d (0x7f67c1e866ed in /home/minwoo/miniconda
+3/envs/kd_v4/lib/python3.10/site-packages/torch/lib/libtorch_cuda.so)
+frame #4: <unknown function> + 0x145c0 (0x7f680aefd5c0 in /home/minwoo/miniconda3/envs/kd_v4/lib/pytho
+n3.10/site-packages/torch/lib/libtorch.so)
+frame #5: <unknown function> + 0x8609 (0x7f6819c08609 in /lib/x86_64-linux-gnu/libpthread.so.0)
+frame #6: clone + 0x43 (0x7f68199d3133 in /lib/x86_64-linux-gnu/libc.so.6)
+
+terminate called after throwing an instance of 'c10::DistBackendError'
+  what():  [PG ID 0 PG GUID 0(default_pg) Rank 2] Process group watchdog thread terminated with except
+ion: [Rank 2] Watchdog caught collective operation timeout: WorkNCCL(SeqNum=452386, OpType=ALLGATHER,
+NumelIn=12288, NumelOut=49152, Timeout(ms)=600000) ran for 600038 milliseconds before timing out.
+Exception raised from checkTimeout at /pytorch/torch/csrc/distributed/c10d/ProcessGroupNCCL.cpp:632 (m
+ost recent call first):
+frame #0: c10::Error::Error(c10::SourceLocation, std::string) + 0x96 (0x7f67c0b3a1b6 in /home/minwoo/m
+iniconda3/envs/kd_v4/lib/python3.10/site-packages/torch/lib/libc10.so)
+frame #1: c10d::ProcessGroupNCCL::WorkNCCL::checkTimeout(std::optional<std::chrono::duration<long, std
+::ratio<1l, 1000l> > >) + 0x2b4 (0x7f67c1e83c74 in /home/minwoo/miniconda3/envs/kd_v4/lib/python3.10/s
+ite-packages/torch/lib/libtorch_cuda.so)
+frame #2: c10d::ProcessGroupNCCL::watchdogHandler() + 0x890 (0x7f67c1e857d0 in /home/minwoo/miniconda3
+/envs/kd_v4/lib/python3.10/site-packages/torch/lib/libtorch_cuda.so)
+frame #3: c10d::ProcessGroupNCCL::ncclCommWatchdog() + 0x14d (0x7f67c1e866ed in /home/minwoo/miniconda
+3/envs/kd_v4/lib/python3.10/site-packages/torch/lib/libtorch_cuda.so)
+frame #4: <unknown function> + 0x145c0 (0x7f680aefd5c0 in /home/minwoo/miniconda3/envs/kd_v4/lib/pytho
+n3.10/site-packages/torch/lib/libtorch.so)
+frame #5: <unknown function> + 0x8609 (0x7f6819c08609 in /lib/x86_64-linux-gnu/libpthread.so.0)
+frame #6: clone + 0x43 (0x7f68199d3133 in /lib/x86_64-linux-gnu/libc.so.6)
+
+Exception raised from ncclCommWatchdog at /pytorch/torch/csrc/distributed/c10d/ProcessGroupNCCL.cpp:19
+01 (most recent call first):
+frame #0: c10::Error::Error(c10::SourceLocation, std::string) + 0x96 (0x7f67c0b3a1b6 in /home/minwoo/m
+iniconda3/envs/kd_v4/lib/python3.10/site-packages/torch/lib/libc10.so)
+frame #1: <unknown function> + 0xe5c6fc (0x7f67c1ae16fc in /home/minwoo/miniconda3/envs/kd_v4/lib/pyth
+on3.10/site-packages/torch/lib/libtorch_cuda.so)
+frame #2: <unknown function> + 0x145c0 (0x7f680aefd5c0 in /home/minwoo/miniconda3/envs/kd_v4/lib/pytho
+n3.10/site-packages/torch/lib/libtorch.so)
+frame #3: <unknown function> + 0x8609 (0x7f6819c08609 in /lib/x86_64-linux-gnu/libpthread.so.0)
+frame #4: clone + 0x43 (0x7f68199d3133 in /lib/x86_64-linux-gnu/libc.so.6)
+
+[rank1]:[E612 20:19:06.529872311 ProcessGroupNCCL.cpp:681] [Rank 1] Some NCCL operations have failed o
+r timed out. Due to the asynchronous nature of CUDA kernels, subsequent GPU operations might run on co
+rrupted/incomplete data.
+[rank1]:[E612 20:19:06.529886063 ProcessGroupNCCL.cpp:695] [Rank 1] To avoid data inconsistency, we ar
+e taking the entire process down.
+[rank1]:[E612 20:19:06.530952646 ProcessGroupNCCL.cpp:1895] [PG ID 0 PG GUID 0(default_pg) Rank 1] Pro
+cess group watchdog thread terminated with exception: [Rank 1] Watchdog caught collective operation ti
+meout: WorkNCCL(SeqNum=452386, OpType=ALLGATHER, NumelIn=12288, NumelOut=49152, Timeout(ms)=600000) ra
+n for 600020 milliseconds before timing out.
+Exception raised from checkTimeout at /pytorch/torch/csrc/distributed/c10d/ProcessGroupNCCL.cpp:632 (m
+ost recent call first):
+frame #0: c10::Error::Error(c10::SourceLocation, std::string) + 0x96 (0x7f15557a01b6 in /home/minwoo/m
+iniconda3/envs/kd_v4/lib/python3.10/site-packages/torch/lib/libc10.so)
+frame #1: c10d::ProcessGroupNCCL::WorkNCCL::checkTimeout(std::optional<std::chrono::duration<long, std
+::ratio<1l, 1000l> > >) + 0x2b4 (0x7f1556ae9c74 in /home/minwoo/miniconda3/envs/kd_v4/lib/python3.10/s
+ite-packages/torch/lib/libtorch_cuda.so)
+frame #2: c10d::ProcessGroupNCCL::watchdogHandler() + 0x890 (0x7f1556aeb7d0 in /home/minwoo/miniconda3
+/envs/kd_v4/lib/python3.10/site-packages/torch/lib/libtorch_cuda.so)
+frame #3: c10d::ProcessGroupNCCL::ncclCommWatchdog() + 0x14d (0x7f1556aec6ed in /home/minwoo/miniconda
+3/envs/kd_v4/lib/python3.10/site-packages/torch/lib/libtorch_cuda.so)
+frame #4: <unknown function> + 0x145c0 (0x7f159fb635c0 in /home/minwoo/miniconda3/envs/kd_v4/lib/pytho
+n3.10/site-packages/torch/lib/libtorch.so)
+frame #5: <unknown function> + 0x8609 (0x7f15ae86e609 in /lib/x86_64-linux-gnu/libpthread.so.0)
+frame #6: clone + 0x43 (0x7f15ae639133 in /lib/x86_64-linux-gnu/libc.so.6)
+
+terminate called after throwing an instance of 'c10::DistBackendError'
+  what():  [PG ID 0 PG GUID 0(default_pg) Rank 1] Process group watchdog thread terminated with except
+ion: [Rank 1] Watchdog caught collective operation timeout: WorkNCCL(SeqNum=452386, OpType=ALLGATHER,
+NumelIn=12288, NumelOut=49152, Timeout(ms)=600000) ran for 600020 milliseconds before timing out.
+Exception raised from checkTimeout at /pytorch/torch/csrc/distributed/c10d/ProcessGroupNCCL.cpp:632 (m
+ost recent call first):
+frame #0: c10::Error::Error(c10::SourceLocation, std::string) + 0x96 (0x7f15557a01b6 in /home/minwoo/m
+iniconda3/envs/kd_v4/lib/python3.10/site-packages/torch/lib/libc10.so)
+frame #1: c10d::ProcessGroupNCCL::WorkNCCL::checkTimeout(std::optional<std::chrono::duration<long, std
+::ratio<1l, 1000l> > >) + 0x2b4 (0x7f1556ae9c74 in /home/minwoo/miniconda3/envs/kd_v4/lib/python3.10/s
+ite-packages/torch/lib/libtorch_cuda.so)
+frame #2: c10d::ProcessGroupNCCL::watchdogHandler() + 0x890 (0x7f1556aeb7d0 in /home/minwoo/miniconda3
+/envs/kd_v4/lib/python3.10/site-packages/torch/lib/libtorch_cuda.so)
+frame #3: c10d::ProcessGroupNCCL::ncclCommWatchdog() + 0x14d (0x7f1556aec6ed in /home/minwoo/miniconda
+3/envs/kd_v4/lib/python3.10/site-packages/torch/lib/libtorch_cuda.so)
+frame #4: <unknown function> + 0x145c0 (0x7f159fb635c0 in /home/minwoo/miniconda3/envs/kd_v4/lib/pytho
+n3.10/site-packages/torch/lib/libtorch.so)
+frame #5: <unknown function> + 0x8609 (0x7f15ae86e609 in /lib/x86_64-linux-gnu/libpthread.so.0)
+frame #6: clone + 0x43 (0x7f15ae639133 in /lib/x86_64-linux-gnu/libc.so.6)
+
+Exception raised from ncclCommWatchdog at /pytorch/torch/csrc/distributed/c10d/ProcessGroupNCCL.cpp:19
+01 (most recent call first):
+frame #0: c10::Error::Error(c10::SourceLocation, std::string) + 0x96 (0x7f15557a01b6 in /home/minwoo/m
+iniconda3/envs/kd_v4/lib/python3.10/site-packages/torch/lib/libc10.so)
+frame #1: <unknown function> + 0xe5c6fc (0x7f15567476fc in /home/minwoo/miniconda3/envs/kd_v4/lib/pyth
+on3.10/site-packages/torch/lib/libtorch_cuda.so)
+frame #2: <unknown function> + 0x145c0 (0x7f159fb635c0 in /home/minwoo/miniconda3/envs/kd_v4/lib/pytho
+n3.10/site-packages/torch/lib/libtorch.so)
+frame #3: <unknown function> + 0x8609 (0x7f15ae86e609 in /lib/x86_64-linux-gnu/libpthread.so.0)
+frame #4: clone + 0x43 (0x7f15ae639133 in /lib/x86_64-linux-gnu/libc.so.6)
+
+W0612 20:19:06.499000 14322 site-packages/torch/distributed/elastic/multiprocessing/api.py:897] Sendin
+g process 14408 closing signal SIGTERM
+W0612 20:19:06.500000 14322 site-packages/torch/distributed/elastic/multiprocessing/api.py:897] Sendin
+g process 14409 closing signal SIGTERM
+W0612 20:19:06.500000 14322 site-packages/torch/distributed/elastic/multiprocessing/api.py:897] Sendin
+g process 14410 closing signal SIGTERM
+W0612 20:19:36.501000 14322 site-packages/torch/distributed/elastic/multiprocessing/api.py:916] Unable
+ to shutdown process 14410 via Signals.SIGTERM, forcefully exiting via Signals.SIGKILL
+^[[B^[[A^[[A^[[A^[[A^[[A^[[A^CW0612 23:56:34.875000 14322 site-packages/torch/distributed/elastic/agen
+t/server/api.py:719] Received Signals.SIGINT death signal, shutting down workers
+W0612 23:56:34.875000 14322 site-packages/torch/distributed/elastic/multiprocessing/api.py:897] Sendin
+g process 14410 closing signal SIGINT
+^CW0612 23:56:57.954000 14322 site-packages/torch/distributed/elastic/multiprocessing/api.py:897] Send
+ing process 14410 closing signal SIGTERM
+^CTraceback (most recent call last):
+  File "/home/minwoo/miniconda3/envs/kd_v4/lib/python3.10/site-packages/torch/distributed/elastic/agen
+t/server/api.py", line 711, in run
+    result = self._invoke_run(role)
+  File "/home/minwoo/miniconda3/envs/kd_v4/lib/python3.10/site-packages/torch/distributed/elastic/agen
+t/server/api.py", line 871, in _invoke_run
+    run_result = self._monitor_workers(self._worker_group)
+  File "/home/minwoo/miniconda3/envs/kd_v4/lib/python3.10/site-packages/torch/distributed/elastic/metr
+ics/api.py", line 137, in wrapper
+    result = f(*args, **kwargs)
+  File "/home/minwoo/miniconda3/envs/kd_v4/lib/python3.10/site-packages/torch/distributed/elastic/agen
+t/server/local_elastic_agent.py", line 394, in _monitor_workers
+    result = self._pcontext.wait(0)
+  File "/home/minwoo/miniconda3/envs/kd_v4/lib/python3.10/site-packages/torch/distributed/elastic/mult
+iprocessing/api.py", line 531, in wait
+    return self._poll()
+  File "/home/minwoo/miniconda3/envs/kd_v4/lib/python3.10/site-packages/torch/distributed/elastic/mult
+iprocessing/api.py", line 861, in _poll
+    self.close()  # terminate all running procs
+  File "/home/minwoo/miniconda3/envs/kd_v4/lib/python3.10/site-packages/torch/distributed/elastic/mult
+iprocessing/api.py", line 572, in close
+    self._close(death_sig=death_sig, timeout=timeout)
+  File "/home/minwoo/miniconda3/envs/kd_v4/lib/python3.10/site-packages/torch/distributed/elastic/mult
+iprocessing/api.py", line 923, in _close
+    handler.proc.wait()
+  File "/home/minwoo/miniconda3/envs/kd_v4/lib/python3.10/subprocess.py", line 1209, in wait
+    return self._wait(timeout=timeout)
+  File "/home/minwoo/miniconda3/envs/kd_v4/lib/python3.10/subprocess.py", line 1959, in _wait
+    (pid, sts) = self._try_wait(0)
+  File "/home/minwoo/miniconda3/envs/kd_v4/lib/python3.10/subprocess.py", line 1917, in _try_wait
+    (pid, sts) = os.waitpid(self.pid, wait_flags)
+  File "/home/minwoo/miniconda3/envs/kd_v4/lib/python3.10/site-packages/torch/distributed/elastic/mult
+iprocessing/api.py", line 84, in _terminate_process_handler
+    raise SignalException(f"Process {os.getpid()} got signal: {sigval}", sigval=sigval)
+torch.distributed.elastic.multiprocessing.api.SignalException: Process 14322 got signal: 2
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/minwoo/miniconda3/envs/kd_v4/lib/python3.10/site-packages/torch/distributed/elastic/agen
+t/server/api.py", line 720, in run
+    self._shutdown(e.sigval)
+  File "/home/minwoo/miniconda3/envs/kd_v4/lib/python3.10/site-packages/torch/distributed/elastic/agen
+t/server/local_elastic_agent.py", line 372, in _shutdown
+    self._pcontext.close(death_sig)
+  File "/home/minwoo/miniconda3/envs/kd_v4/lib/python3.10/site-packages/torch/distributed/elastic/mult
+iprocessing/api.py", line 572, in close
+    self._close(death_sig=death_sig, timeout=timeout)
+  File "/home/minwoo/miniconda3/envs/kd_v4/lib/python3.10/site-packages/torch/distributed/elastic/mult
+iprocessing/api.py", line 909, in _close
+    handler.proc.wait(time_to_wait)
+  File "/home/minwoo/miniconda3/envs/kd_v4/lib/python3.10/subprocess.py", line 1209, in wait
+    return self._wait(timeout=timeout)
+  File "/home/minwoo/miniconda3/envs/kd_v4/lib/python3.10/subprocess.py", line 1953, in _wait
+    time.sleep(delay)
+  File "/home/minwoo/miniconda3/envs/kd_v4/lib/python3.10/site-packages/torch/distributed/elastic/mult
+iprocessing/api.py", line 84, in _terminate_process_handler
+    raise SignalException(f"Process {os.getpid()} got signal: {sigval}", sigval=sigval)
+torch.distributed.elastic.multiprocessing.api.SignalException: Process 14322 got signal: 2
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/minwoo/miniconda3/envs/kd_v4/bin/torchrun", line 6, in <module>
+    sys.exit(main())
+  File "/home/minwoo/miniconda3/envs/kd_v4/lib/python3.10/site-packages/torch/distributed/elastic/mult
+iprocessing/errors/__init__.py", line 355, in wrapper
+    return f(*args, **kwargs)
+  File "/home/minwoo/miniconda3/envs/kd_v4/lib/python3.10/site-packages/torch/distributed/run.py", lin
+e 918, in main
+    run(args)
+  File "/home/minwoo/miniconda3/envs/kd_v4/lib/python3.10/site-packages/torch/distributed/run.py", lin
+e 909, in run
+    elastic_launch(
+  File "/home/minwoo/miniconda3/envs/kd_v4/lib/python3.10/site-packages/torch/distributed/launcher/api
+.py", line 138, in __call__
+    return launch_agent(self._config, self._entrypoint, list(args))
+  File "/home/minwoo/miniconda3/envs/kd_v4/lib/python3.10/site-packages/torch/distributed/launcher/api
+.py", line 260, in launch_agent
+    result = agent.run()
+  File "/home/minwoo/miniconda3/envs/kd_v4/lib/python3.10/site-packages/torch/distributed/elastic/metr
+ics/api.py", line 137, in wrapper
+    result = f(*args, **kwargs)
+  File "/home/minwoo/miniconda3/envs/kd_v4/lib/python3.10/site-packages/torch/distributed/elastic/agen
+t/server/api.py", line 725, in run
+    self._shutdown()
+  File "/home/minwoo/miniconda3/envs/kd_v4/lib/python3.10/site-packages/torch/distributed/elastic/agen
+t/server/local_elastic_agent.py", line 372, in _shutdown
+    self._pcontext.close(death_sig)
+  File "/home/minwoo/miniconda3/envs/kd_v4/lib/python3.10/site-packages/torch/distributed/elastic/mult
+iprocessing/api.py", line 572, in close
+    self._close(death_sig=death_sig, timeout=timeout)
+  File "/home/minwoo/miniconda3/envs/kd_v4/lib/python3.10/site-packages/torch/distributed/elastic/mult
+iprocessing/api.py", line 909, in _close
+    handler.proc.wait(time_to_wait)
+  File "/home/minwoo/miniconda3/envs/kd_v4/lib/python3.10/subprocess.py", line 1209, in wait
+    return self._wait(timeout=timeout)
+  File "/home/minwoo/miniconda3/envs/kd_v4/lib/python3.10/subprocess.py", line 1953, in _wait
+    time.sleep(delay)
+  File "/home/minwoo/miniconda3/envs/kd_v4/lib/python3.10/site-packages/torch/distributed/elastic/mult
+iprocessing/api.py", line 84, in _terminate_process_handler
+    raise SignalException(f"Process {os.getpid()} got signal: {sigval}", sigval=sigval)
+torch.distributed.elastic.multiprocessing.api.SignalException: Process 14322 got signal: 2
+(kd_v4) minwoo@ml2-gamma:~/Distillation_Project$ tmux capture-pane -pS -30000 > /home/minwoo/Distillat
+ion_Project/error611.log
+

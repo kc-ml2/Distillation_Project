@@ -43,7 +43,7 @@ from torch.utils.tensorboard import SummaryWriter
 def make_tb_run_name(config):
     tb_option_dict = {
         # "experiment": "test_tensorboard",
-        "experiment": "baseline_test",
+        "experiment": "baseline_test_no_amp",
         "mode": "pretrain",
         "vit": config["vit"],
         "bert": config["my_bert_size"],
@@ -88,8 +88,8 @@ def train(model, data_loader, optimizer, epoch, device, config, writer=None, val
         # loss_ita, loss_itm, loss_lm = model(image, caption, alpha = alpha)  
         # loss = loss_ita + loss_itm + loss_lm  
         # bp 16 mixed precision
-        # if device == "cuda": # 이 부분 수정할 예정
-        if device.type == "cuda": # .type로 수정해봄
+        if device == "cuda": # 이 부분 수정할 예정
+        # if device.type == "cuda": # .type로 수정해봄
             # print("autocast available")
             with torch.amp.autocast(device_type='cuda', dtype=torch.bfloat16):
                 loss_ita, loss_itm, loss_lm = model(image, caption, alpha = alpha)  
