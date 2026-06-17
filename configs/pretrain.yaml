@@ -1,5 +1,5 @@
 train_file: ['/home/minwoo/Distillation_Project/datasets/vision/coco/annotations/coco_karpathy_train.json',
-             '/home/minwoo/Distillation_Project/datasets/vision/vg/annotation/vg_train.json'
+             '/home/minwoo/Distillation_Project/datasets/vision/vg/annotations/vg_train.json'
              ]
 laion_path: ''   
 image_root_coco: '/home/minwoo/Distillation_Project/datasets/vision/coco/images/'
@@ -17,7 +17,7 @@ used_dataset: 'coco_vg'
 
 # output_dir: '/home/minwoo/Distillation_Project/output/pretrain_coco_cc12m_small'
 # output_dir: '/home/minwoo/Distillation_Project/output/pretrain_coco_only_baseline'
-output_dir: '/home/minwoo/Distillation_Project/output/pretrain_coco_vg_baseline'
+output_dir: '/home/minwoo/Distillation_Project/output/pt_checkpoint_base'
 
 # new) tenserboard log interval
 tb_train_log_interval: 50
@@ -88,7 +88,7 @@ warmup_lr: 0.0667e-6
 lr_decay_rate: 0.9
 max_epoch: 20 # 테스트용. 원래 얼마더라? 20임
 # warmup_steps: 3000 # 배치 75 
-warmup_steps: 45000
+warmup_steps: 37000
 
 
 

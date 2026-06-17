@@ -346,12 +346,12 @@ class PretrainValLossRunner:
         if not utils.is_main_process():
             return
 
-        self.writer.add_scalar("loss/val/ita", stats["loss_ita"], global_step)
-        self.writer.add_scalar("loss/val/itm", stats["loss_itm"], global_step)
-        self.writer.add_scalar("loss/val/lm", stats["loss_lm"], global_step)
+        self.writer.add_scalar("loss_val/ita", stats["loss_ita"], global_step)
+        self.writer.add_scalar("loss_val/itm", stats["loss_itm"], global_step)
+        self.writer.add_scalar("loss_val/lm", stats["loss_lm"], global_step)
         # self.writer.add_scalar("loss/val/retrieval", stats["loss_retrieval"], global_step)
         # self.writer.add_scalar("loss/val/captioning", stats["loss_captioning"], global_step)
-        self.writer.add_scalar("loss/val/total", stats["loss_total"], global_step)
+        self.writer.add_scalar("loss_val/total", stats["loss_total"], global_step)
         self.writer.add_scalar("val/alpha", stats["alpha"], global_step)
 
 

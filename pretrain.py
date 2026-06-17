@@ -43,7 +43,7 @@ from torch.utils.tensorboard import SummaryWriter
 def make_tb_run_name(config):
     tb_option_dict = {
         # "experiment": "test_tensorboard",
-        "experiment": "baseline_lr_verylow",
+        "exp": "baseline_lrlow_amp",
         "mode": "pretrain",
         "vit": config["vit"],
         "bert": config["my_bert_size"],
@@ -88,8 +88,8 @@ def train(model, data_loader, optimizer, epoch, device, config, writer=None, val
         # loss_ita, loss_itm, loss_lm = model(image, caption, alpha = alpha)  
         # loss = loss_ita + loss_itm + loss_lm  
         # bp 16 mixed precision
-        if device == "cuda": # 이 부분 수정할 예정
-        # if device.type == "cuda": # .type로 수정해봄
+        # if device == "cuda": # 이 부분 수정할 예정
+        if device.type == "cuda": # .type로 수정해봄
             # print("autocast available")
             with torch.amp.autocast(device_type='cuda', dtype=torch.bfloat16):
                 loss_ita, loss_itm, loss_lm = model(image, caption, alpha = alpha)  
@@ -109,10 +109,10 @@ def train(model, data_loader, optimizer, epoch, device, config, writer=None, val
 
         # 로컬 기록 이후에 텐서보드 입력, config에 tb_log_interval을 적기
         if writer is not None and global_step % config["tb_train_log_interval"] == 0:
-            writer.add_scalar("loss/train/ita", loss_ita.item(), global_step)
-            writer.add_scalar("loss/train/itm", loss_itm.item(), global_step)
-            writer.add_scalar("loss/train/lm", loss_lm.item(), global_step)
-            writer.add_scalar("loss/train/total", loss.item(), global_step)
+            writer.add_scalar("loss_train/ita", loss_ita.item(), global_step)
+            writer.add_scalar("loss_train/itm", loss_itm.item(), global_step)
+            writer.add_scalar("loss_train/lm", loss_lm.item(), global_step)
+            writer.add_scalar("loss_train/total", loss.item(), global_step)
             writer.add_scalar("optim/lr", optimizer.param_groups[0]["lr"], global_step)
             writer.add_scalar("train/alpha", alpha, global_step)
         # 이후 벨리데이션 로그도 여기다 적기

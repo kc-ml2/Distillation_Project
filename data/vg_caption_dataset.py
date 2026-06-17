@@ -46,8 +46,8 @@ def mod_vg_json(annotation_root_vg, annotation_output_vg):
 
 if __name__ == "__main__":
     # 1. 파일 경로 설정 (실제 환경에 맞게 수정해주세요)
-    VG_RAW_FILE = "/home/minwoo/Distillation_Project/datasets/vision/vg/annotation/"
-    VG_OUT_FILE = "/home/minwoo/Distillation_Project/datasets/vision/vg/annotation"
+    VG_RAW_FILE = "/home/minwoo/Distillation_Project/datasets/vision/vg/annotations/"
+    VG_OUT_FILE = "/home/minwoo/Distillation_Project/datasets/vision/vg/annotations/"
     # VG 파일이 있다면 실행
     if os.path.exists(VG_RAW_FILE):
         mod_vg_json(VG_RAW_FILE, VG_OUT_FILE)
