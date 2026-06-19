@@ -12,12 +12,20 @@ import transformers
 transformers.logging.set_verbosity_warning() # 에러와 경고까지는 보여줌?
 logger = transformers.logging.get_logger(__name__) # added? for warning at bottom logger
 
+import math
 import torch
 from torch import nn
 import torch.nn.functional as F
 from custom_functions.dinov3_encoder import DINOv3_Wrapper # custom function으로 이동한 후에 임포트
 
 from models.blip import create_vit, init_tokenizer, load_checkpoint
+
+#### 수정부분 시작: 실험 4 - temp 나누기 대신 logit_scale 곱하기로 reparam ####
+# 기존 temp clamp 범위 (0.001, 0.5) -> effective scale(1/temp) 범위는 (2, 1000).
+# reparam 자체의 효과만 보기 위해 exp(logit_scale)의 허용 범위를 동일하게 (2, 1000)으로 맞춤.
+LOGIT_SCALE_MIN = math.log(2)
+LOGIT_SCALE_MAX = math.log(1000)
+#### 수정부분 끝 ####
 
 class BLIP_Pretrain(nn.Module):
     def __init__(self,                 
@@ -253,7 +261,10 @@ class BLIP_Pretrain(nn.Module):
         
         self.queue_size = queue_size # 57600
         self.momentum = momentum # 0.995
-        self.temp = nn.Parameter(0.07*torch.ones([]))   # parameter and tensor(0.0700, requires_grad=True) ?? magic number for temperature
+        #### 수정부분 시작: 실험 4 - temp 나누기 대신 logit_scale 곱하기로 reparam ####
+        # exp(logit_scale_init) = 1/0.07 ≈ 14.2857로, 기존 temp=0.07 시작점과 동일한 effective scale에서 출발
+        self.logit_scale = nn.Parameter(torch.ones([]) * math.log(1 / 0.07))
+        #### 수정부분 끝 ####
         # momentum은 안바꿔도 되더라 그런데 디코더는 손을 좀 봐야겠음.
 
         ## ==========================decoder line=====================
@@ -289,28 +300,30 @@ class BLIP_Pretrain(nn.Module):
             - None  : self.training 값을 따라감
                     train mode면 True, eval mode면 False
             - True  : train forward처럼 내부 학습 state 갱신 허용
-                    self.temp clamp_, momentum encoder update, queue enqueue 수행
+                    self.logit_scale clamp_, momentum encoder update, queue enqueue 수행
             - False : validation forward처럼 loss만 계산
-                    self.temp 직접 변경, momentum update, queue enqueue 금지
+                    self.logit_scale 직접 변경, momentum update, queue enqueue 금지
 
         주의:
             model.eval()은 dropout/batchnorm 동작만 바꾸며,
-            forward 안의 self.temp.clamp_(), _momentum_update(),
+            forward 안의 self.logit_scale.clamp_(), _momentum_update(),
             _dequeue_and_enqueue()를 자동으로 막아주지는 않는다.
         """
 
         if update_train_state is None:
             update_train_state = self.training
 
-        # self.temp는 contrastive loss의 learnable temperature parameter.
+        #### 수정부분 시작: 실험 4 - temp 나누기 대신 logit_scale 곱하기로 reparam ####
+        # self.logit_scale은 contrastive loss에 곱해지는 scale의 log값 (exp(logit_scale)가 실제 scale).
         # train에서는 기존 BLIP처럼 in-place clamp로 parameter 범위를 유지한다.
         # validation에서는 parameter를 직접 바꾸지 않고 계산용 clamped value만 사용한다.
         if update_train_state:
             with torch.no_grad():
-                self.temp.clamp_(0.001, 0.5)
-            contrastive_temperature = self.temp # 이름만 바꿔주기 
+                self.logit_scale.clamp_(LOGIT_SCALE_MIN, LOGIT_SCALE_MAX)
+            safe_scale = self.logit_scale.exp()
         else:
-            contrastive_temperature = self.temp.clamp(0.001, 0.5)
+            safe_scale = self.logit_scale.clamp(LOGIT_SCALE_MIN, LOGIT_SCALE_MAX).exp()
+        #### 수정부분 끝 ####
     #### 수정부분 끝 ####
         
         image_embeds = self.visual_encoder(image) # 임베딩 벡터 따와
@@ -340,9 +353,9 @@ class BLIP_Pretrain(nn.Module):
             text_feat_m = F.normalize(self.text_proj_m(text_output_m.last_hidden_state[:,0,:]),dim=-1) 
             text_feat_all = torch.cat([text_feat_m.t(),self.text_queue.clone().detach()],dim=1)
 
-            #### 수정부분 시작: contrastive temperature 사용 ####
-            sim_i2t_m = image_feat_m @ text_feat_all / contrastive_temperature
-            sim_t2i_m = text_feat_m @ image_feat_all / contrastive_temperature
+            #### 수정부분 시작: 실험 4 - temp 나누기 대신 logit_scale 곱하기 ####
+            sim_i2t_m = image_feat_m @ text_feat_all * safe_scale
+            sim_t2i_m = text_feat_m @ image_feat_all * safe_scale
             #### 수정부분 끝 ####
 
             sim_targets = torch.zeros(sim_i2t_m.size()).to(image.device)
@@ -351,9 +364,9 @@ class BLIP_Pretrain(nn.Module):
             sim_i2t_targets = alpha * F.softmax(sim_i2t_m, dim=1) + (1 - alpha) * sim_targets
             sim_t2i_targets = alpha * F.softmax(sim_t2i_m, dim=1) + (1 - alpha) * sim_targets        
 
-        #### 수정부분 시작: contrastive temperature 사용 ####
-        sim_i2t = image_feat @ text_feat_all / contrastive_temperature
-        sim_t2i = text_feat @ image_feat_all / contrastive_temperature
+        #### 수정부분 시작: 실험 4 - temp 나누기 대신 logit_scale 곱하기 ####
+        sim_i2t = image_feat @ text_feat_all * safe_scale
+        sim_t2i = text_feat @ image_feat_all * safe_scale
         #### 수정부분 끝 ####
                              
         loss_i2t = -torch.sum(F.log_softmax(sim_i2t, dim=1)*sim_i2t_targets,dim=1).mean()

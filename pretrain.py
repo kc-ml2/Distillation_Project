@@ -56,7 +56,7 @@ class CollapseDetected(Exception):
 def make_tb_run_name(config):
     tb_option_dict = {
         # "experiment": "test_tensorboard",
-        "exp": "2.no_decay_temp",
+        "exp": "4.logit_scale_no_decay",
         "mode": "pretrain",
         "vit": config["vit"],
         "bert": config["my_bert_size"],
@@ -132,15 +132,15 @@ def train(model, data_loader, optimizer, epoch, device, config, writer=None, val
                 writer.add_scalar("train/alpha", alpha, global_step)
             # 이후 벨리데이션 로그도 여기다 적기
 
-            #### 수정부분 시작: contrastive temperature / logit scale 기록 ####
-            # model.temp는 DDP gradient all-reduce로 모든 rank에서 bit-identical하게 유지되므로
+            #### 수정부분 시작: 실험 4 - logit_scale(곱하기 reparam) 기록 ####
+            # model.logit_scale도 DDP gradient all-reduce로 모든 rank에서 bit-identical하게 유지되므로
             # writer 유무와 상관없이 모든 rank가 독립적으로 계산해도 동일한 시점에 동일한 결론에 도달함
             model_for_log = model.module if hasattr(model, "module") else model
-            temp_value = model_for_log.temp.detach().item()
-            logit_scale_value = 1.0 / temp_value
+            logit_scale_raw = model_for_log.logit_scale.detach().item() # log space의 raw parameter
+            logit_scale_value = model_for_log.logit_scale.detach().exp().item() # 실제 loss에 곱해지는 scale
 
             if writer is not None:
-                writer.add_scalar("model/temp", temp_value, global_step)
+                writer.add_scalar("model/logit_scale_raw", logit_scale_raw, global_step)
                 writer.add_scalar("model/logit_scale", logit_scale_value, global_step)
             #### 수정부분 끝 ####
 
@@ -268,9 +268,9 @@ def main(args, config): # configs.pretrain.yaml
 
     model = model.to(device)   
 
-    #### 수정부분 시작: 실험 2 - contrastive temperature(self.temp)를 weight decay 대상에서 제외 ####
-    # optimizer 생성은 DDP wrap 이전이라 named_parameters() 이름이 'temp' 그대로 나옴 (module. 접두사 없음)
-    no_decay_param_names = {'temp'}
+    #### 수정부분 시작: 실험 4 - logit_scale reparam + weight decay 대상에서 제외 ####
+    # optimizer 생성은 DDP wrap 이전이라 named_parameters() 이름이 'logit_scale' 그대로 나옴 (module. 접두사 없음)
+    no_decay_param_names = {'logit_scale'}
     decay_params, no_decay_params = [], []
     for name, param in model.named_parameters():
         if name in no_decay_param_names:
