@@ -43,7 +43,7 @@ from torch.utils.tensorboard import SummaryWriter
 def make_tb_run_name(config):
     tb_option_dict = {
         # "experiment": "test_tensorboard",
-        "exp": "baseline_lrlow_amp",
+        "exp": "1.vg_crop",
         "mode": "pretrain",
         "vit": config["vit"],
         "bert": config["my_bert_size"],
