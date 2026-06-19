@@ -43,7 +43,7 @@ from torch.utils.tensorboard import SummaryWriter
 def make_tb_run_name(config):
     tb_option_dict = {
         # "experiment": "test_tensorboard",
-        "exp": "1.vg_crop",
+        "exp": "2.no_decay_temp",
         "mode": "pretrain",
         "vit": config["vit"],
         "bert": config["my_bert_size"],
@@ -231,7 +231,24 @@ def main(args, config): # configs.pretrain.yaml
 
     model = model.to(device)   
 
-    optimizer = torch.optim.AdamW(params=model.parameters(), lr=config['init_lr'], weight_decay=config['weight_decay'])
+    #### 수정부분 시작: 실험 2 - contrastive temperature(self.temp)를 weight decay 대상에서 제외 ####
+    # optimizer 생성은 DDP wrap 이전이라 named_parameters() 이름이 'temp' 그대로 나옴 (module. 접두사 없음)
+    no_decay_param_names = {'temp'}
+    decay_params, no_decay_params = [], []
+    for name, param in model.named_parameters():
+        if name in no_decay_param_names:
+            no_decay_params.append(param)
+        else:
+            decay_params.append(param)
+
+    optimizer = torch.optim.AdamW(
+        [
+            {'params': decay_params, 'weight_decay': config['weight_decay']},
+            {'params': no_decay_params, 'weight_decay': 0.0},
+        ],
+        lr=config['init_lr'],
+    )
+    #### 수정부분 끝 ####
     
     start_epoch = 0
     if args.checkpoint:    
