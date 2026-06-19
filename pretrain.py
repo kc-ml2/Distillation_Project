@@ -7,6 +7,7 @@
 '''
 import argparse
 import os
+import sys
 # import ruamel.yaml as yaml
 # from ruamel.yaml import YAML
 import yaml
@@ -39,6 +40,18 @@ from data import eval_validation_loss
 #### tensorboard scalars ####
 from torch.utils.tensorboard import SummaryWriter
 
+#### 수정부분 시작: temp 런어웨이 ablation용 자동 종료 트리거 (실험 1~4 끝나면 제거) ####
+# 이전 run(exp=baseline_lrlow_amp)에서 logit_scale(1/temp)이 epoch 4.3~6 사이에
+# 38~58 수준의 정상 플래토에서 클램프 상한(1000)까지 폭주한 걸 확인함.
+# 정상 범위보다 훨씬 위인 700을 10000 step 연속으로 넘기면 "사실상 붕괴 확정"으로 보고 종료.
+COLLAPSE_LOGIT_SCALE_THRESHOLD = 700.0
+COLLAPSE_SUSTAINED_STEPS = 10000
+COLLAPSE_MAX_EPOCH = 7  # 7 epoch 지나면 붕괴 여부와 무관하게 종료 (ablation 진단 목적상 충분)
+
+class CollapseDetected(Exception):
+    pass
+#### 수정부분 끝 ####
+
 # 텐서보드 이름을 제작해주는 함수. 컨피그만 있으면 알아서 만들 것임
 def make_tb_run_name(config):
     tb_option_dict = {
@@ -52,7 +65,7 @@ def make_tb_run_name(config):
     }
     return "__".join(f"{k}={v}" for k, v in tb_option_dict.items())
 
-def train(model, data_loader, optimizer, epoch, device, config, writer=None, val_loss_runner=None): # writer추가 val loss runner 추가
+def train(model, data_loader, optimizer, epoch, device, config, writer=None, val_loss_runner=None, collapse_counter=None): # writer추가 val loss runner 추가, collapse_counter추가
     # train
     model.train()  
     
@@ -108,22 +121,46 @@ def train(model, data_loader, optimizer, epoch, device, config, writer=None, val
         metric_logger.update(lr=optimizer.param_groups[0]["lr"])  
 
         # 로컬 기록 이후에 텐서보드 입력, config에 tb_log_interval을 적기
-        if writer is not None and global_step % config["tb_train_log_interval"] == 0:
-            writer.add_scalar("loss_train/ita", loss_ita.item(), global_step)
-            writer.add_scalar("loss_train/itm", loss_itm.item(), global_step)
-            writer.add_scalar("loss_train/lm", loss_lm.item(), global_step)
-            writer.add_scalar("loss_train/total", loss.item(), global_step)
-            writer.add_scalar("optim/lr", optimizer.param_groups[0]["lr"], global_step)
-            writer.add_scalar("train/alpha", alpha, global_step)
-        # 이후 벨리데이션 로그도 여기다 적기
+        # 주의: i, epoch은 모든 rank에서 동일하므로 이 게이트는 writer 유무와 무관하게 전체 rank가 동일하게 통과/스킵함
+        if global_step % config["tb_train_log_interval"] == 0:
+            if writer is not None:
+                writer.add_scalar("loss_train/ita", loss_ita.item(), global_step)
+                writer.add_scalar("loss_train/itm", loss_itm.item(), global_step)
+                writer.add_scalar("loss_train/lm", loss_lm.item(), global_step)
+                writer.add_scalar("loss_train/total", loss.item(), global_step)
+                writer.add_scalar("optim/lr", optimizer.param_groups[0]["lr"], global_step)
+                writer.add_scalar("train/alpha", alpha, global_step)
+            # 이후 벨리데이션 로그도 여기다 적기
 
-        #### 수정부분 시작: contrastive temperature / logit scale 기록 ####
+            #### 수정부분 시작: contrastive temperature / logit scale 기록 ####
+            # model.temp는 DDP gradient all-reduce로 모든 rank에서 bit-identical하게 유지되므로
+            # writer 유무와 상관없이 모든 rank가 독립적으로 계산해도 동일한 시점에 동일한 결론에 도달함
             model_for_log = model.module if hasattr(model, "module") else model
             temp_value = model_for_log.temp.detach().item()
+            logit_scale_value = 1.0 / temp_value
 
-            writer.add_scalar("model/temp", temp_value, global_step)
-            writer.add_scalar("model/logit_scale", 1.0 / temp_value, global_step)
-        #### 수정부분 끝 ####
+            if writer is not None:
+                writer.add_scalar("model/temp", temp_value, global_step)
+                writer.add_scalar("model/logit_scale", logit_scale_value, global_step)
+            #### 수정부분 끝 ####
+
+            #### 수정부분 시작: temp 런어웨이 ablation용 자동 종료 트리거 (실험 1~4 끝나면 제거) ####
+            if collapse_counter is not None:
+                if logit_scale_value > COLLAPSE_LOGIT_SCALE_THRESHOLD:
+                    collapse_counter['sustained_steps'] += config["tb_train_log_interval"]
+                else:
+                    collapse_counter['sustained_steps'] = 0
+
+                if collapse_counter['sustained_steps'] >= COLLAPSE_SUSTAINED_STEPS:
+                    raise CollapseDetected(
+                        f"logit_scale={logit_scale_value:.2f}가 {collapse_counter['sustained_steps']} step 연속으로 "
+                        f"{COLLAPSE_LOGIT_SCALE_THRESHOLD} 초과 (epoch={epoch}, global_step={global_step})"
+                    )
+                if epoch >= COLLAPSE_MAX_EPOCH:
+                    raise CollapseDetected(
+                        f"epoch={epoch}로 COLLAPSE_MAX_EPOCH({COLLAPSE_MAX_EPOCH}) 도달 (global_step={global_step}, logit_scale={logit_scale_value:.2f})"
+                    )
+            #### 수정부분 끝 ####
 
         #### 수정부분 시작: train 도중 validation loss optional 실행 ####
         if val_loss_runner is not None:
@@ -267,14 +304,18 @@ def main(args, config): # configs.pretrain.yaml
 
     # 만약 ddp가 설정됨 -> without ddp와 ddp를 분리시킴. model은 ddp설정된거, w/o ddp는 일반 블립 하나
 
+    #### 수정부분 시작: temp 런어웨이 ablation용 자동 종료 트리거 - epoch 경계 넘어서도 연속 카운트 유지 (실험 1~4 끝나면 제거) ####
+    collapse_counter = {'sustained_steps': 0}
+    #### 수정부분 끝 ####
+
     try: # writer 자동종료를 위해서
         print("Start training")
-        start_time = time.time()    
+        start_time = time.time()
         for epoch in range(start_epoch, config['max_epoch']):
-            
+
             step_lr_schedule(optimizer, epoch, config['init_lr'], config['min_lr'], config['lr_decay_rate'])
-                    
-            train_stats = train(model, data_loader, optimizer, epoch, device, config, writer, val_loss_runner=val_loss_runner) # writer추가
+
+            train_stats = train(model, data_loader, optimizer, epoch, device, config, writer, val_loss_runner=val_loss_runner, collapse_counter=collapse_counter) # writer추가, collapse_counter추가
             
             #### 수정부분 시작: epoch 종료 validation loss 실행 ####
             val_stats = {}
@@ -309,7 +350,22 @@ def main(args, config): # configs.pretrain.yaml
                     
         total_time = time.time() - start_time
         total_time_str = str(datetime.timedelta(seconds=int(total_time)))
-        print('Training time {}'.format(total_time_str)) 
+        print('Training time {}'.format(total_time_str))
+
+    #### 수정부분 시작: temp 런어웨이 ablation용 자동 종료 트리거 - 감지 시 체크포인트 남기고 종료 (실험 1~4 끝나면 제거) ####
+    except CollapseDetected as e:
+        print(f"[COLLAPSE TRIGGER] {e}")
+        if utils.is_main_process():
+            save_obj = {
+                'model': model_without_ddp.state_dict(),
+                'optimizer': optimizer.state_dict(),
+                'config': config,
+            }
+            torch.save(save_obj, os.path.join(args.output_dir, 'checkpoint_collapsed.pth'))
+            with open(os.path.join(args.output_dir, "log.txt"), "a") as f:
+                f.write(json.dumps({'collapsed': str(e)}) + "\n")
+        sys.exit(99)
+    #### 수정부분 끝 ####
 
     finally:
         if writer is not None:
