@@ -28,11 +28,16 @@ def mod_vg_json(annotation_root_vg, annotation_output_vg):
         
         for region in item['regions']: # 이건 리스트가 하나 나옴. 그래서 하나의 리전당 캡션, 리전 아이디 위치, 이미지 아이디, phrase(caption) 가 나옴
             # 딕셔너리 형태로 저장하기
-            formatted_data.append({ 
+            formatted_data.append({
                 "image_id": image_id,
                 "id": caption_id,
                 "image": img_name,
                 "caption": region['phrase'].strip(),
+                # VG는 캡션이 이미지 전체가 아니라 region 하나를 가리키므로 bbox를 같이 들고가서 로더에서 crop 한다
+                "x": region['x'],
+                "y": region['y'],
+                "width": region['width'],
+                "height": region['height'],
                 # "dataset_source": "vg" # 데이터로더 라우팅을 위한 꼬리표 이건나중에 한번에 하는게?
             })
             caption_id += 1

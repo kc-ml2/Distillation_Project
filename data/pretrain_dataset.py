@@ -79,10 +79,21 @@ class pretrain_dataset(Dataset):
 
         image_path = os.path.join(img_root, ann['image']) # 진짜 이미지 파일이 있는 경로 만들기
         # ann['image']: 'val2014/COCO_val2014_000000522418.jpg' 코코예시
-        # ann['image']: '1.jpg', 'caption' vg예시
+        # ann['image']: '1.jpg', 'caption' vg예시 (x,y,width,height: caption이 가리키는 region)
 
         # 그러면 해당 루트 경로를 받아서
-        image = Image.open(image_path).convert('RGB')   
+        image = Image.open(image_path).convert('RGB')
+
+        if ann['dataset_source'] == 'vg':
+            # VG는 캡션이 이미지 전체가 아니라 특정 region을 설명하므로 전체 이미지 대신 해당 region만 crop
+            img_w, img_h = image.size
+            x0 = min(max(ann['x'], 0), img_w)
+            y0 = min(max(ann['y'], 0), img_h)
+            x1 = min(max(ann['x'] + ann['width'], 0), img_w)
+            y1 = min(max(ann['y'] + ann['height'], 0), img_h)
+            if x1 > x0 and y1 > y0: # 일부 region이 좌표가 음수거나 범위를 벗어나는 경우가 있어 방어
+                image = image.crop((x0, y0, x1, y1))
+
         image = self.transform(image)
         caption = pre_caption(ann['caption'],30)
         
