@@ -17,7 +17,7 @@ used_dataset: 'coco_vg'
 
 # output_dir: '/home/minwoo/Distillation_Project/output/pretrain_coco_cc12m_small'
 # output_dir: '/home/minwoo/Distillation_Project/output/pretrain_coco_only_baseline'
-output_dir: '/home/minwoo/Distillation_Project/output/pt_checkpoint_base'
+output_dir: '/home/minwoo/Distillation_Project/output/pt_checkpoint_base_amp'
 
 # new) tenserboard log interval
 tb_train_log_interval: 50
@@ -79,7 +79,7 @@ alpha: 0.4
 # optimizer 기존에는 글로벌 배치가 3200이다. 32*75 = 2400, 즉 15분의 1로 줄여야한다는것
 weight_decay: 0.05 # 유지
 # init_lr: 3e-4 # 배치 75
-init_lr: 2.0e-5
+init_lr: 1.0e-5 # 2.0e-5
 
 # min_lr: 1.0e-6 최초
 min_lr: 0.0667e-6
