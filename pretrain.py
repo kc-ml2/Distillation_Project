@@ -46,7 +46,6 @@ from torch.utils.tensorboard import SummaryWriter
 # 정상 범위보다 훨씬 위인 700을 10000 step 연속으로 넘기면 "사실상 붕괴 확정"으로 보고 종료.
 COLLAPSE_LOGIT_SCALE_THRESHOLD = 700.0
 COLLAPSE_SUSTAINED_STEPS = 10000
-COLLAPSE_MAX_EPOCH = 7  # 7 epoch 지나면 붕괴 여부와 무관하게 종료 (ablation 진단 목적상 충분)
 
 class CollapseDetected(Exception):
     pass
@@ -155,10 +154,6 @@ def train(model, data_loader, optimizer, epoch, device, config, writer=None, val
                     raise CollapseDetected(
                         f"logit_scale={logit_scale_value:.2f}가 {collapse_counter['sustained_steps']} step 연속으로 "
                         f"{COLLAPSE_LOGIT_SCALE_THRESHOLD} 초과 (epoch={epoch}, global_step={global_step})"
-                    )
-                if epoch >= COLLAPSE_MAX_EPOCH:
-                    raise CollapseDetected(
-                        f"epoch={epoch}로 COLLAPSE_MAX_EPOCH({COLLAPSE_MAX_EPOCH}) 도달 (global_step={global_step}, logit_scale={logit_scale_value:.2f})"
                     )
             #### 수정부분 끝 ####
 
