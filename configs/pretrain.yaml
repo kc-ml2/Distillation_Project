@@ -67,6 +67,24 @@ val_loss_amp: true
 #### 수정부분 끝 ####
 ###
 
+#### 수정부분 시작: COCO Karpathy retrieval validation (momentum 없는 student-only R@1/5/10) ####
+# ITC-only: 코사인 유사도만, 가벼움 (~10-30초) -> 자주 체크
+# ITM rerank: ITC top-k를 ITM head로 재채점, 무거움 (~2-5분) -> 1시간에 한 번 꼴 (1 epoch ~4시간 실측 기준)
+val_retrieval_enabled: true
+val_retrieval_ann_root: '/home/minwoo/Distillation_Project/datasets/vision/coco/annotations/'
+val_retrieval_image_root: '/home/minwoo/Distillation_Project/datasets/vision/coco/images/'
+val_retrieval_split: 'val'
+val_retrieval_batch_size: 64
+val_retrieval_num_workers: 4
+k_test: 128
+
+val_retrieval_itc_interval_steps: 1000
+val_retrieval_itc_epoch_end: true
+
+val_retrieval_itm_interval_steps: 10000
+val_retrieval_itm_epoch_end: true
+#### 수정부분 끝 ####
+
 # batch 작아지면 init lr도 작아지고, 웜업 스텝을 늘려야한다
 
 image_size: 224
