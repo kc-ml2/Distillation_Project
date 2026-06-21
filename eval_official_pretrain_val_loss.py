@@ -27,29 +27,6 @@ from models.blip_pretrain import blip_pretrain
 from data import eval_validation_loss
 
 
-def load_model_weights_only(model, checkpoint_path):
-    checkpoint = torch.load(checkpoint_path, map_location="cpu")
-
-    if isinstance(checkpoint, dict) and "model" in checkpoint:
-        state_dict = checkpoint["model"]
-    else:
-        state_dict = checkpoint
-
-    clean_state_dict = {}
-    for k, v in state_dict.items():
-        if k.startswith("module."):
-            k = k[len("module."):]
-        clean_state_dict[k] = v
-
-    msg = model.load_state_dict(clean_state_dict, strict=False)
-
-    if utils.is_main_process():
-        print(f"Loaded model weights from: {checkpoint_path}")
-        print(msg)
-
-    return model
-
-
 def main(args, config):
     utils.init_distributed_mode(args)
 
@@ -95,7 +72,7 @@ def main(args, config):
     if not args.checkpoint:
         raise ValueError("--checkpoint is required")
 
-    model = load_model_weights_only(model, args.checkpoint)
+    model = utils.load_model_weights_only(model, args.checkpoint)
 
     if args.distributed:
         model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[args.gpu])

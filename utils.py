@@ -246,6 +246,29 @@ def is_main_process():
     return get_rank() == 0
 
 
+def load_model_weights_only(model, checkpoint_path):
+    checkpoint = torch.load(checkpoint_path, map_location="cpu")
+
+    if isinstance(checkpoint, dict) and "model" in checkpoint:
+        state_dict = checkpoint["model"]
+    else:
+        state_dict = checkpoint
+
+    clean_state_dict = {}
+    for k, v in state_dict.items():
+        if k.startswith("module."):
+            k = k[len("module."):]
+        clean_state_dict[k] = v
+
+    msg = model.load_state_dict(clean_state_dict, strict=False)
+
+    if is_main_process():
+        print(f"Loaded model weights from: {checkpoint_path}")
+        print(msg)
+
+    return model
+
+
 def save_on_master(*args, **kwargs):
     if is_main_process():
         torch.save(*args, **kwargs)
