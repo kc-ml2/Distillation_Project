@@ -124,7 +124,8 @@ def main(args, config):
             json.dump(val_stats, f, indent=2)
         print(f"Saved stats to: {out_path}")
 
-    dist.barrier()
+    if args.distributed:
+        dist.barrier()
 
     if writer is not None:
         writer.close()

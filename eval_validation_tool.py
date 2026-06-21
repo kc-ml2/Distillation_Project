@@ -1,11 +1,10 @@
 # custom code
-# evaluate validation loss / caption / retrival
+# evaluate caption / retrieval validation metrics
 # usually for pretraining
 
-# three options
-# 1. val loss from validation set -> coco
-# 2. caption metric from val set -> coco
-# 3. retrival metric from val set -> coco
+# two options
+# 1. caption metric from val set -> coco
+# 2. retrival metric from val set -> coco
 # all validation functions from coco dataset
 
 import torch
@@ -16,36 +15,7 @@ import datetime
 import utils
 
 # =================================================================================
-# 1. Validation Loss 계산 모듈
-# =================================================================================
-@torch.no_grad()
-def evaluate_loss(model, data_loader, device, epoch):
-    print(f"\n[Epoch {epoch}] Validation Loss 평가 시작...")
-    metric_logger = utils.MetricLogger(delimiter="  ")
-    header = f'Val Loss Epoch: [{epoch}]'
-    print_freq = 50   
-
-    for i, (image, caption) in enumerate(metric_logger.log_every(data_loader, print_freq, header)): # 데이터로더는 도대체 역할이 뭐길래 enumerate하면 자동으로 뿜어져나오지
-        image = image.to(device, non_blocking=True)
-        alpha = 0.0 # Val에서는 alpha 0 고정 엥 알파가 뭔데 0으로 둬
-
-        if device == "cuda":
-            with torch.amp.autocast(device_type='cuda', dtype=torch.bfloat16):
-                loss_ita, loss_itm, loss_lm = model(image, caption, alpha=alpha)  
-                loss = loss_ita + loss_itm + loss_lm
-        else:
-            loss_ita, loss_itm, loss_lm = model(image, caption, alpha=alpha)  
-            loss = loss_ita + loss_itm + loss_lm
-
-        metric_logger.update(loss_ita=loss_ita.item())
-        metric_logger.update(loss_itm=loss_itm.item())
-        metric_logger.update(loss_lm=loss_lm.item())
-
-    metric_logger.synchronize_between_processes()
-    return {k: "{:.6f}".format(meter.global_avg) for k, meter in metric_logger.meters.items()}
-
-# =================================================================================
-# 2. Captioning 평가 모듈
+# 1. Captioning 평가 모듈
 # =================================================================================
 @torch.no_grad()
 def evaluate_caption(model, data_loader, device, config):
@@ -70,7 +40,7 @@ def evaluate_caption(model, data_loader, device, config):
     return result
 
 # =================================================================================
-# 3. Retrieval 평가 및 지표(Recall) 계산 모듈
+# 2. Retrieval 평가 및 지표(Recall) 계산 모듈
 # =================================================================================
 @torch.no_grad() # 근데 얘내들은 모멘텀 인코더까지 끌어와야하지않나 아닌가 모멘텀 큐가 저장되어있는게 트레이닝이고 벨리데이션에선 그냥 선택만 하면 되나
 def evaluate_retrieval(model, data_loader, device, config):
@@ -206,47 +176,3 @@ def itm_eval(scores_i2t, scores_t2i, txt2img, img2txt):
     return {'txt_r1': tr1, 'txt_r5': tr5, 'txt_r10': tr10, 'txt_r_mean': tr_mean,
             'img_r1': ir1, 'img_r5': ir5, 'img_r10': ir10, 'img_r_mean': ir_mean,
             'r_mean': r_mean}
-
-
-# =================================================================================
-# 4. 외부에서 호출하는 메인 Entry Point
-# =================================================================================
-def run_validation(model_without_ddp, device, config, epoch, writer=None, global_step=None, loaders=None):
-    # 컨피그 대신 바깥의 메인에서 뭘 할 것인지 정하는 리스트 주기
-    """
-    모든 Validation 로직을 오케스트레이션하는 함수.
-    loaders: {'loss': loss_loader, 'caption': caption_loader, 'retrieval': retrieval_loader} 형태의 딕셔너리
-    """
-    # 1. 평가 모드 진입
-    model_without_ddp.eval()
-    val_logs = {}
-
-    # 2. 설정된 평가 항목들에 따라 개별 함수 호출
-    if config.get("do_val_loss", False) and loaders.get('loss') is not None: # 이놈은 중복인데? 하만 해도 되잖아
-        loss_stats = evaluate_loss(model_without_ddp, loaders['loss'], device, epoch)
-        val_logs.update({f"val_{k}": v for k, v in loss_stats.items()})
-
-    if config.get("do_val_caption", False) and loaders.get('caption') is not None:
-        cap_result = evaluate_caption(model_without_ddp, loaders['caption'], device, config)
-        # 캡션 결과는 보통 리스트 형태이므로, 필요시 파일로 저장하거나 COCO Eval을 연결합니다.
-        val_logs["caption_result_sample"] = cap_result[:2] # 로그용으로 샘플 2개만 기록
-
-    if config.get("do_val_retrieval", False) and loaders.get('retrieval') is not None:
-        ret_loader = loaders['retrieval']
-        score_i2t, score_t2i = evaluate_retrieval(model_without_ddp, ret_loader, device, config)
-        
-        if utils.is_main_process(): # 왜 메인 프로세스만 하는거지?
-            ret_metrics = itm_eval(score_i2t, score_t2i, ret_loader.dataset.txt2img, ret_loader.dataset.img2txt) # ret_loader.dataset.txt2img가 무슨 함순데 애초에 로더는 뭘 받아오는거임?
-            val_logs.update({f"val_{k}": v for k, v in ret_metrics.items()})
-            print(f"[Retrieval 결과] r_mean: {ret_metrics['r_mean']:.2f}")
-
-    # (선택) TensorBoard 기록
-    if writer is not None and utils.is_main_process():
-        for k, v in val_logs.items():
-            if isinstance(v, (int, float, str)) and "caption" not in k:
-                writer.add_scalar(f"val/{k.replace('val_', '')}", float(v), global_step)
-
-    # 3. 평가 종료 후 학습 모드로 완벽 복구
-    model_without_ddp.train()
-    
-    return val_logs

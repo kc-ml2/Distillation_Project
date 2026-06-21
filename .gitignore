@@ -56,3 +56,9 @@ output/Pretrain/log.txt
 current_log.txt
 loss_curve.png
 loss_curve_epoch.png
+
+# =========================
+# Claude Code / superpowers artifacts
+# =========================
+claude_skills/
+docs/superpowers/
