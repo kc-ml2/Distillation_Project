@@ -36,6 +36,9 @@ from data import create_dataset, create_sampler, create_loader # init에 있는 
 #### 수정부분 시작: validation loss 모듈 import ####
 from data import eval_validation_loss
 #### 수정부분 끝 ####
+#### 수정부분 시작: retrieval validation 모듈 import ####
+from data import eval_validation_retrieval
+#### 수정부분 끝 ####
 
 #### tensorboard scalars ####
 from torch.utils.tensorboard import SummaryWriter
@@ -64,7 +67,7 @@ def make_tb_run_name(config):
     }
     return "__".join(f"{k}={v}" for k, v in tb_option_dict.items())
 
-def train(model, data_loader, optimizer, epoch, device, config, writer=None, val_loss_runner=None, collapse_counter=None): # writer추가 val loss runner 추가, collapse_counter추가
+def train(model, data_loader, optimizer, epoch, device, config, writer=None, val_loss_runner=None, collapse_counter=None, model_without_ddp=None, retrieval_val_runner=None): # writer추가 val loss runner 추가, collapse_counter추가, retrieval val runner 추가
     # train
     model.train()  
     
@@ -168,6 +171,16 @@ def train(model, data_loader, optimizer, epoch, device, config, writer=None, val
             )
         #### 수정부분 끝 ####
 
+        #### 수정부분 시작: train 도중 retrieval validation optional 실행 (ITC는 자주, ITM rerank는 드물게) ####
+        if retrieval_val_runner is not None:
+            retrieval_val_runner.val_retrieval_during_train(
+                model_without_ddp=model_without_ddp,
+                epoch=epoch,
+                iteration=i,
+                global_step=global_step,
+            )
+        #### 수정부분 끝 ####
+
         
     # gather the stats from all processes
     metric_logger.synchronize_between_processes()
@@ -247,6 +260,14 @@ def main(args, config): # configs.pretrain.yaml
         writer=writer,
     )
     #### 수정부분 끝 ####
+
+    #### 수정부분 시작: retrieval validation runner 생성 (momentum 없이 student 인코더만으로 COCO val retrieval 평가) ####
+    retrieval_val_runner = eval_validation_retrieval.build_pretrain_retrieval_val_runner(
+        config=config,
+        device=device,
+        writer=writer,
+    )
+    #### 수정부분 끝 ####
     
 
 
@@ -310,7 +331,7 @@ def main(args, config): # configs.pretrain.yaml
 
             step_lr_schedule(optimizer, epoch, config['init_lr'], config['min_lr'], config['lr_decay_rate'])
 
-            train_stats = train(model, data_loader, optimizer, epoch, device, config, writer, val_loss_runner=val_loss_runner, collapse_counter=collapse_counter) # writer추가, collapse_counter추가
+            train_stats = train(model, data_loader, optimizer, epoch, device, config, writer, val_loss_runner=val_loss_runner, collapse_counter=collapse_counter, model_without_ddp=model_without_ddp, retrieval_val_runner=retrieval_val_runner) # writer추가, collapse_counter추가, retrieval val runner 추가
             
             #### 수정부분 시작: epoch 종료 validation loss 실행 ####
             val_stats = {}
@@ -323,6 +344,17 @@ def main(args, config): # configs.pretrain.yaml
                     epoch=epoch,
                     global_step=epoch_end_global_step,
                     train_loader_len=len(data_loader),
+                )
+            #### 수정부분 끝 ####
+
+            #### 수정부분 시작: epoch 종료 retrieval validation 실행 ####
+            if retrieval_val_runner is not None:
+                epoch_end_global_step = (epoch + 1) * len(data_loader)
+
+                retrieval_val_runner.run_epoch_end(
+                    model_without_ddp=model_without_ddp,
+                    epoch=epoch,
+                    global_step=epoch_end_global_step,
                 )
             #### 수정부분 끝 ####
             
