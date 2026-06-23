@@ -1,3 +1,4 @@
+import contextlib
 import unittest
 
 import torch
@@ -13,6 +14,8 @@ class FakeTokenizerOutput:
         self.attention_mask = attention_mask
 
     def to(self, device):
+        self.input_ids = self.input_ids.to(device)
+        self.attention_mask = self.attention_mask.to(device)
         return self
 
 
@@ -45,7 +48,7 @@ class FakeTextEncoder(nn.Module):
                 encoder_hidden_states=None, encoder_attention_mask=None,
                 return_dict=True):
         batch, seq_len = input_ids.shape
-        hidden = torch.zeros(batch, seq_len, self.embed_dim)
+        hidden = torch.zeros(batch, seq_len, self.embed_dim, device=input_ids.device)
         for b in range(batch):
             tok = int(input_ids[b, 0].item())
             if 0 <= tok < self.embed_dim:
@@ -134,6 +137,56 @@ class EvaluateRetrievalSplitTest(unittest.TestCase):
         metrics = evt.itm_eval(scores_i2t, scores_t2i,
                                 self.dataset.txt2img, self.dataset.img2txt)
         self.assertEqual(metrics["r_mean"], 100.0)
+
+
+@unittest.skipUnless(torch.cuda.is_available(), "requires CUDA")
+class EvaluateRetrievalAmpCudaIntegrationTest(unittest.TestCase):
+    """val_retrieval_amp=True drives real bf16 autocast on a real CUDA device -
+    catches dtype mismatches (e.g. index_put into a fp32 score matrix with a
+    bf16 RHS) that CPU-only nullcontext tests can't exercise."""
+
+    def setUp(self):
+        self.n = 4
+        self.device = torch.device("cuda")
+        self.model = FakeRetrievalModel(embed_dim=self.n).to(self.device)
+        self.dataset = FakeRetrievalDataset(n=self.n)
+        self.loader = DataLoader(self.dataset, batch_size=2, shuffle=False)
+
+    def test_itm_rerank_with_amp_enabled_does_not_crash_and_keeps_perfect_recall(self):
+        config = {"k_test": 2, "val_retrieval_amp": True}
+        scores_i2t, scores_t2i = evt.evaluate_retrieval_itm(
+            self.model, self.loader, self.device, config)
+
+        metrics = evt.itm_eval(scores_i2t, scores_t2i,
+                                self.dataset.txt2img, self.dataset.img2txt)
+        self.assertEqual(metrics["r_mean"], 100.0)
+
+    def test_itc_only_with_amp_enabled_does_not_crash_and_keeps_perfect_recall(self):
+        config = {"k_test": 2, "val_retrieval_amp": True}
+        scores_i2t, scores_t2i = evt.evaluate_retrieval_itc(
+            self.model, self.loader, self.device, config)
+
+        metrics = evt.itm_eval(scores_i2t, scores_t2i,
+                                self.dataset.txt2img, self.dataset.img2txt)
+        self.assertEqual(metrics["r_mean"], 100.0)
+
+
+class RetrievalAutocastContextTest(unittest.TestCase):
+    def test_cpu_device_uses_nullcontext_even_when_amp_enabled(self):
+        ctx = evt._retrieval_autocast_context(torch.device("cpu"), {"val_retrieval_amp": True})
+        self.assertIsInstance(ctx, contextlib.nullcontext)
+
+    def test_cuda_device_uses_autocast_when_enabled(self):
+        ctx = evt._retrieval_autocast_context(torch.device("cuda"), {"val_retrieval_amp": True})
+        self.assertIsInstance(ctx, torch.amp.autocast_mode.autocast)
+
+    def test_cuda_device_uses_nullcontext_when_disabled(self):
+        ctx = evt._retrieval_autocast_context(torch.device("cuda"), {"val_retrieval_amp": False})
+        self.assertIsInstance(ctx, contextlib.nullcontext)
+
+    def test_defaults_to_amp_enabled_when_key_missing(self):
+        ctx = evt._retrieval_autocast_context(torch.device("cuda"), {})
+        self.assertIsInstance(ctx, torch.amp.autocast_mode.autocast)
 
 
 if __name__ == "__main__":

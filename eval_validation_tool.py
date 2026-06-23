@@ -7,6 +7,7 @@
 # 2. retrival metric from val set -> coco
 # all validation functions from coco dataset
 
+import contextlib
 import torch
 import torch.distributed as dist
 import torch.nn.functional as F
@@ -14,6 +15,15 @@ import numpy as np
 import time
 import datetime
 import utils
+
+
+def _retrieval_autocast_context(device, config):
+    """val_loss_runner와 동일한 게이팅: val_retrieval_amp(기본 true) and device.type=='cuda'일 때만
+    bf16 autocast, 그 외엔 nullcontext."""
+    amp_enabled = config.get('val_retrieval_amp', True) and device.type == 'cuda'
+    if amp_enabled:
+        return torch.amp.autocast(device_type='cuda', dtype=torch.bfloat16)
+    return contextlib.nullcontext()
 
 # =================================================================================
 # 1. Captioning 평가 모듈
@@ -102,8 +112,9 @@ def evaluate_retrieval_itc(model, data_loader, device, config):
     print('\nComputing features for ITC-only Retrieval evaluation...')
     start_time = time.time()
 
-    sims_matrix, _, _, _ = _encode_retrieval_features(
-        model, data_loader, device, need_patch_feats=False)
+    with _retrieval_autocast_context(device, config):
+        sims_matrix, _, _, _ = _encode_retrieval_features(
+            model, data_loader, device, need_patch_feats=False)
 
     total_time = time.time() - start_time
     total_time_str = str(datetime.timedelta(seconds=int(total_time)))
@@ -112,7 +123,7 @@ def evaluate_retrieval_itc(model, data_loader, device, config):
     score_matrix_i2t = sims_matrix
     score_matrix_t2i = sims_matrix.t()
 
-    return score_matrix_i2t.cpu().numpy(), score_matrix_t2i.cpu().numpy()
+    return score_matrix_i2t.float().cpu().numpy(), score_matrix_t2i.float().cpu().numpy()
 
 
 @torch.no_grad()
@@ -125,8 +136,9 @@ def evaluate_retrieval_itm(model, data_loader, device, config):
     header = 'Retrieval Evaluation:'
     start_time = time.time()
 
-    sims_matrix, image_feats, text_ids, text_atts = _encode_retrieval_features(
-        model, data_loader, device, need_patch_feats=True)
+    with _retrieval_autocast_context(device, config):
+        sims_matrix, image_feats, text_ids, text_atts = _encode_retrieval_features(
+            model, data_loader, device, need_patch_feats=True)
 
     texts = data_loader.dataset.text
     score_matrix_i2t = torch.full((len(data_loader.dataset.image), len(texts)), -100.0).to(device)
@@ -138,17 +150,18 @@ def evaluate_retrieval_itm(model, data_loader, device, config):
     end = min(sims_matrix.size(0), start + step)
 
     # I2T 평가
-    for i, sims in enumerate(metric_logger.log_every(sims_matrix[start:end], 50, header)):
-        topk_sim, topk_idx = sims.topk(k=config.get('k_test', 128), dim=0)
-        encoder_output = image_feats[start+i].repeat(config.get('k_test', 128), 1, 1).to(device)
-        encoder_att = torch.ones(encoder_output.size()[:-1], dtype=torch.long).to(device)
-        output = model.text_encoder(text_ids[topk_idx],
-                                    attention_mask = text_atts[topk_idx],
-                                    encoder_hidden_states = encoder_output,
-                                    encoder_attention_mask = encoder_att,
-                                    return_dict = True)
-        score = model.itm_head(output.last_hidden_state[:,0,:])[:,1]
-        score_matrix_i2t[start+i, topk_idx] = score + topk_sim
+    with _retrieval_autocast_context(device, config):
+        for i, sims in enumerate(metric_logger.log_every(sims_matrix[start:end], 50, header)):
+            topk_sim, topk_idx = sims.topk(k=config.get('k_test', 128), dim=0)
+            encoder_output = image_feats[start+i].repeat(config.get('k_test', 128), 1, 1).to(device)
+            encoder_att = torch.ones(encoder_output.size()[:-1], dtype=torch.long).to(device)
+            output = model.text_encoder(text_ids[topk_idx],
+                                        attention_mask = text_atts[topk_idx],
+                                        encoder_hidden_states = encoder_output,
+                                        encoder_attention_mask = encoder_att,
+                                        return_dict = True)
+            score = model.itm_head(output.last_hidden_state[:,0,:])[:,1]
+            score_matrix_i2t[start+i, topk_idx] = (score + topk_sim).to(score_matrix_i2t.dtype)
 
     sims_matrix_t = sims_matrix.t()
     score_matrix_t2i = torch.full((len(texts), len(data_loader.dataset.image)), -100.0).to(device)
@@ -158,17 +171,18 @@ def evaluate_retrieval_itm(model, data_loader, device, config):
     end = min(sims_matrix_t.size(0), start + step)
 
     # T2I 평가
-    for i, sims in enumerate(metric_logger.log_every(sims_matrix_t[start:end], 50, header)):
-        topk_sim, topk_idx = sims.topk(k=config.get('k_test', 128), dim=0)
-        encoder_output = image_feats[topk_idx].to(device)
-        encoder_att = torch.ones(encoder_output.size()[:-1], dtype=torch.long).to(device)
-        output = model.text_encoder(text_ids[start+i].repeat(config.get('k_test', 128), 1),
-                                    attention_mask = text_atts[start+i].repeat(config.get('k_test', 128), 1),
-                                    encoder_hidden_states = encoder_output,
-                                    encoder_attention_mask = encoder_att,
-                                    return_dict = True)
-        score = model.itm_head(output.last_hidden_state[:,0,:])[:,1]
-        score_matrix_t2i[start+i, topk_idx] = score + topk_sim
+    with _retrieval_autocast_context(device, config):
+        for i, sims in enumerate(metric_logger.log_every(sims_matrix_t[start:end], 50, header)):
+            topk_sim, topk_idx = sims.topk(k=config.get('k_test', 128), dim=0)
+            encoder_output = image_feats[topk_idx.cpu()].to(device)
+            encoder_att = torch.ones(encoder_output.size()[:-1], dtype=torch.long).to(device)
+            output = model.text_encoder(text_ids[start+i].repeat(config.get('k_test', 128), 1),
+                                        attention_mask = text_atts[start+i].repeat(config.get('k_test', 128), 1),
+                                        encoder_hidden_states = encoder_output,
+                                        encoder_attention_mask = encoder_att,
+                                        return_dict = True)
+            score = model.itm_head(output.last_hidden_state[:,0,:])[:,1]
+            score_matrix_t2i[start+i, topk_idx] = (score + topk_sim).to(score_matrix_t2i.dtype)
 
     if utils.is_dist_avail_and_initialized():
         dist.barrier()

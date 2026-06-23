@@ -76,6 +76,7 @@ val_retrieval_image_root: '/home/minwoo/Distillation_Project/datasets/vision/coc
 val_retrieval_split: 'val'
 val_retrieval_batch_size: 64
 val_retrieval_num_workers: 4
+val_retrieval_amp: true
 k_test: 128
 
 val_retrieval_itc_interval_steps: 1000
