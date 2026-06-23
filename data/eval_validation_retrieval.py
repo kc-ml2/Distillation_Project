@@ -60,11 +60,13 @@ class RetrievalValRunner:
                 header=f"Val Retrieval ITC: [epoch {epoch} | step {iteration} | global {global_step}]",
             )
 
-        itm_interval = self.config.get("val_retrieval_itm_interval_steps", 0)
-        if itm_interval and itm_interval > 0 and global_step % itm_interval == 0:
+        # ITM은 비싸서(epoch당 ~17% tax 실측) global_step 배수로 반복하지 않고, iteration(에폭 로컬
+        # step, 매 에폭 0부터 재시작)이 이 값과 같아지는 순간 - 즉 에폭당 정확히 1번만 돈다.
+        itm_mid_step = self.config.get("val_retrieval_itm_interval_steps", 0)
+        if itm_mid_step and itm_mid_step > 0 and iteration == itm_mid_step:
             results["itm"] = self._run_tier(
                 model_without_ddp, "itm", global_step,
-                header=f"Val Retrieval ITM: [epoch {epoch} | step {iteration} | global {global_step}]",
+                header=f"Val Retrieval ITM Mid-epoch: [epoch {epoch} | step {iteration} | global {global_step}]",
             )
 
         return results

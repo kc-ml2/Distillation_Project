@@ -26,7 +26,7 @@ class RetrievalValRunnerTest(unittest.TestCase):
 
         self.config = {
             "val_retrieval_itc_interval_steps": 1000,
-            "val_retrieval_itm_interval_steps": 10000,
+            "val_retrieval_itm_interval_steps": 50,
             "val_retrieval_itc_epoch_end": True,
             "val_retrieval_itm_epoch_end": True,
         }
@@ -46,21 +46,27 @@ class RetrievalValRunnerTest(unittest.TestCase):
         mock_itm.return_value = (None, None)
         mock_eval.return_value = {"r_mean": 0.0}
 
+        # ITC: global_step이 itc_interval(1000)의 배수일 때마다 반복
         self.runner.val_retrieval_during_train(self.model, epoch=0, iteration=999, global_step=1000)
         self.assertEqual(mock_itc.call_count, 1)
         self.assertEqual(mock_itm.call_count, 0)
 
-        self.runner.val_retrieval_during_train(self.model, epoch=0, iteration=9999, global_step=10000)
-        self.assertEqual(mock_itc.call_count, 2)
+        # ITM: iteration(에폭 로컬 step)이 itm_interval(50)과 같아지는 순간 1번만
+        self.runner.val_retrieval_during_train(self.model, epoch=0, iteration=50, global_step=1050)
+        self.assertEqual(mock_itc.call_count, 1)
         self.assertEqual(mock_itm.call_count, 1)
 
-        self.runner.val_retrieval_during_train(self.model, epoch=0, iteration=500, global_step=1500)
-        self.assertEqual(mock_itc.call_count, 2)
+        # 같은 에폭에서 다시 50을 지나가도 (이미 지나갔으므로 발생 안 함, 다른 값이면 트리거 안 됨)
+        self.runner.val_retrieval_during_train(self.model, epoch=0, iteration=51, global_step=1051)
         self.assertEqual(mock_itm.call_count, 1)
 
-        self.runner.val_retrieval_during_train(self.model, epoch=0, iteration=0, global_step=0)
-        self.assertEqual(mock_itc.call_count, 2)
-        self.assertEqual(mock_itm.call_count, 1)
+        # 다음 에폭에서 iteration이 0부터 다시 시작해 50에 도달하면 다시 1번 트리거
+        self.runner.val_retrieval_during_train(self.model, epoch=1, iteration=50, global_step=2050)
+        self.assertEqual(mock_itm.call_count, 2)
+
+        self.runner.val_retrieval_during_train(self.model, epoch=1, iteration=0, global_step=2001)
+        self.assertEqual(mock_itc.call_count, 1)
+        self.assertEqual(mock_itm.call_count, 2)
 
     @mock.patch("data.eval_validation_retrieval.eval_validation_tool.itm_eval")
     @mock.patch("data.eval_validation_retrieval.eval_validation_tool.evaluate_retrieval_itm")

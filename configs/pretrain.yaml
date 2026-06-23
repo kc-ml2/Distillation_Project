@@ -82,7 +82,7 @@ k_test: 128
 val_retrieval_itc_interval_steps: 1000
 val_retrieval_itc_epoch_end: true
 
-val_retrieval_itm_interval_steps: 10000
+val_retrieval_itm_interval_steps: 18675
 val_retrieval_itm_epoch_end: true
 #### 수정부분 끝 ####
 
