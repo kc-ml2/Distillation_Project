@@ -34,7 +34,7 @@ def build_teacher(config, device):
         my_bert_size="base",
         queue_size=config["queue_size"],
     )
-    ckpt = torch.load(config["teacher"]["checkpoint"], map_location="cpu")
+    ckpt = torch.load(config["teacher"]["checkpoint"], map_location="cpu", weights_only=False)
     state = ckpt.get("model", ckpt)
     msg = teacher.load_state_dict(state, strict=False)
     print("teacher load:", msg)

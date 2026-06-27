@@ -68,8 +68,9 @@ def build_cache(teacher_feat_fn, dataset, out_dir, dim, signature, teacher_id, b
     txt_feats = np.zeros((n, dim), dtype=np.float32)
     for start in range(0, n, batch_size):
         stop = min(start + batch_size, n)
-        images = torch.stack([dataset[i][0] for i in range(start, stop)])
-        captions = [dataset[i][1] for i in range(start, stop)]
+        items = [dataset[i] for i in range(start, stop)]
+        images = torch.stack([item[0] for item in items])
+        captions = [item[1] for item in items]
         img_f, txt_f = teacher_feat_fn(images, captions)
         img_feats[start:stop] = img_f.detach().cpu().numpy()
         txt_feats[start:stop] = txt_f.detach().cpu().numpy()
