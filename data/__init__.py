@@ -9,6 +9,7 @@ from data.flickr30k_dataset import flickr30k_train, flickr30k_retrieval_eval
 from data.vqa_dataset import vqa_dataset
 from data.nlvr_dataset import nlvr_dataset
 from data.pretrain_dataset import pretrain_dataset
+from distillation.teacher_cache import TeacherCache
 from data.pretrain_cc12m_webdataset import cc12m_webdataset # 이것도 웹데이터셋용으로 추가
 import glob
 
@@ -33,16 +34,23 @@ def create_dataset(dataset, config, min_scale=0.5):
         ])  
         
     if dataset=='pretrain':
-        # pretrain_train_aug=false면 학습 입력을 transform_test(결정적: Resize+normalize, 랜덤 crop/flip/RandAug 없음)로 고정.
-        # 오프라인 teacher 캐싱 distillation에서 teacher 타깃 뷰와 student 입력 뷰를 정확히 일치시키기 위한 control용. 기본 True = 기존 동작 유지.
+        # pretrain_train_aug=false면 학습 입력을 transform_test(결정적)로 고정 (캐싱 distillation용 control)
         use_train_aug = config.get('pretrain_train_aug', True)
         pretrain_transform = transform_train if use_train_aug else transform_test
-        dataset = pretrain_dataset(ann_file=config['train_file'], # 리스트 형태로 2개 들어옴
+
+        teacher_cache = None
+        distill_itc = config.get('distill', {}).get('itc', {})
+        if distill_itc.get('enabled', False):
+            teacher_cache = TeacherCache(distill_itc['cache_dir'])
+
+        dataset = pretrain_dataset(ann_file=config['train_file'],
                                    laion_path=config['laion_path'],
-                                   img_root_coco=config['image_root_coco'], # added
+                                   img_root_coco=config['image_root_coco'],
                                    img_root_vg=config['image_root_vg'],
-                                   transform=pretrain_transform
-        )# 이미지 루트 값 추가함.
+                                   transform=pretrain_transform,
+                                   teacher_cache=teacher_cache)
+        if teacher_cache is not None:
+            teacher_cache.validate_against(len(dataset), config['train_file'])
         return dataset
     
     elif dataset=='pretrain_cc12m_webdataset':

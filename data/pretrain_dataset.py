@@ -13,7 +13,7 @@ from data.utils import pre_caption
 import os,glob
 
 class pretrain_dataset(Dataset):
-    def __init__(self, ann_file, laion_path, img_root_coco, img_root_vg, transform): 
+    def __init__(self, ann_file, laion_path, img_root_coco, img_root_vg, transform, teacher_cache=None):
 
         self.ann_pretrain = []
         dataset_len = []
@@ -52,6 +52,7 @@ class pretrain_dataset(Dataset):
             self.annotation = self.ann_pretrain
             
         self.transform = transform
+        self.teacher_cache = teacher_cache
         self.img_root_coco = img_root_coco
         self.img_root_vg = img_root_vg
 
@@ -96,5 +97,8 @@ class pretrain_dataset(Dataset):
 
         image = self.transform(image)
         caption = pre_caption(ann['caption'],30)
-        
+
+        if self.teacher_cache is not None:
+            img_feat_t, txt_feat_t = self.teacher_cache.get(index)
+            return image, caption, img_feat_t, txt_feat_t
         return image, caption # 반출
