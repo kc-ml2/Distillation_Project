@@ -17,7 +17,13 @@ used_dataset: 'coco_vg'
 
 # output_dir: '/home/minwoo/Distillation_Project/output/pretrain_coco_cc12m_small'
 # output_dir: '/home/minwoo/Distillation_Project/output/pretrain_coco_only_baseline'
-output_dir: '/home/minwoo/Distillation_Project/output/pt_checkpoint_base_amp'
+# output_dir: '/home/minwoo/Distillation_Project/output/pt_checkpoint_base_logitscale_nodecay'
+output_dir: '/home/minwoo/Distillation_Project/output/pt_checkpoint_base_noaug'
+
+# experiment 태그 (tensorboard run 이름에 사용)
+exp: '5.no_aug'
+# 이미지 증강 토글: false면 학습도 transform_test(결정적). 캐싱 distillation 대비 control 실험용. 기본 동작은 true.
+pretrain_train_aug: false
 
 # new) tenserboard log interval
 tb_train_log_interval: 50

@@ -58,7 +58,7 @@ class CollapseDetected(Exception):
 def make_tb_run_name(config):
     tb_option_dict = {
         # "experiment": "test_tensorboard",
-        "exp": "4.logit_scale_no_decay",
+        "exp": config.get("exp", "unnamed"),   # config의 exp 키로 실험마다 지정 (하드코딩 제거)
         "mode": "pretrain",
         "vit": config["vit"],
         "bert": config["my_bert_size"],
