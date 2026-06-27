@@ -54,3 +54,24 @@ class TeacherCache:
             raise ValueError(
                 "Teacher cache train_files signature mismatch; dataset changed since caching."
             )
+
+
+@torch.no_grad()
+def build_cache(teacher_feat_fn, dataset, out_dir, dim, signature, teacher_id, batch_size=64):
+    """Iterate `dataset` in index order, compute teacher features, write the cache.
+
+    teacher_feat_fn(images, captions) -> (img_feat[B,dim], txt_feat[B,dim]), L2-normalized.
+    Returns N.
+    """
+    n = len(dataset)
+    img_feats = np.zeros((n, dim), dtype=np.float32)
+    txt_feats = np.zeros((n, dim), dtype=np.float32)
+    for start in range(0, n, batch_size):
+        stop = min(start + batch_size, n)
+        images = torch.stack([dataset[i][0] for i in range(start, stop)])
+        captions = [dataset[i][1] for i in range(start, stop)]
+        img_f, txt_f = teacher_feat_fn(images, captions)
+        img_feats[start:stop] = img_f.detach().cpu().numpy()
+        txt_feats[start:stop] = txt_f.detach().cpu().numpy()
+    write_cache(out_dir, img_feats, txt_feats, signature, dim, teacher_id)
+    return n
