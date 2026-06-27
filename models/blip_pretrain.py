@@ -19,6 +19,7 @@ import torch.nn.functional as F
 from custom_functions.dinov3_encoder import DINOv3_Wrapper # custom function으로 이동한 후에 임포트
 
 from models.blip import create_vit, init_tokenizer, load_checkpoint
+from distillation.losses import itc_distill_loss
 
 #### 수정부분 시작: 실험 4 - temp 나누기 대신 logit_scale 곱하기로 reparam ####
 # 기존 temp clamp 범위 (0.001, 0.5) -> effective scale(1/temp) 범위는 (2, 1000).
@@ -293,7 +294,8 @@ class BLIP_Pretrain(nn.Module):
         # =========== depreciated ========
         
         
-    def forward(self, image, caption, alpha, update_train_state=None):
+    def forward(self, image, caption, alpha, update_train_state=None,
+                teacher_img_feat=None, teacher_text_feat=None, distill_temp=0.05):
     #### 수정부분 시작: validation-safe forward option 추가 ####
         """
         update_train_state:
@@ -448,8 +450,18 @@ class BLIP_Pretrain(nn.Module):
                                            return_dict = True,   
                                           )   
           
-        loss_lm = decoder_output.loss                
-        return loss_ita, loss_itm, loss_lm
+        loss_lm = decoder_output.loss
+
+        # external-teacher ITC distillation (in-batch BxB relational KL); None when disabled.
+        loss_itc_kd = None
+        if teacher_img_feat is not None and teacher_text_feat is not None:
+            loss_itc_kd = itc_distill_loss(
+                image_feat, text_feat,
+                teacher_img_feat.to(image.device), teacher_text_feat.to(image.device),
+                distill_temp,
+            )
+
+        return loss_ita, loss_itm, loss_lm, loss_itc_kd
  
 
 
