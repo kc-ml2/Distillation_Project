@@ -69,8 +69,13 @@ def make_tb_run_name(config):
 
 def train(model, data_loader, optimizer, epoch, device, config, writer=None, val_loss_runner=None, collapse_counter=None, model_without_ddp=None, retrieval_val_runner=None): # writer추가 val loss runner 추가, collapse_counter추가, retrieval val runner 추가
     # train
-    model.train()  
-    
+    model.train()
+
+    distill_itc = config.get('distill', {}).get('itc', {})
+    itc_kd_enabled = distill_itc.get('enabled', False)
+    itc_kd_weight = float(distill_itc.get('weight', 1.0))
+    itc_kd_temp = float(distill_itc.get('temp', 0.05))
+
     metric_logger = utils.MetricLogger(delimiter="  ")
     metric_logger.add_meter('lr', utils.SmoothedValue(window_size=50, fmt='{value:.6f}'))
     metric_logger.add_meter('loss_ita', utils.SmoothedValue(window_size=50, fmt='{value:.6f}'))
@@ -86,7 +91,12 @@ def train(model, data_loader, optimizer, epoch, device, config, writer=None, val
     data_loader.sampler.set_epoch(epoch)
 
 
-    for i, (image, caption) in enumerate(metric_logger.log_every(data_loader, print_freq, header)):
+    for i, batch in enumerate(metric_logger.log_every(data_loader, print_freq, header)):
+        if len(batch) == 4:
+            image, caption, teacher_img_feat, teacher_text_feat = batch
+        else:
+            image, caption = batch
+            teacher_img_feat = teacher_text_feat = None
         # 글로벌 스텝 추가
         global_step = epoch * len(data_loader) + i
         
@@ -104,15 +114,23 @@ def train(model, data_loader, optimizer, epoch, device, config, writer=None, val
         # loss = loss_ita + loss_itm + loss_lm  
         # bp 16 mixed precision
         # if device == "cuda": # 이 부분 수정할 예정
-        if device.type == "cuda": # .type로 수정해봄
-            # print("autocast available")
+        if device.type == "cuda":
             with torch.amp.autocast(device_type='cuda', dtype=torch.bfloat16):
-                loss_ita, loss_itm, loss_lm = model(image, caption, alpha = alpha)  
+                loss_ita, loss_itm, loss_lm, loss_itc_kd = model(
+                    image, caption, alpha=alpha,
+                    teacher_img_feat=teacher_img_feat, teacher_text_feat=teacher_text_feat,
+                    distill_temp=itc_kd_temp)
                 loss = loss_ita + loss_itm + loss_lm
+                if itc_kd_enabled and loss_itc_kd is not None:
+                    loss = loss + itc_kd_weight * loss_itc_kd
         else:
-            # print("autocast failed")
-            loss_ita, loss_itm, loss_lm = model(image, caption, alpha = alpha)  
+            loss_ita, loss_itm, loss_lm, loss_itc_kd = model(
+                image, caption, alpha=alpha,
+                teacher_img_feat=teacher_img_feat, teacher_text_feat=teacher_text_feat,
+                distill_temp=itc_kd_temp)
             loss = loss_ita + loss_itm + loss_lm
+            if itc_kd_enabled and loss_itc_kd is not None:
+                loss = loss + itc_kd_weight * loss_itc_kd
 
         loss.backward()
         optimizer.step()    
@@ -120,7 +138,9 @@ def train(model, data_loader, optimizer, epoch, device, config, writer=None, val
         metric_logger.update(loss_ita=loss_ita.item())
         metric_logger.update(loss_itm=loss_itm.item())
         metric_logger.update(loss_lm=loss_lm.item())
-        metric_logger.update(lr=optimizer.param_groups[0]["lr"])  
+        if loss_itc_kd is not None:
+            metric_logger.update(loss_itc_kd=loss_itc_kd.item())
+        metric_logger.update(lr=optimizer.param_groups[0]["lr"])
 
         # 로컬 기록 이후에 텐서보드 입력, config에 tb_log_interval을 적기
         # 주의: i, epoch은 모든 rank에서 동일하므로 이 게이트는 writer 유무와 무관하게 전체 rank가 동일하게 통과/스킵함
@@ -129,6 +149,8 @@ def train(model, data_loader, optimizer, epoch, device, config, writer=None, val
                 writer.add_scalar("loss_train/ita", loss_ita.item(), global_step)
                 writer.add_scalar("loss_train/itm", loss_itm.item(), global_step)
                 writer.add_scalar("loss_train/lm", loss_lm.item(), global_step)
+                if loss_itc_kd is not None:
+                    writer.add_scalar("loss_train/itc_kd", loss_itc_kd.item(), global_step)
                 writer.add_scalar("loss_train/total", loss.item(), global_step)
                 writer.add_scalar("optim/lr", optimizer.param_groups[0]["lr"], global_step)
                 writer.add_scalar("train/alpha", alpha, global_step)
