@@ -115,5 +115,14 @@ max_epoch: 20 # 테스트용. 원래 얼마더라? 20임
 # warmup_steps: 3000 # 배치 75 
 warmup_steps: 37000
 
+# ====== knowledge distillation (default OFF — never affects unrelated runs) ======
+distill:
+  itc:
+    enabled: false          # true로 켤 때 pretrain_train_aug 도 false 여야 함
+    weight: 1.0             # λ_itc
+    temp: 0.05              # τ, 증류 온도 (model logit_scale와 별개)
+    cache_dir: '/home/minwoo/Distillation_Project/output/teacher_cache_blip_large'
 
-
+teacher:
+  arch: 'blip_large'
+  checkpoint: '<REQUIRED: 학습된 BLIP-large 체크포인트 경로>'   # Phase-0 전에 채울 것
