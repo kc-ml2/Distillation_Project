@@ -23,7 +23,7 @@ output_dir: '/home/minwoo/Distillation_Project/output/pt_checkpoint_base_noaug'
 # experiment 태그 (tensorboard run 이름에 사용)
 exp: '5.no_aug'
 # 이미지 증강 토글: false면 학습도 transform_test(결정적). 캐싱 distillation 대비 control 실험용. 기본 동작은 true.
-pretrain_train_aug: false
+pretrain_train_aug: true   # online teacher distillation requires augmentation ON (no-aug was a NO-GO)
 
 # new) tenserboard log interval
 tb_train_log_interval: 50
@@ -121,7 +121,6 @@ distill:
     enabled: false          # true로 켤 때 pretrain_train_aug 도 false 여야 함
     weight: 1.0             # λ_itc
     temp: 0.05              # τ, 증류 온도 (model logit_scale와 별개)
-    cache_dir: '/home/minwoo/Distillation_Project/output/teacher_cache_blip_large'
 
 teacher:
   arch: 'blip_large'
