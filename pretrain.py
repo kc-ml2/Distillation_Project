@@ -67,7 +67,7 @@ def make_tb_run_name(config):
     }
     return "__".join(f"{k}={v}" for k, v in tb_option_dict.items())
 
-def train(model, data_loader, optimizer, epoch, device, config, writer=None, val_loss_runner=None, collapse_counter=None, model_without_ddp=None, retrieval_val_runner=None): # writer추가 val loss runner 추가, collapse_counter추가, retrieval val runner 추가
+def train(model, data_loader, optimizer, epoch, device, config, writer=None, val_loss_runner=None, collapse_counter=None, model_without_ddp=None, retrieval_val_runner=None, online_teacher=None): # online_teacher 추가
     # train
     model.train()
 
@@ -91,12 +91,7 @@ def train(model, data_loader, optimizer, epoch, device, config, writer=None, val
     data_loader.sampler.set_epoch(epoch)
 
 
-    for i, batch in enumerate(metric_logger.log_every(data_loader, print_freq, header)):
-        if len(batch) == 4:
-            image, caption, teacher_img_feat, teacher_text_feat = batch
-        else:
-            image, caption = batch
-            teacher_img_feat = teacher_text_feat = None
+    for i, (image, caption) in enumerate(metric_logger.log_every(data_loader, print_freq, header)):
         # 글로벌 스텝 추가
         global_step = epoch * len(data_loader) + i
         
@@ -106,7 +101,13 @@ def train(model, data_loader, optimizer, epoch, device, config, writer=None, val
         optimizer.zero_grad()
         
         image = image.to(device,non_blocking=True)
-        
+
+        # online teacher: same augmented batch -> ITC features (bf16, no_grad). None when distill off.
+        if itc_kd_enabled and online_teacher is not None:
+            teacher_img_feat, teacher_text_feat = online_teacher.itc_feats(image, caption)
+        else:
+            teacher_img_feat = teacher_text_feat = None
+
         # ramp up alpha in the first 2 epochs
         alpha = config['alpha']*min(1,(epoch*len(data_loader)+i)/(2*len(data_loader))) 
 
@@ -338,9 +339,21 @@ def main(args, config): # configs.pretrain.yaml
     model_without_ddp = model
     if args.distributed:
         model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[args.gpu])
-        model_without_ddp = model.module    
+        model_without_ddp = model.module
 
     # 만약 ddp가 설정됨 -> without ddp와 ddp를 분리시킴. model은 ddp설정된거, w/o ddp는 일반 블립 하나
+
+    #### online teacher (distillation) — replicate per rank, frozen, not DDP-wrapped ####
+    online_teacher = None
+    if config.get('distill', {}).get('itc', {}).get('enabled', False):
+        from distillation.online_teacher import OnlineTeacher
+        online_teacher = OnlineTeacher(
+            checkpoint=config['teacher']['checkpoint'],
+            image_size=config['image_size'],
+            vit='large', bert='base',
+            queue_size=config['queue_size'],
+        ).to(device)
+        print("[distill] online teacher loaded")
 
     #### 수정부분 시작: temp 런어웨이 ablation용 자동 종료 트리거 - epoch 경계 넘어서도 연속 카운트 유지 (실험 1~4 끝나면 제거) ####
     collapse_counter = {'sustained_steps': 0}
@@ -353,7 +366,7 @@ def main(args, config): # configs.pretrain.yaml
 
             step_lr_schedule(optimizer, epoch, config['init_lr'], config['min_lr'], config['lr_decay_rate'])
 
-            train_stats = train(model, data_loader, optimizer, epoch, device, config, writer, val_loss_runner=val_loss_runner, collapse_counter=collapse_counter, model_without_ddp=model_without_ddp, retrieval_val_runner=retrieval_val_runner) # writer추가, collapse_counter추가, retrieval val runner 추가
+            train_stats = train(model, data_loader, optimizer, epoch, device, config, writer, val_loss_runner=val_loss_runner, collapse_counter=collapse_counter, model_without_ddp=model_without_ddp, retrieval_val_runner=retrieval_val_runner, online_teacher=online_teacher) # online_teacher 추가
             
             #### 수정부분 시작: epoch 종료 validation loss 실행 ####
             val_stats = {}
