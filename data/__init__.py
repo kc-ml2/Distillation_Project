@@ -33,8 +33,7 @@ def create_dataset(dataset, config, min_scale=0.5):
         ])  
         
     if dataset=='pretrain':
-        # pretrain_train_aug=false면 학습 입력을 transform_test(결정적: Resize+normalize, 랜덤 crop/flip/RandAug 없음)로 고정.
-        # 오프라인 teacher 캐싱 distillation에서 teacher 타깃 뷰와 student 입력 뷰를 정확히 일치시키기 위한 control용. 기본 True = 기존 동작 유지.
+        # pretrain_train_aug=false면 학습 입력을 transform_test(결정적)로 고정. online teacher distillation은 augmentation ON(true) 필요.
         use_train_aug = config.get('pretrain_train_aug', True)
         pretrain_transform = transform_train if use_train_aug else transform_test
         dataset = pretrain_dataset(ann_file=config['train_file'], # 리스트 형태로 2개 들어옴

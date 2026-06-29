@@ -32,6 +32,8 @@ class TestOnlineTeacher(unittest.TestCase):
         # L2-normalized rows (bf16 tolerance)
         norms = img_feat.float().norm(dim=-1)
         self.assertTrue(torch.allclose(norms, torch.ones_like(norms), atol=5e-2))
+        txt_norms = txt_feat.float().norm(dim=-1)
+        self.assertTrue(torch.allclose(txt_norms, torch.ones_like(txt_norms), atol=5e-2))
 
 
 if __name__ == "__main__":

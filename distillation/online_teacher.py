@@ -18,6 +18,14 @@ class OnlineTeacher:
             state = ckpt.get("model", ckpt) if isinstance(ckpt, dict) else ckpt
             msg = model.load_state_dict(state, strict=False)
             print("teacher load:", msg)
+            critical_missing = [k for k in msg.missing_keys
+                                if k.startswith(("visual_encoder.", "text_encoder.", "vision_proj.", "text_proj."))]
+            if critical_missing:
+                raise RuntimeError(
+                    f"Teacher checkpoint is missing {len(critical_missing)} ITC-critical keys "
+                    f"(architecture mismatch vs vit='{vit}', bert='{bert}'?). "
+                    f"First few: {critical_missing[:5]}"
+                )
 
         # free submodules/buffers itc_feats never uses (~halves teacher memory)
         for attr in ("visual_encoder_m", "text_encoder_m", "vision_proj_m",

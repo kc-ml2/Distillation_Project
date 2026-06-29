@@ -118,7 +118,7 @@ warmup_steps: 37000
 # ====== knowledge distillation (default OFF — never affects unrelated runs) ======
 distill:
   itc:
-    enabled: false          # true로 켤 때 pretrain_train_aug 도 false 여야 함
+    enabled: false          # true로 켤 때 pretrain_train_aug: true 필요 (online teacher가 student와 같은 증강 뷰를 봐야 함)
     weight: 1.0             # λ_itc
     temp: 0.05              # τ, 증류 온도 (model logit_scale와 별개)
 
