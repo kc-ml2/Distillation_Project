@@ -84,3 +84,24 @@ class OnlineTeacher:
                                                   return_dict=True, mode="text")
             txt_feat = F.normalize(self.model.text_proj(text_output.last_hidden_state[:, 0, :]), dim=-1)
         return img_feat, txt_feat
+
+    @torch.no_grad()
+    def lm_logits(self, image, caption):
+        """Teacher-forced decoder logits for the same augmented batch.
+        학생 forward의 LM 경로와 동일한 토크나이즈/BOS 규칙 — forward 쪽에서
+        decoder_input_ids 일치를 assert하므로 규칙이 어긋나면 즉시 검출된다."""
+        self._require("lm")
+        device = image.device
+        with torch.amp.autocast(device_type=device.type, dtype=torch.bfloat16):
+            image_embeds = self.model.visual_encoder(image)
+            image_atts = torch.ones(image_embeds.size()[:-1], dtype=torch.long, device=device)
+            text = self.tokenizer(caption, padding="max_length", truncation=True,
+                                  max_length=30, return_tensors="pt").to(device)
+            decoder_input_ids = text.input_ids.clone()
+            decoder_input_ids[:, 0] = self.tokenizer.bos_token_id
+            out = self.model.text_decoder(decoder_input_ids,
+                                          attention_mask=text.attention_mask,
+                                          encoder_hidden_states=image_embeds,
+                                          encoder_attention_mask=image_atts,
+                                          return_dict=True)   # labels 없음 → logits만
+        return out.logits, decoder_input_ids

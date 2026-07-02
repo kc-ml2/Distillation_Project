@@ -35,6 +35,10 @@ class TestOnlineTeacher(unittest.TestCase):
         txt_norms = txt_feat.float().norm(dim=-1)
         self.assertTrue(torch.allclose(txt_norms, torch.ones_like(txt_norms), atol=5e-2))
 
+    def test_lm_logits_raises_without_lm_keep(self):
+        with self.assertRaises(RuntimeError):
+            self.teacher.lm_logits(torch.randn(1, 3, 224, 224), ["a cat"])
+
 
 class TestOnlineTeacherKeepLm(unittest.TestCase):
     """keep=('lm',): visual_encoder + text_decoder만 생존해야 한다."""
@@ -58,6 +62,18 @@ class TestOnlineTeacherKeepLm(unittest.TestCase):
     def test_itc_feats_raises_without_itc_keep(self):
         with self.assertRaises(RuntimeError):
             self.teacher.itc_feats(torch.randn(1, 3, 224, 224), ["a cat"])
+
+    def test_lm_logits_contract(self):
+        image = torch.randn(2, 3, 224, 224)
+        caption = ["a green field", "a red car"]
+        logits, dec_ids = self.teacher.lm_logits(image, caption)
+        vocab = len(self.teacher.tokenizer)          # 30524
+        self.assertEqual(tuple(logits.shape), (2, 30, vocab))
+        self.assertEqual(tuple(dec_ids.shape), (2, 30))
+        self.assertFalse(logits.requires_grad)
+        self.assertTrue(torch.isfinite(logits.float()).all())
+        # 첫 토큰은 BOS로 치환되어야 함 (학생의 decoder_input_ids 규칙과 동일)
+        self.assertTrue((dec_ids[:, 0] == self.teacher.tokenizer.bos_token_id).all())
 
 
 class TestOnlineTeacherKeepBoth(unittest.TestCase):
