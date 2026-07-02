@@ -65,6 +65,13 @@ def make_tb_run_name(config):
         "batch_size": f"bs{config['batch_size']}x{utils.get_world_size()}eff{config['batch_size'] * utils.get_world_size()}",
         "dataset": config["used_dataset"], # 주의! 야멜안바꾸면 잘못입력됨.
     }
+    # distill 활성 시 run name에 kd 태그 (예: kd=lm_w1.0T2.0) — w/T는 고정 하이퍼파라미터라
+    # 시계열 로깅 대신 이름+config.yaml 덤프로 기록
+    distill_cfg = config.get("distill", {})
+    kd_parts = [f"{k}_w{distill_cfg[k].get('weight', 1.0)}T{distill_cfg[k].get('temp')}"
+                for k in ("itc", "lm") if distill_cfg.get(k, {}).get("enabled", False)]
+    if kd_parts:
+        tb_option_dict["kd"] = "+".join(kd_parts)
     return "__".join(f"{k}={v}" for k, v in tb_option_dict.items())
 
 def train(model, data_loader, optimizer, epoch, device, config, writer=None, val_loss_runner=None, collapse_counter=None, model_without_ddp=None, retrieval_val_runner=None, online_teacher=None): # online_teacher 추가
@@ -75,6 +82,11 @@ def train(model, data_loader, optimizer, epoch, device, config, writer=None, val
     itc_kd_enabled = distill_itc.get('enabled', False)
     itc_kd_weight = float(distill_itc.get('weight', 1.0))
     itc_kd_temp = float(distill_itc.get('temp', 0.05))
+
+    distill_lm = config.get('distill', {}).get('lm', {})
+    lm_kd_enabled = distill_lm.get('enabled', False)
+    lm_kd_weight = float(distill_lm.get('weight', 1.0))
+    lm_kd_temp = float(distill_lm.get('temp', 2.0))
 
     metric_logger = utils.MetricLogger(delimiter="  ")
     metric_logger.add_meter('lr', utils.SmoothedValue(window_size=50, fmt='{value:.6f}'))
@@ -108,6 +120,12 @@ def train(model, data_loader, optimizer, epoch, device, config, writer=None, val
         else:
             teacher_img_feat = teacher_text_feat = None
 
+        # online teacher: same augmented batch -> LM decoder logits (bf16, no_grad). None when distill off.
+        if lm_kd_enabled and online_teacher is not None:
+            teacher_lm_logits, teacher_lm_ids = online_teacher.lm_logits(image, caption)
+        else:
+            teacher_lm_logits = teacher_lm_ids = None
+
         # ramp up alpha in the first 2 epochs
         alpha = config['alpha']*min(1,(epoch*len(data_loader)+i)/(2*len(data_loader))) 
 
@@ -117,21 +135,29 @@ def train(model, data_loader, optimizer, epoch, device, config, writer=None, val
         # if device == "cuda": # 이 부분 수정할 예정
         if device.type == "cuda":
             with torch.amp.autocast(device_type='cuda', dtype=torch.bfloat16):
-                loss_ita, loss_itm, loss_lm, loss_itc_kd = model(
+                loss_ita, loss_itm, loss_lm, loss_itc_kd, loss_lm_kd = model(
                     image, caption, alpha=alpha,
                     teacher_img_feat=teacher_img_feat, teacher_text_feat=teacher_text_feat,
-                    distill_temp=itc_kd_temp)
+                    distill_temp=itc_kd_temp,
+                    teacher_lm_logits=teacher_lm_logits, teacher_lm_input_ids=teacher_lm_ids,
+                    lm_distill_temp=lm_kd_temp)
                 loss = loss_ita + loss_itm + loss_lm
                 if itc_kd_enabled and loss_itc_kd is not None:
                     loss = loss + itc_kd_weight * loss_itc_kd
+                if lm_kd_enabled and loss_lm_kd is not None:
+                    loss = loss + lm_kd_weight * loss_lm_kd
         else:
-            loss_ita, loss_itm, loss_lm, loss_itc_kd = model(
+            loss_ita, loss_itm, loss_lm, loss_itc_kd, loss_lm_kd = model(
                 image, caption, alpha=alpha,
                 teacher_img_feat=teacher_img_feat, teacher_text_feat=teacher_text_feat,
-                distill_temp=itc_kd_temp)
+                distill_temp=itc_kd_temp,
+                teacher_lm_logits=teacher_lm_logits, teacher_lm_input_ids=teacher_lm_ids,
+                lm_distill_temp=lm_kd_temp)
             loss = loss_ita + loss_itm + loss_lm
             if itc_kd_enabled and loss_itc_kd is not None:
                 loss = loss + itc_kd_weight * loss_itc_kd
+            if lm_kd_enabled and loss_lm_kd is not None:
+                loss = loss + lm_kd_weight * loss_lm_kd
 
         loss.backward()
         optimizer.step()    
@@ -141,6 +167,8 @@ def train(model, data_loader, optimizer, epoch, device, config, writer=None, val
         metric_logger.update(loss_lm=loss_lm.item())
         if loss_itc_kd is not None:
             metric_logger.update(loss_itc_kd=loss_itc_kd.item())
+        if loss_lm_kd is not None:
+            metric_logger.update(loss_lm_kd=loss_lm_kd.item())
         metric_logger.update(lr=optimizer.param_groups[0]["lr"])
 
         # 로컬 기록 이후에 텐서보드 입력, config에 tb_log_interval을 적기
@@ -152,6 +180,8 @@ def train(model, data_loader, optimizer, epoch, device, config, writer=None, val
                 writer.add_scalar("loss_train/lm", loss_lm.item(), global_step)
                 if loss_itc_kd is not None:
                     writer.add_scalar("loss_train/itc_kd", loss_itc_kd.item(), global_step)
+                if loss_lm_kd is not None:
+                    writer.add_scalar("loss_train/lm_kd", loss_lm_kd.item(), global_step)
                 writer.add_scalar("loss_train/total", loss.item(), global_step)
                 writer.add_scalar("optim/lr", optimizer.param_groups[0]["lr"], global_step)
                 writer.add_scalar("train/alpha", alpha, global_step)
@@ -345,15 +375,23 @@ def main(args, config): # configs.pretrain.yaml
 
     #### online teacher (distillation) — replicate per rank, frozen, not DDP-wrapped ####
     online_teacher = None
-    if config.get('distill', {}).get('itc', {}).get('enabled', False):
+    distill_cfg = config.get('distill', {})
+    teacher_keep = tuple(k for k in ('itc', 'lm') if distill_cfg.get(k, {}).get('enabled', False))
+    if teacher_keep:
+        ckpt_path = config.get('teacher', {}).get('checkpoint', '')
+        if not ckpt_path or not os.path.isfile(ckpt_path):
+            raise FileNotFoundError(
+                f"distill enabled (keep={teacher_keep}) but teacher.checkpoint not found: '{ckpt_path}'"
+            )
         from distillation.online_teacher import OnlineTeacher
         online_teacher = OnlineTeacher(
-            checkpoint=config['teacher']['checkpoint'],
+            checkpoint=ckpt_path,
             image_size=config['image_size'],
             vit='large', bert='base',
             queue_size=config['queue_size'],
+            keep=teacher_keep,
         ).to(device)
-        print("[distill] online teacher loaded")
+        print(f"[distill] online teacher loaded (keep={teacher_keep})")
 
     #### 수정부분 시작: temp 런어웨이 ablation용 자동 종료 트리거 - epoch 경계 넘어서도 연속 카운트 유지 (실험 1~4 끝나면 제거) ####
     collapse_counter = {'sustained_steps': 0}
