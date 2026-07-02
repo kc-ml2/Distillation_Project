@@ -99,5 +99,20 @@ class TestOnlineTeacherKeepBoth(unittest.TestCase):
                           bert="base", queue_size=240, keep=("itm",))
 
 
+class TestOnlineTeacherLargeConstruction(unittest.TestCase):
+    """실제 티처 아키텍처(vit='large')의 생성 회귀. timm 1.x에서 BLIP 원본의
+    in21k load_custom_pretrained 경로가 깨지므로(DefaultCfg.get 부재), 티처는
+    백본 사전 초기화를 건너뛰어야 한다 — 가중치는 어차피 BLIP 체크포인트가
+    전량 덮는다. 느림: ViT-L 본체+모멘텀 생성 (~수 분, CPU)."""
+
+    def test_construct_large_lm_teacher(self):
+        teacher = OnlineTeacher(checkpoint="", image_size=224, vit="large",
+                                bert="base", queue_size=240, keep=("lm",))
+        m = teacher.model
+        self.assertIsNotNone(m.visual_encoder)
+        self.assertIsNotNone(m.text_decoder)
+        self.assertIsNone(m.text_encoder)
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -31,7 +31,10 @@ class OnlineTeacher:
         self.keep = tuple(keep)
 
         model = blip_pretrain(image_size=image_size, vit=vit, my_bert_size=bert,
-                              queue_size=queue_size)
+                              queue_size=queue_size,
+                              # 티처 가중치는 아래 체크포인트 로드가 전량 결정 —
+                              # 백본 사전 초기화(large의 timm-1.x 비호환 경로 포함)를 건너뜀
+                              init_backbone_weights=False)
         if checkpoint:
             ckpt = torch.load(checkpoint, map_location="cpu", weights_only=False)
             state = ckpt.get("model", ckpt) if isinstance(ckpt, dict) else ckpt
