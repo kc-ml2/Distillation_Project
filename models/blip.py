@@ -21,6 +21,15 @@ import os
 from urllib.parse import urlparse
 from timm.models.hub import download_cached_file
 
+# BLIP decoder BERT config per language-model size. Mirrors blip_pretrain's model_specs.
+# vocab_size 30524 in these already matches the pretrain decoder after
+# resize_token_embeddings(len(tokenizer)) (30522 + [DEC]/[ENC]).
+DECODER_CONFIGS = {
+    'base':   'configs/med_config.json',
+    'medium': 'configs/med_medium_config.json',
+    'minilm': 'configs/med_minilm_config.json',
+}
+
 class BLIP_Base(nn.Module):
     def __init__(self,                 
                  med_config = 'configs/med_config.json',  
@@ -77,13 +86,14 @@ class BLIP_Base(nn.Module):
         
         
 class BLIP_Decoder(nn.Module):
-    def __init__(self,                 
-                 med_config = 'configs/med_config.json',  
+    def __init__(self,
+                 med_config = 'configs/med_config.json',
                  image_size = 384,
                  vit = 'base',
                  vit_grad_ckpt = False,
                  vit_ckpt_layer = 0,
                  prompt = 'a picture of ',
+                 my_bert_size = 'base',
                  ):
         """
         Args:
@@ -94,10 +104,10 @@ class BLIP_Decoder(nn.Module):
         super().__init__()
         
         self.visual_encoder, vision_width = create_vit(vit,image_size, vit_grad_ckpt, vit_ckpt_layer)
-        self.tokenizer = init_tokenizer()   
-        med_config = BertConfig.from_json_file(med_config)
-        med_config.encoder_width = vision_width
-        self.text_decoder = BertLMHeadModel(config=med_config)    
+        self.tokenizer = init_tokenizer()
+        decoder_config = BertConfig.from_json_file(DECODER_CONFIGS.get(my_bert_size, med_config))
+        decoder_config.encoder_width = vision_width
+        self.text_decoder = BertLMHeadModel(config=decoder_config)    
         
         self.prompt = prompt
         self.prompt_length = len(self.tokenizer(self.prompt).input_ids)-1
