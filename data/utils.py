@@ -81,7 +81,38 @@ from pycocotools.coco import COCO
 from pycocoevalcap.eval import COCOEvalCap
 from torchvision.datasets.utils import download_url
 
-def coco_caption_eval(coco_gt_root, results_file, split):
+
+def _score_no_spice(gts, res):
+    """COCOEvalCap scoring without the slow, Java-heavy SPICE scorer.
+    gts/res: {img_id: [{'caption': str}, ...]}. Returns {metric: score}."""
+    from pycocoevalcap.tokenizer.ptbtokenizer import PTBTokenizer
+    from pycocoevalcap.bleu.bleu import Bleu
+    from pycocoevalcap.meteor.meteor import Meteor
+    from pycocoevalcap.rouge.rouge import Rouge
+    from pycocoevalcap.cider.cider import Cider
+
+    tokenizer = PTBTokenizer()
+    gts = tokenizer.tokenize(gts)
+    res = tokenizer.tokenize(res)
+
+    scorers = [
+        (Bleu(4), ["Bleu_1", "Bleu_2", "Bleu_3", "Bleu_4"]),
+        (Meteor(), "METEOR"),
+        (Rouge(), "ROUGE_L"),
+        (Cider(), "CIDEr"),
+    ]
+    out = {}
+    for scorer, method in scorers:
+        score, _ = scorer.compute_score(gts, res)
+        if isinstance(method, list):
+            for sc, m in zip(score, method):
+                out[m] = sc
+        else:
+            out[method] = score
+    return out
+
+
+def coco_caption_eval(coco_gt_root, results_file, split, use_spice=True):
     urls = {'val':'https://storage.googleapis.com/sfr-vision-language-research/datasets/coco_karpathy_val_gt.json',
             'test':'https://storage.googleapis.com/sfr-vision-language-research/datasets/coco_karpathy_test_gt.json'}
     filenames = {'val':'coco_karpathy_val_gt.json','test':'coco_karpathy_test_gt.json'}    
@@ -103,7 +134,13 @@ def coco_caption_eval(coco_gt_root, results_file, split):
 
     # evaluate results
     # SPICE will take a few minutes the first time, but speeds up due to caching
-    coco_eval.evaluate()
+    if use_spice:
+        coco_eval.evaluate()
+    else:
+        imgIds = coco_eval.params['image_id']
+        gts = {i: coco_eval.coco.imgToAnns[i] for i in imgIds}
+        res = {i: coco_eval.cocoRes.imgToAnns[i] for i in imgIds}
+        coco_eval.eval = _score_no_spice(gts, res)
 
     # print output evaluation scores
     for metric, score in coco_eval.eval.items():
