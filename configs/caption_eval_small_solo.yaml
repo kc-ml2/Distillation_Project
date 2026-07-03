@@ -15,3 +15,6 @@ min_lr: 0
 max_epoch: 1
 prompt: ''
 use_spice: false
+max_length: 20
+min_length: 5
+num_beams: 3
