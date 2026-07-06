@@ -13,7 +13,7 @@ from data.utils import pre_caption
 import os,glob
 
 class pretrain_dataset(Dataset):
-    def __init__(self, ann_file, laion_path, img_root_coco, img_root_vg, transform): 
+    def __init__(self, ann_file, laion_path, img_root_coco, img_root_vg, transform, transform_vg=None):
 
         self.ann_pretrain = []
         dataset_len = []
@@ -52,6 +52,8 @@ class pretrain_dataset(Dataset):
             self.annotation = self.ann_pretrain
             
         self.transform = transform
+        # VG 전용 transform (없으면 공통 transform으로 폴백 = 기존 동작 유지)
+        self.transform_vg = transform_vg if transform_vg is not None else transform
         self.img_root_coco = img_root_coco
         self.img_root_vg = img_root_vg
 
@@ -94,7 +96,10 @@ class pretrain_dataset(Dataset):
             if x1 > x0 and y1 > y0: # 일부 region이 좌표가 음수거나 범위를 벗어나는 경우가 있어 방어
                 image = image.crop((x0, y0, x1, y1))
 
-        image = self.transform(image)
+        if ann['dataset_source'] == 'vg':
+            image = self.transform_vg(image)   # region crop된 작은 이미지엔 VG 전용(보수적 min_scale) transform
+        else:
+            image = self.transform(image)      # coco / laion = 공통 transform
         caption = pre_caption(ann['caption'],30)
         
         return image, caption # 반출

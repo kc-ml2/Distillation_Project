@@ -18,12 +18,16 @@ used_dataset: 'coco_vg'
 # output_dir: '/home/minwoo/Distillation_Project/output/pretrain_coco_cc12m_small'
 # output_dir: '/home/minwoo/Distillation_Project/output/pretrain_coco_only_baseline'
 # output_dir: '/home/minwoo/Distillation_Project/output/pt_checkpoint_base_logitscale_nodecay'
-output_dir: '/home/minwoo/Distillation_Project/output/pt_checkpoint_base_noaug'
+output_dir: '/home/minwoo/Distillation_Project/output/pt_checkpoint_base_vg_min0.5'
 
 # experiment 태그 (tensorboard run 이름에 사용)
-exp: '5.no_aug'
+exp: 'extra.vg_min0.5'
 # 이미지 증강 토글: false면 학습도 transform_test(결정적). 캐싱 distillation 대비 control 실험용. 기본 동작은 true.
 pretrain_train_aug: true   # online teacher distillation requires augmentation ON (no-aug was a NO-GO)
+
+# VG 전용 RandomResizedCrop 하한. VG는 이미 region crop이라 공통 min_scale(0.2)로 재-crop하면 객체 손실 → 0.5로 완화.
+# pretrain_train_aug: true 일 때만 효과. config에 없으면 공통 min_scale(0.2)로 폴백(=기존 동작).
+vg_min_scale: 0.5
 
 # new) tenserboard log interval
 tb_train_log_interval: 50

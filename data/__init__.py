@@ -35,12 +35,25 @@ def create_dataset(dataset, config, min_scale=0.5):
     if dataset=='pretrain':
         # pretrain_train_aug=false면 학습 입력을 transform_test(결정적)로 고정. online teacher distillation은 augmentation ON(true) 필요.
         use_train_aug = config.get('pretrain_train_aug', True)
-        pretrain_transform = transform_train if use_train_aug else transform_test
+        # VG는 이미 region crop된 작은 이미지 → 공통 min_scale(0.2)로 재-crop하면 객체가 잘려나감.
+        # vg_min_scale로 VG에만 더 보수적인 RandomResizedCrop 하한을 준다. config에 없으면 min_scale과 동일(=기존 동작).
+        vg_min_scale = config.get('vg_min_scale', min_scale)
+        transform_train_vg = transforms.Compose([
+                transforms.RandomResizedCrop(config['image_size'],scale=(vg_min_scale, 1.0),interpolation=InterpolationMode.BICUBIC),
+                transforms.RandomHorizontalFlip(),
+                RandomAugment(2,5,isPIL=True,augs=['Identity','AutoContrast','Brightness','Sharpness','Equalize',
+                                                  'ShearX', 'ShearY', 'TranslateX', 'TranslateY', 'Rotate']),
+                transforms.ToTensor(),
+                normalize,
+            ])
+        pretrain_transform    = transform_train    if use_train_aug else transform_test
+        pretrain_transform_vg = transform_train_vg if use_train_aug else transform_test
         dataset = pretrain_dataset(ann_file=config['train_file'], # 리스트 형태로 2개 들어옴
                                    laion_path=config['laion_path'],
                                    img_root_coco=config['image_root_coco'], # added
                                    img_root_vg=config['image_root_vg'],
-                                   transform=pretrain_transform
+                                   transform=pretrain_transform,
+                                   transform_vg=pretrain_transform_vg
         )# 이미지 루트 값 추가함.
         return dataset
     
