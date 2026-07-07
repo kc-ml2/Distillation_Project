@@ -1,12 +1,12 @@
 image_root: '/home/minwoo/Distillation_Project/datasets/vision/coco/images/'
 ann_root: '/home/minwoo/Distillation_Project/datasets/vision/coco/annotations/'
 coco_gt_root: '/home/minwoo/Distillation_Project/datasets/vision/coco/annotation/coco_gt'
-pretrained: '/home/minwoo/Distillation_Project/output/pt_smallreg_minilm_lm_distill/checkpoint_19.pth'
-output_dir: 'output/caption_zeroshot/small_distill'
-vit: 'small_reg'
+pretrained: '/home/minwoo/Distillation_Project/output/pt_checkpoint_base_amp/checkpoint_19.pth'
+output_dir: 'output/caption_zeroshot/base_amp'
+vit: 'base'
 vit_grad_ckpt: False
 vit_ckpt_layer: 0
-my_bert_size: 'minilm'
+my_bert_size: 'base'
 image_size: 224
 batch_size: 32
 init_lr: 1.0e-5

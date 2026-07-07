@@ -41,7 +41,13 @@ class BLIP_Pretrain(nn.Module):
                  # add option for language model
                  my_bert_size = "base", # default = bert (original)
                  med_bert_medium_config = 'configs/bert_medium_config.json',
-                 med_bert_MiniLM_config = 'configs/bert_minilm_config.json' # med라고 적어놨지만 med가 아닌 일반 버트컨피그임
+                 med_bert_MiniLM_config = 'configs/bert_minilm_config.json', # med라고 적어놨지만 med가 아닌 일반 버트컨피그임
+
+                 # False면 base(deit)/large(in21k) 백본 사전 초기화를 건너뜀.
+                 # 생성 직후 BLIP 체크포인트로 전량 덮는 경우용(온라인 티처 / 체크포인트 평가).
+                 # large의 in21k 경로는 timm 1.x에서 깨져 있어 large를 로드하려면 필수.
+                 # small 계열은 timm.create_model(pretrained=True) 내장이라 이 플래그와 무관.
+                 init_backbone_weights = True
                  ):
         """
         Args:
@@ -53,16 +59,20 @@ class BLIP_Pretrain(nn.Module):
         
         if vit=='base':
             self.visual_encoder, vision_width = create_vit(vit,image_size, vit_grad_ckpt, vit_ckpt_layer, 0)
-            checkpoint = torch.hub.load_state_dict_from_url(
-                url="https://dl.fbaipublicfiles.com/deit/deit_base_patch16_224-b5f2ef4d.pth",
-                map_location="cpu", check_hash=True)
-            state_dict = checkpoint["model"]     
-            msg = self.visual_encoder.load_state_dict(state_dict,strict=False)
+            if init_backbone_weights:
+                checkpoint = torch.hub.load_state_dict_from_url(
+                    url="https://dl.fbaipublicfiles.com/deit/deit_base_patch16_224-b5f2ef4d.pth",
+                    map_location="cpu", check_hash=True)
+                state_dict = checkpoint["model"]
+                msg = self.visual_encoder.load_state_dict(state_dict,strict=False)
         elif vit=='large':
             self.visual_encoder, vision_width = create_vit(vit,image_size, vit_grad_ckpt, vit_ckpt_layer, 0)
-            from timm.models.helpers import load_custom_pretrained
-            from timm.models.vision_transformer import default_cfgs
-            load_custom_pretrained(self.visual_encoder,default_cfgs['vit_large_patch16_224_in21k'])
+            if init_backbone_weights:
+                # timm 0.4.x 시절 API — timm 1.x에서는 default_cfgs 항목이 DefaultCfg라 깨짐.
+                # 체크포인트를 로드하는 쪽은 init_backbone_weights=False로 우회.
+                from timm.models.helpers import load_custom_pretrained
+                from timm.models.vision_transformer import default_cfgs
+                load_custom_pretrained(self.visual_encoder,default_cfgs['vit_large_patch16_224_in21k'])
         
         elif vit=='small': # model for small vit, and 
             # model: vit_small_patch16_dinov3
