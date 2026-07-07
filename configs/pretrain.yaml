@@ -18,10 +18,11 @@ used_dataset: 'coco_vg'
 # output_dir: '/home/minwoo/Distillation_Project/output/pretrain_coco_cc12m_small'
 # output_dir: '/home/minwoo/Distillation_Project/output/pretrain_coco_only_baseline'
 # output_dir: '/home/minwoo/Distillation_Project/output/pt_checkpoint_base_logitscale_nodecay'
-output_dir: '/home/minwoo/Distillation_Project/output/pt_checkpoint_base_noaug'
+# output_dir: '/home/minwoo/Distillation_Project/output/pt_checkpoint_base_noaug'
+output_dir: '/home/minwoo/Distillation_Project/output/pt_smallreg_minilm_itc_distill_tau0.022'
 
 # experiment 태그 (tensorboard run 이름에 사용)
-exp: '5.no_aug'
+exp: '6.itc_distill_tau0.022'
 # 이미지 증강 토글: false면 학습도 transform_test(결정적). 캐싱 distillation 대비 control 실험용. 기본 동작은 true.
 pretrain_train_aug: true   # online teacher distillation requires augmentation ON (no-aug was a NO-GO)
 
@@ -31,17 +32,17 @@ tb_val_log_interval: 1000
 
 # size of vit model; base or large
 
-vit: 'base'
-vit_grad_ckpt: False
-vit_ckpt_layer: 0
-
-# vit: 'small_reg' # small로 달아봄. 스몰은 작동을 안하더라
+# vit: 'base'
 # vit_grad_ckpt: False
 # vit_ckpt_layer: 0
 
+vit: 'small_reg'   # itc_distill 학생 (exp7 solo / exp8 lm_distill과 동일 recipe)
+vit_grad_ckpt: False
+vit_ckpt_layer: 0
+
 # size of language model: base, medium, minilm 중 하나로 설정
-# my_bert_size: 'minilm'
-my_bert_size: 'base'
+# my_bert_size: 'base'
+my_bert_size: 'minilm'
 
 
 ## 벨리데이션 과정
@@ -116,12 +117,18 @@ max_epoch: 20 # 테스트용. 원래 얼마더라? 20임
 warmup_steps: 37000
 
 # ====== knowledge distillation (default OFF — never affects unrelated runs) ======
+# 이 한 블록에서 itc/lm 증류 + teacher를 모두 제어한다. enabled: false면 코드가 KD 경로를 완전히 게이트.
 distill:
   itc:
-    enabled: false          # true로 켤 때 pretrain_train_aug: true 필요 (online teacher가 student와 같은 증강 뷰를 봐야 함)
-    weight: 1.0             # λ_itc
-    temp: 0.05              # τ, 증류 온도 (model logit_scale와 별개)
+    enabled: true           # ITC relational KD (in-batch B×B KL). true면 pretrain_train_aug: true 필수
+    weight: 1.0             # λ_itc — ⚠️ 잠정값. τ² 제거 + τ↓로 grad가 (1/τ)(q−p)≈45(q−p)로 증폭됨.
+                            #        첫 런에서 loss_train/itc_kd가 ita(~7.7)/lm(~5.2) 대비 과하면 낮춰라.
+    temp: 0.022             # τ. 티처 유사도 실측 pos-prob 0.46 (학생 수렴온도 0.023 앵커). critical_bugfix/ 참조
+  lm:
+    enabled: false          # LM logit KD. 이번 실험은 ITC-only이므로 끔
+    weight: 1.0
+    temp: 2.0               # T>1 (softening) — lm_distill_loss의 ×T² 유지가 맞음
 
 teacher:
-  arch: 'blip_large'
-  checkpoint: '<REQUIRED: 학습된 BLIP-large 체크포인트 경로>'   # Phase-0 전에 채울 것
+  arch: 'blip_large'        # 코드가 online_teacher를 vit=large, bert=base로 고정 로드
+  checkpoint: '/home/minwoo/Distillation_Project/output/official_pretrain_checkpoint/model_large.pth'

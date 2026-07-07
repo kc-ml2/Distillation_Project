@@ -11,7 +11,12 @@ def itc_distill_loss(image_feat_s, text_feat_s, teacher_img_feat, teacher_txt_fe
         temp: distillation temperature τ (same for teacher and student).
 
     Returns:
-        Scalar tensor = 0.5 * (KL_i2t + KL_t2i) * τ², with KL(teacher ‖ student).
+        Scalar tensor = 0.5 * (KL_i2t + KL_t2i), with KL(teacher ‖ student).
+
+    Note: Hinton의 × T² 보정은 T>1(softening) 전제에서만 gradient를 order-1로 되돌린다.
+    ITC-KD의 τ는 CLIP식 contrastive 온도로 τ≪1(sharpening)이라, × τ²는 보정이 아니라
+    gradient를 τ배로 죽이는 역효과(2026-07-07 측정·분석: critical_bugfix/). → 제거.
+    크기 정합은 loss 합산 시 λ_itc(weight)로 잡는다.
     """
     teacher_img_feat = teacher_img_feat.detach()
     teacher_txt_feat = teacher_txt_feat.detach()
@@ -24,7 +29,7 @@ def itc_distill_loss(image_feat_s, text_feat_s, teacher_img_feat, teacher_txt_fe
     # text->image: transpose
     loss_t2i = F.kl_div(F.log_softmax(s_s.t(), dim=1), F.softmax(s_t.t(), dim=1), reduction="batchmean")
 
-    return 0.5 * (loss_i2t + loss_t2i) * (temp ** 2)
+    return 0.5 * (loss_i2t + loss_t2i)
 
 
 def lm_distill_loss(student_logits, teacher_logits, decoder_targets, temp):
