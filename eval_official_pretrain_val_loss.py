@@ -58,6 +58,10 @@ def main(args, config):
     if utils.is_main_process():
         print("Creating model")
 
+    if utils.is_main_process():
+        print(f"[arch] vit={config['vit']} bert={config['my_bert_size']} "
+              f"image_size={config['image_size']}")
+
     model = blip_pretrain(
         image_size=config["image_size"],
         vit=config["vit"],
@@ -65,6 +69,9 @@ def main(args, config):
         vit_ckpt_layer=config["vit_ckpt_layer"],
         queue_size=config["queue_size"],
         my_bert_size=config["my_bert_size"],
+        # --checkpoint로 직후 전량 덮으므로 백본 사전 초기화 불필요.
+        # large(in21k) 사전초기화는 timm 1.x에서 깨져 있어 반드시 꺼야 로드된다.
+        init_backbone_weights=False,
     )
 
     model = model.to(device)
@@ -113,6 +120,10 @@ if __name__ == "__main__":
     parser.add_argument("--config", default="./configs/pretrain.yaml")
     parser.add_argument("--checkpoint", required=True)
     parser.add_argument("--output_dir", default=None)
+    # arch 오버라이드 (없으면 config 값). 티처(large/base)를 학생 config 그대로 평가할 때 사용.
+    parser.add_argument("--vit", default=None, help="override config vit (e.g. large)")
+    parser.add_argument("--bert", default=None, help="override config my_bert_size (e.g. base)")
+    parser.add_argument("--image_size", default=None, type=int, help="override config image_size")
     parser.add_argument("--device", default="cuda")
     parser.add_argument("--seed", default=42, type=int)
     parser.add_argument("--world_size", default=1, type=int)
@@ -124,6 +135,14 @@ if __name__ == "__main__":
 
     with open(args.config, "r") as f:
         config = yaml.safe_load(f)
+
+    # CLI arch 오버라이드를 config에 주입 → val runner(transform)와 모델 빌드가 같은 값을 공유
+    if args.vit is not None:
+        config["vit"] = args.vit
+    if args.bert is not None:
+        config["my_bert_size"] = args.bert
+    if args.image_size is not None:
+        config["image_size"] = args.image_size
 
     if args.output_dir is None:
         args.output_dir = config.get("output_dir", "./output_official_val_loss")

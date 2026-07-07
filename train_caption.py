@@ -114,9 +114,9 @@ def main(args, config):
 
     #### Model #### 
     print("Creating model")
-    model = blip_decoder(pretrained=config['pretrained'], image_size=config['image_size'], vit=config['vit'], 
-                           vit_grad_ckpt=config['vit_grad_ckpt'], vit_ckpt_layer=config['vit_ckpt_layer'], 
-                           prompt=config['prompt'])
+    model = blip_decoder(pretrained=config['pretrained'], image_size=config['image_size'], vit=config['vit'],
+                           vit_grad_ckpt=config['vit_grad_ckpt'], vit_ckpt_layer=config['vit_ckpt_layer'],
+                           prompt=config['prompt'], my_bert_size=config['my_bert_size'])
 
     model = model.to(device)   
     
@@ -148,8 +148,8 @@ def main(args, config):
         test_result_file = save_result(test_result, args.result_dir, 'test_epoch%d'%epoch, remove_duplicate='image_id')  
 
         if utils.is_main_process():   
-            coco_val = coco_caption_eval(config['coco_gt_root'],val_result_file,'val')
-            coco_test = coco_caption_eval(config['coco_gt_root'],test_result_file,'test')
+            coco_val = coco_caption_eval(config['coco_gt_root'],val_result_file,'val', use_spice=config.get('use_spice', True))
+            coco_test = coco_caption_eval(config['coco_gt_root'],test_result_file,'test', use_spice=config.get('use_spice', True))
             
             if args.evaluate:            
                 log_stats = {**{f'val_{k}': v for k, v in coco_val.eval.items()},
