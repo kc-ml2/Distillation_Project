@@ -39,6 +39,9 @@ from data import eval_validation_loss
 #### 수정부분 시작: retrieval validation 모듈 import ####
 from data import eval_validation_retrieval
 #### 수정부분 끝 ####
+#### 수정부분 시작: caption validation 모듈 import ####
+from data import eval_validation_caption
+#### 수정부분 끝 ####
 
 #### tensorboard scalars ####
 from torch.utils.tensorboard import SummaryWriter
@@ -74,7 +77,7 @@ def make_tb_run_name(config):
         tb_option_dict["kd"] = "+".join(kd_parts)
     return "__".join(f"{k}={v}" for k, v in tb_option_dict.items())
 
-def train(model, data_loader, optimizer, epoch, device, config, writer=None, val_loss_runner=None, collapse_counter=None, model_without_ddp=None, retrieval_val_runner=None, online_teacher=None): # online_teacher 추가
+def train(model, data_loader, optimizer, epoch, device, config, writer=None, val_loss_runner=None, collapse_counter=None, model_without_ddp=None, retrieval_val_runner=None, caption_val_runner=None, online_teacher=None): # online_teacher 추가
     # train
     model.train()
 
@@ -234,7 +237,17 @@ def train(model, data_loader, optimizer, epoch, device, config, writer=None, val
             )
         #### 수정부분 끝 ####
 
-        
+        #### 수정부분 시작: train 도중 caption validation optional 실행 (경량 지표만, ITM mid와 동일 시점) ####
+        if caption_val_runner is not None:
+            caption_val_runner.val_caption_during_train(
+                model_without_ddp=model_without_ddp,
+                epoch=epoch,
+                iteration=i,
+                global_step=global_step,
+            )
+        #### 수정부분 끝 ####
+
+
     # gather the stats from all processes
     metric_logger.synchronize_between_processes()
     print("Averaged stats:", metric_logger.global_avg())     
@@ -321,7 +334,15 @@ def main(args, config): # configs.pretrain.yaml
         writer=writer,
     )
     #### 수정부분 끝 ####
-    
+
+    #### 수정부분 시작: caption validation runner 생성 (student generate로 COCO val 캡션 채점) ####
+    caption_val_runner = eval_validation_caption.build_pretrain_caption_val_runner(
+        config=config,
+        device=device,
+        writer=writer,
+    )
+    #### 수정부분 끝 ####
+
 
 
 
@@ -404,7 +425,7 @@ def main(args, config): # configs.pretrain.yaml
 
             step_lr_schedule(optimizer, epoch, config['init_lr'], config['min_lr'], config['lr_decay_rate'])
 
-            train_stats = train(model, data_loader, optimizer, epoch, device, config, writer, val_loss_runner=val_loss_runner, collapse_counter=collapse_counter, model_without_ddp=model_without_ddp, retrieval_val_runner=retrieval_val_runner, online_teacher=online_teacher) # online_teacher 추가
+            train_stats = train(model, data_loader, optimizer, epoch, device, config, writer, val_loss_runner=val_loss_runner, collapse_counter=collapse_counter, model_without_ddp=model_without_ddp, retrieval_val_runner=retrieval_val_runner, caption_val_runner=caption_val_runner, online_teacher=online_teacher) # online_teacher 추가
             
             #### 수정부분 시작: epoch 종료 validation loss 실행 ####
             val_stats = {}
@@ -430,8 +451,19 @@ def main(args, config): # configs.pretrain.yaml
                     global_step=epoch_end_global_step,
                 )
             #### 수정부분 끝 ####
-            
-            if utils.is_main_process():  
+
+            #### 수정부분 시작: epoch 종료 caption validation 실행 (경량 + SPICE) ####
+            if caption_val_runner is not None:
+                epoch_end_global_step = (epoch + 1) * len(data_loader)
+
+                caption_val_runner.run_epoch_end(
+                    model_without_ddp=model_without_ddp,
+                    epoch=epoch,
+                    global_step=epoch_end_global_step,
+                )
+            #### 수정부분 끝 ####
+
+            if utils.is_main_process():
                 log_stats = {**{f'train_{k}': v for k, v in train_stats.items()},
                             'epoch': epoch,
                             }                     

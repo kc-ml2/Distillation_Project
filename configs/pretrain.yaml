@@ -19,10 +19,10 @@ used_dataset: 'coco_vg'
 # output_dir: '/home/minwoo/Distillation_Project/output/pretrain_coco_only_baseline'
 # output_dir: '/home/minwoo/Distillation_Project/output/pt_checkpoint_base_logitscale_nodecay'
 # output_dir: '/home/minwoo/Distillation_Project/output/pt_checkpoint_base_noaug'
-output_dir: '/home/minwoo/Distillation_Project/output/pt_smallreg_minilm_itc_distill_tau0.022'
+output_dir: '/home/minwoo/Distillation_Project/output/pt_smallreg_minilm_itc_distill_tau0.022_droptau'
 
 # experiment 태그 (tensorboard run 이름에 사용)
-exp: '6.itc_distill_tau0.022'
+exp: '6.1.itc_distill_tau0.022_droptau'
 # 이미지 증강 토글: false면 학습도 transform_test(결정적). 캐싱 distillation 대비 control 실험용. 기본 동작은 true.
 pretrain_train_aug: true   # online teacher distillation requires augmentation ON (no-aug was a NO-GO)
 
@@ -92,6 +92,23 @@ val_retrieval_itc_epoch_end: true
 val_retrieval_itm_interval_steps: 18675
 val_retrieval_itm_epoch_end: true
 #### 수정부분 끝 ####
+
+# ── caption 메트릭 validation ──
+val_caption_enabled: true
+val_caption_ann_root: '/home/minwoo/Distillation_Project/datasets/vision/coco/annotations/'
+val_caption_image_root: '/home/minwoo/Distillation_Project/datasets/vision/coco/images/'
+val_caption_gt_root: '/home/minwoo/Distillation_Project/datasets/vision/coco/annotation/coco_gt'
+val_caption_split: 'val'
+val_caption_batch_size: 32
+val_caption_num_workers: 4
+val_caption_mid_interval_steps: 18675   # ITM mid와 동일
+val_caption_epoch_end: true
+val_caption_use_spice: true             # epoch-end에서만 SPICE
+caption_score_cpu_list: '0-31'          # 잡A '0-31' / 잡B '32-63' / null=캡 없음
+caption_num_beams: 3
+caption_max_length: 20
+caption_min_length: 5
+caption_prompt: ''
 
 # batch 작아지면 init lr도 작아지고, 웜업 스텝을 늘려야한다
 
