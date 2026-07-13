@@ -99,7 +99,11 @@ class CaptionValRunner:
             all_preds = self._gather(preds)
             if not utils.is_main_process():
                 return {}
-            metrics = self._score(all_preds, global_step, with_spice)
+            try:
+                metrics = self._score(all_preds, global_step, with_spice)
+            except Exception as e:
+                print(f"{header} caption scoring FAILED, skipping this eval: {type(e).__name__}: {e}")
+                return {}
             msg = f"{header} CIDEr={metrics.get('CIDEr', float('nan')):.3f}"
             if with_spice and "SPICE" in metrics:
                 msg += f" SPICE={metrics['SPICE']:.3f}"

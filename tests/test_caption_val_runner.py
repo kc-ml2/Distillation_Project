@@ -72,6 +72,27 @@ class CaptionValRunnerTest(unittest.TestCase):
         self.runner.run_epoch_end(self.model, epoch=0, global_step=37346)
         self.assertEqual(mock_eval.call_count, 0)
 
+    def test_scoring_failure_is_non_fatal(self):
+        import data.eval_validation_caption as evc
+        m = mock.patch("data.eval_validation_caption.coco_caption_eval",
+                       side_effect=RuntimeError("java boom"))
+        m.start(); self.addCleanup(m.stop)
+        self.model.train()
+        # must not raise, must return {}, must restore train mode
+        result = self.runner.run_epoch_end(self.model, epoch=0, global_step=37346)
+        self.assertEqual(result, {})
+        self.assertTrue(self.model.training)
+
+    def test_epoch_end_writes_tensorboard_scalars(self):
+        self._patch_score()
+        writer = mock.Mock()
+        runner = evc.CaptionValRunner(
+            data_loader=fake_loader(), device="cpu", config=self.config, writer=writer)
+        runner.run_epoch_end(self.model, epoch=0, global_step=37346)
+        written = {c.args[0] for c in writer.add_scalar.call_args_list}
+        self.assertIn("val_caption/CIDEr", written)
+        self.assertIn("val_caption/SPICE", written)
+
 
 class BuildCaptionRunnerFactoryTest(unittest.TestCase):
     def test_returns_none_when_disabled(self):
