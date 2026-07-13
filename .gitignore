@@ -48,6 +48,7 @@ runs/
 output/test_results # 테스트 결과들
 프로젝트_유의사항
 ignore_files
+tensorboard_outdated
 
 # =========================
 # output logs
