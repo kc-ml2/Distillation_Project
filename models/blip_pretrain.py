@@ -303,7 +303,47 @@ class BLIP_Pretrain(nn.Module):
         # tie_encoder_decoder_weights(self.text_encoder,self.text_decoder.bert,'','/attention')
         # =========== depreciated ========
         
-        
+
+    def generate(self, image, sample=False, num_beams=3, max_length=20, min_length=5,
+                 top_p=0.9, repetition_penalty=1.0, prompt=''):
+        """캡션 생성 (BLIP_Decoder.generate 미러링). pretrain 모델의
+        visual_encoder + text_decoder + tokenizer를 그대로 사용, prompt는 인자."""
+        image_embeds = self.visual_encoder(image)
+        image_atts = torch.ones(image_embeds.size()[:-1], dtype=torch.long).to(image.device)
+        model_kwargs = {"encoder_hidden_states": image_embeds, "encoder_attention_mask": image_atts}
+
+        prompts = [prompt] * image.size(0)
+        input_ids = self.tokenizer(prompts, return_tensors="pt").input_ids.to(image.device)
+        input_ids[:, 0] = self.tokenizer.bos_token_id
+        input_ids = input_ids[:, :-1]
+
+        if sample:
+            outputs = self.text_decoder.generate(input_ids=input_ids,
+                                                  max_length=max_length,
+                                                  min_length=min_length,
+                                                  do_sample=True,
+                                                  top_p=top_p,
+                                                  num_return_sequences=1,
+                                                  eos_token_id=self.tokenizer.sep_token_id,
+                                                  pad_token_id=self.tokenizer.pad_token_id,
+                                                  repetition_penalty=1.1,
+                                                  **model_kwargs)
+        else:
+            outputs = self.text_decoder.generate(input_ids=input_ids,
+                                                  max_length=max_length,
+                                                  min_length=min_length,
+                                                  num_beams=num_beams,
+                                                  eos_token_id=self.tokenizer.sep_token_id,
+                                                  pad_token_id=self.tokenizer.pad_token_id,
+                                                  repetition_penalty=repetition_penalty,
+                                                  **model_kwargs)
+
+        captions = []
+        for output in outputs:
+            caption = self.tokenizer.decode(output, skip_special_tokens=True)
+            captions.append(caption[len(prompt):])
+        return captions
+
     def forward(self, image, caption, alpha, update_train_state=None,
                 teacher_img_feat=None, teacher_text_feat=None, distill_temp=0.05,
                 teacher_lm_logits=None, teacher_lm_input_ids=None, lm_distill_temp=2.0):
