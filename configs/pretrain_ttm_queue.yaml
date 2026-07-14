@@ -10,13 +10,13 @@ cc12m_ratio: 5
 
 used_dataset: 'coco_vg'
 
-# ===== ITC distillation Phase 1 · Arm T (sharp) =====
-# 설계 근거: critical_bugfix/2026-07-14_kd_grad_balance_and_geometry/README.md
-# 6.1(τ0.022 λ1 drop-τ²)이 KD로 ITC를 2.6~6.7× 압도해 retrieval −3.9. 진단 후 Phase 1:
-#   - 로스에 ×τ 보정(losses.py) → grad 크기가 τ에 무관해져 두 arm이 단일 λ로 자동 정합.
-#   - λ_shared = weight = 2.5 (목표 ep0 ratio ~0.4, 6.1의 6.66 대비 16× 약). 자연 감쇠(anneal 없음).
-# Arm T: τ=0.022 (diag질량 0.51·유효서포트 4.2, sharp — ITC와 가까움, 안전하나 marginal 정보 적음).
-# Arm S(τ=0.05)와의 유일한 차이는 temp + caption CPU 분리. 나머지는 baseline(exp7)과 동일 = τ 1-변수 통제.
+# ===== ITC teacher-target-mixing (exp9) · variant queue =====
+# 설계: docs/superpowers/specs/2026-07-14-teacher-target-mix-design.md
+# 티처를 별도 KD 손실이 아니라 ITC soft-target에 녹여 gradient 충돌(cos<0) 제거.
+#   target = 0.6·one-hot + 0.4·[γ·teacher + (1−γ)·momentum], γ: 2ep 홀드 후 12ep까지 선형 1→0.
+#   별도 KD(distill.itc)는 OFF, distill.itc_target_mix로 켠다. τ(itc_target_mix.temp)=0.05.
+# variant in_batch(D, 큐 없음) vs queue(C, teacher-feature 큐) — 유일한 차이는 itc_target_mix.variant.
+# 나머지는 student baseline(exp7)과 동일 = 통제.
 output_dir: '/home/minwoo/Distillation_Project/output/pt_smallreg_minilm_ttm_queue'
 
 # experiment 태그 (tensorboard run 이름에 사용)
@@ -77,7 +77,7 @@ val_retrieval_itc_epoch_end: true
 val_retrieval_itm_interval_steps: 18675
 val_retrieval_itm_epoch_end: true
 
-#### 학습 중 caption 지표 검증 (BLEU/METEOR/ROUGE/CIDEr/SPICE) — Arm T = 잡A(CPU 0-31) ####
+#### 학습 중 caption 지표 검증 (BLEU/METEOR/ROUGE/CIDEr/SPICE) — ttm_queue = 잡B(CPU 32-63) ####
 val_caption_enabled: true
 val_caption_ann_root: '/home/minwoo/Distillation_Project/datasets/vision/coco/annotations/'
 val_caption_image_root: '/home/minwoo/Distillation_Project/datasets/vision/coco/images/'
