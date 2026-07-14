@@ -11,12 +11,14 @@ def itc_distill_loss(image_feat_s, text_feat_s, teacher_img_feat, teacher_txt_fe
         temp: distillation temperature τ (same for teacher and student).
 
     Returns:
-        Scalar tensor = 0.5 * (KL_i2t + KL_t2i), with KL(teacher ‖ student).
+        Scalar tensor = 0.5 * (KL_i2t + KL_t2i) * τ, with KL(teacher ‖ student).
 
-    Note: Hinton의 × T² 보정은 T>1(softening) 전제에서만 gradient를 order-1로 되돌린다.
-    ITC-KD의 τ는 CLIP식 contrastive 온도로 τ≪1(sharpening)이라, × τ²는 보정이 아니라
-    gradient를 τ배로 죽이는 역효과(2026-07-07 측정·분석: critical_bugfix/). → 제거.
-    크기 정합은 loss 합산 시 λ_itc(weight)로 잡는다.
+    Note: KD grad ∂L/∂z = (q−p)/τ. 여기 τ≪1(sharpening) saturation regime에선 (q−p)가 유계라
+    grad ∝ 1/τ. Hinton의 × τ² 보정은 고온(선형화) 전제에서만 grad를 O(1)로 되돌리며,
+    이 regime엔 과보정이라 grad를 τ배로 죽인다(2026-07-07 keeptau2 = no-op으로 실증).
+    → 이 regime의 올바른 정규화는 **× τ** (grad ∝ τ·(1/τ) = O(1)). 이러면 grad 크기가 τ에 무관해져
+    두 arm이 단일 λ(weight)로 자동 정합된다. crossover 실측·유도: critical_bugfix/2026-07-14.
+    크기 정합(ITC 대비 목표 ratio)은 λ_itc(weight)로 잡는다.
     """
     teacher_img_feat = teacher_img_feat.detach()
     teacher_txt_feat = teacher_txt_feat.detach()
@@ -29,7 +31,7 @@ def itc_distill_loss(image_feat_s, text_feat_s, teacher_img_feat, teacher_txt_fe
     # text->image: transpose
     loss_t2i = F.kl_div(F.log_softmax(s_s.t(), dim=1), F.softmax(s_t.t(), dim=1), reduction="batchmean")
 
-    return 0.5 * (loss_i2t + loss_t2i)
+    return 0.5 * (loss_i2t + loss_t2i) * temp
 
 
 def lm_distill_loss(student_logits, teacher_logits, decoder_targets, temp):
