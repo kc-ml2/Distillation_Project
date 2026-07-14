@@ -10,3 +10,25 @@ def ttm_gamma(global_step, hold_steps, decay_end_steps):
     if global_step >= decay_end_steps:
         return 0.0
     return 1.0 - (global_step - hold_steps) / (decay_end_steps - hold_steps)
+
+
+def teacher_soft_in_batch(row_feat, col_feat, tau, n_cols):
+    """variant D: 티처 in-batch softmax [B,B]를 [B, n_cols]로 queue 열 0 패딩."""
+    B = row_feat.shape[0]
+    sim = (row_feat @ col_feat.t()) / tau            # [B, B]
+    soft_bb = F.softmax(sim, dim=1)                   # [B, B]
+    out = torch.zeros(B, n_cols, device=soft_bb.device, dtype=soft_bb.dtype)
+    out[:, :B] = soft_bb
+    return out
+
+
+def teacher_soft_queue(row_feat, col_all, tau):
+    """variant C: 학생 후보군과 정렬된 col_all[D, B+queue] 위 티처 softmax [B, B+queue]."""
+    sim = (row_feat @ col_all) / tau                  # [B, B+queue]
+    return F.softmax(sim, dim=1)
+
+
+def mix_target(onehot, momentum_soft, teacher_soft, gamma, soft_weight):
+    """(1-W)·onehot + W·(γ·teacher + (1-γ)·momentum). 모든 인자 [B,N] 행분포."""
+    soft = gamma * teacher_soft + (1.0 - gamma) * momentum_soft
+    return (1.0 - soft_weight) * onehot + soft_weight * soft
