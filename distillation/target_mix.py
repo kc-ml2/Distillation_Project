@@ -32,3 +32,11 @@ def mix_target(onehot, momentum_soft, teacher_soft, gamma, soft_weight):
     """(1-W)·onehot + W·(γ·teacher + (1-γ)·momentum). 모든 인자 [B,N] 행분포."""
     soft = gamma * teacher_soft + (1.0 - gamma) * momentum_soft
     return (1.0 - soft_weight) * onehot + soft_weight * soft
+
+
+def enqueue_all(pairs, ptr, bs, queue_size):
+    """각 (queue[D,Q], feats_T[D,bs])를 동일 ptr의 열에 써서 큐 간 정렬 보장.
+    ptr은 한 번만 전진. momentum·teacher 큐를 이 함수로 함께 넣어야 열이 일치한다."""
+    for queue, feats_T in pairs:
+        queue[:, ptr:ptr + bs] = feats_T
+    return (ptr + bs) % queue_size

@@ -3,7 +3,7 @@ import torch
 import torch.nn.functional as F
 
 from distillation.target_mix import (
-    ttm_gamma, teacher_soft_in_batch, teacher_soft_queue, mix_target,
+    ttm_gamma, teacher_soft_in_batch, teacher_soft_queue, mix_target, enqueue_all,
 )
 
 
@@ -65,6 +65,31 @@ class TestTeacherSoftAndMix(unittest.TestCase):
         self.assertTrue(torch.allclose(t1, (1 - W) * onehot + W * tea, atol=1e-6))
         t0 = mix_target(onehot, mom, tea, 0.0, W)
         self.assertTrue(torch.allclose(t0, (1 - W) * onehot + W * mom, atol=1e-6))
+
+
+class TestEnqueueAll(unittest.TestCase):
+    def test_all_queues_written_at_same_columns(self):
+        D, Q, bs = 3, 12, 4
+        img_q, txt_q = torch.zeros(D, Q), torch.zeros(D, Q)
+        t_img_q, t_txt_q = torch.zeros(D, Q), torch.zeros(D, Q)
+        img_f = torch.arange(D * bs).float().reshape(D, bs)        # feats_T [D,bs]
+        t_img_f = img_f + 100
+        ptr = 4
+        new_ptr = enqueue_all(
+            [(img_q, img_f), (t_img_q, t_img_f)], ptr, bs, Q)
+        # 같은 열(4:8)에 각자 값이 쓰였는가
+        self.assertTrue(torch.equal(img_q[:, ptr:ptr + bs], img_f))
+        self.assertTrue(torch.equal(t_img_q[:, ptr:ptr + bs], t_img_f))
+        # 다른 열은 그대로 0
+        self.assertTrue(torch.all(img_q[:, :ptr] == 0))
+        self.assertEqual(new_ptr, (ptr + bs) % Q)                  # 8
+
+    def test_wraparound(self):
+        D, Q, bs = 2, 8, 4
+        q = torch.zeros(D, Q)
+        f = torch.ones(D, bs)
+        new_ptr = enqueue_all([(q, f)], 4, bs, Q)
+        self.assertEqual(new_ptr, 0)                               # (4+4)%8
 
 
 if __name__ == "__main__":
