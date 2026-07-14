@@ -91,6 +91,14 @@ def train(model, data_loader, optimizer, epoch, device, config, writer=None, val
     lm_kd_weight = float(distill_lm.get('weight', 1.0))
     lm_kd_temp = float(distill_lm.get('temp', 2.0))
 
+    distill_ttm = config.get('distill', {}).get('itc_target_mix', {})
+    ttm_enabled = distill_ttm.get('enabled', False)
+    assert not (itc_kd_enabled and ttm_enabled), \
+        "distill.itc(별도 KD)와 distill.itc_target_mix 동시 사용 금지"
+    ttm_soft_weight = float(distill_ttm.get('soft_weight', 0.4))
+    ttm_hold_steps = int(distill_ttm.get('hold_epochs', 2) * len(data_loader))
+    ttm_decay_end_steps = int(distill_ttm.get('decay_end_epochs', 12) * len(data_loader))
+
     metric_logger = utils.MetricLogger(delimiter="  ")
     metric_logger.add_meter('lr', utils.SmoothedValue(window_size=50, fmt='{value:.6f}'))
     metric_logger.add_meter('loss_ita', utils.SmoothedValue(window_size=50, fmt='{value:.6f}'))
@@ -118,7 +126,7 @@ def train(model, data_loader, optimizer, epoch, device, config, writer=None, val
         image = image.to(device,non_blocking=True)
 
         # online teacher: same augmented batch -> ITC features (bf16, no_grad). None when distill off.
-        if itc_kd_enabled and online_teacher is not None:
+        if (itc_kd_enabled or ttm_enabled) and online_teacher is not None:
             teacher_img_feat, teacher_text_feat = online_teacher.itc_feats(image, caption)
         else:
             teacher_img_feat = teacher_text_feat = None
@@ -130,9 +138,12 @@ def train(model, data_loader, optimizer, epoch, device, config, writer=None, val
             teacher_lm_logits = teacher_lm_ids = None
 
         # ramp up alpha in the first 2 epochs
-        alpha = config['alpha']*min(1,(epoch*len(data_loader)+i)/(2*len(data_loader))) 
+        alpha = config['alpha']*min(1,(epoch*len(data_loader)+i)/(2*len(data_loader)))
 
-        # loss_ita, loss_itm, loss_lm = model(image, caption, alpha = alpha)  
+        from distillation.target_mix import ttm_gamma
+        gamma = ttm_gamma(global_step, ttm_hold_steps, ttm_decay_end_steps) if ttm_enabled else None
+
+        # loss_ita, loss_itm, loss_lm = model(image, caption, alpha = alpha)
         # loss = loss_ita + loss_itm + loss_lm  
         # bp 16 mixed precision
         # if device == "cuda": # 이 부분 수정할 예정
@@ -143,7 +154,8 @@ def train(model, data_loader, optimizer, epoch, device, config, writer=None, val
                     teacher_img_feat=teacher_img_feat, teacher_text_feat=teacher_text_feat,
                     distill_temp=itc_kd_temp,
                     teacher_lm_logits=teacher_lm_logits, teacher_lm_input_ids=teacher_lm_ids,
-                    lm_distill_temp=lm_kd_temp)
+                    lm_distill_temp=lm_kd_temp,
+                    gamma=gamma)
                 loss = loss_ita + loss_itm + loss_lm
                 if itc_kd_enabled and loss_itc_kd is not None:
                     loss = loss + itc_kd_weight * loss_itc_kd
@@ -155,7 +167,8 @@ def train(model, data_loader, optimizer, epoch, device, config, writer=None, val
                 teacher_img_feat=teacher_img_feat, teacher_text_feat=teacher_text_feat,
                 distill_temp=itc_kd_temp,
                 teacher_lm_logits=teacher_lm_logits, teacher_lm_input_ids=teacher_lm_ids,
-                lm_distill_temp=lm_kd_temp)
+                lm_distill_temp=lm_kd_temp,
+                gamma=gamma)
             loss = loss_ita + loss_itm + loss_lm
             if itc_kd_enabled and loss_itc_kd is not None:
                 loss = loss + itc_kd_weight * loss_itc_kd
@@ -188,6 +201,9 @@ def train(model, data_loader, optimizer, epoch, device, config, writer=None, val
                 writer.add_scalar("loss_train/total", loss.item(), global_step)
                 writer.add_scalar("optim/lr", optimizer.param_groups[0]["lr"], global_step)
                 writer.add_scalar("train/alpha", alpha, global_step)
+                if ttm_enabled:
+                    writer.add_scalar("train/gamma", gamma, global_step)
+                    writer.add_scalar("train/beta", ttm_soft_weight * gamma, global_step)
             # 이후 벨리데이션 로그도 여기다 적기
 
             #### 수정부분 시작: 실험 4 - logit_scale(곱하기 reparam) 기록 ####
@@ -348,13 +364,17 @@ def main(args, config): # configs.pretrain.yaml
 
     #### Model #### 
     print("Creating model")
+    ttm_cfg = config.get('distill', {}).get('itc_target_mix', {})
     model = blip_pretrain(image_size=config['image_size'],
                           vit=config['vit'],
                           vit_grad_ckpt=config['vit_grad_ckpt'],
                           vit_ckpt_layer=config['vit_ckpt_layer'],
                           queue_size=config['queue_size'],
-                          my_bert_size=config['my_bert_size']
-    )
+                          my_bert_size=config['my_bert_size'],
+                          ttm_enabled=ttm_cfg.get('enabled', False),
+                          ttm_variant=ttm_cfg.get('variant', 'in_batch'),
+                          ttm_temp=float(ttm_cfg.get('temp', 0.05)),
+                          ttm_soft_weight=float(ttm_cfg.get('soft_weight', 0.4)))
 
     model = model.to(device)   
 
@@ -397,7 +417,10 @@ def main(args, config): # configs.pretrain.yaml
     #### online teacher (distillation) — replicate per rank, frozen, not DDP-wrapped ####
     online_teacher = None
     distill_cfg = config.get('distill', {})
-    teacher_keep = tuple(k for k in ('itc', 'lm') if distill_cfg.get(k, {}).get('enabled', False))
+    ttm_on = distill_cfg.get('itc_target_mix', {}).get('enabled', False)
+    teacher_keep = tuple(k for k in ('itc', 'lm')
+                         if distill_cfg.get(k, {}).get('enabled', False)
+                         or (k == 'itc' and ttm_on))
     if teacher_keep:
         ckpt_path = config.get('teacher', {}).get('checkpoint', '')
         if not ckpt_path or not os.path.isfile(ckpt_path):
