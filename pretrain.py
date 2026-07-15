@@ -106,6 +106,9 @@ def train(model, data_loader, optimizer, epoch, device, config, writer=None, val
             f"itc_target_mix hold_epochs must be <= decay_end_epochs (steps {ttm_hold_steps} > {ttm_decay_end_steps})"
         assert distill_ttm.get('variant', 'in_batch') in ('in_batch', 'queue'), \
             f"itc_target_mix.variant must be 'in_batch' or 'queue': {distill_ttm.get('variant')}"
+        assert abs(float(config['alpha']) - ttm_soft_weight) < 1e-9, \
+            f"target-mix tail-skip requires config.alpha == soft_weight (got alpha={config['alpha']}, soft_weight={ttm_soft_weight}); " \
+            f"else the γ=0 tail target diverges from baseline"
 
     metric_logger = utils.MetricLogger(delimiter="  ")
     metric_logger.add_meter('lr', utils.SmoothedValue(window_size=50, fmt='{value:.6f}'))
