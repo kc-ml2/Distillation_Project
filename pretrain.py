@@ -99,6 +99,14 @@ def train(model, data_loader, optimizer, epoch, device, config, writer=None, val
     ttm_hold_steps = int(distill_ttm.get('hold_epochs', 2) * len(data_loader))
     ttm_decay_end_steps = int(distill_ttm.get('decay_end_epochs', 12) * len(data_loader))
 
+    if ttm_enabled:
+        assert 0.0 <= ttm_soft_weight <= 1.0, \
+            f"itc_target_mix.soft_weight out of [0,1]: {ttm_soft_weight}"
+        assert ttm_hold_steps <= ttm_decay_end_steps, \
+            f"itc_target_mix hold_epochs must be <= decay_end_epochs (steps {ttm_hold_steps} > {ttm_decay_end_steps})"
+        assert distill_ttm.get('variant', 'in_batch') in ('in_batch', 'queue'), \
+            f"itc_target_mix.variant must be 'in_batch' or 'queue': {distill_ttm.get('variant')}"
+
     metric_logger = utils.MetricLogger(delimiter="  ")
     metric_logger.add_meter('lr', utils.SmoothedValue(window_size=50, fmt='{value:.6f}'))
     metric_logger.add_meter('loss_ita', utils.SmoothedValue(window_size=50, fmt='{value:.6f}'))
@@ -125,8 +133,12 @@ def train(model, data_loader, optimizer, epoch, device, config, writer=None, val
         
         image = image.to(device,non_blocking=True)
 
+        from distillation.target_mix import ttm_gamma
+        gamma = ttm_gamma(global_step, ttm_hold_steps, ttm_decay_end_steps) if ttm_enabled else None
+
         # online teacher: same augmented batch -> ITC features (bf16, no_grad). None when distill off.
-        if (itc_kd_enabled or ttm_enabled) and online_teacher is not None:
+        # target-mix: teacher only while γ>0 (γ=0 tail is target-identical to baseline → skip teacher forward)
+        if (itc_kd_enabled or (ttm_enabled and gamma is not None and gamma > 0)) and online_teacher is not None:
             teacher_img_feat, teacher_text_feat = online_teacher.itc_feats(image, caption)
         else:
             teacher_img_feat = teacher_text_feat = None
@@ -139,9 +151,6 @@ def train(model, data_loader, optimizer, epoch, device, config, writer=None, val
 
         # ramp up alpha in the first 2 epochs
         alpha = config['alpha']*min(1,(epoch*len(data_loader)+i)/(2*len(data_loader)))
-
-        from distillation.target_mix import ttm_gamma
-        gamma = ttm_gamma(global_step, ttm_hold_steps, ttm_decay_end_steps) if ttm_enabled else None
 
         # loss_ita, loss_itm, loss_lm = model(image, caption, alpha = alpha)
         # loss = loss_ita + loss_itm + loss_lm  
