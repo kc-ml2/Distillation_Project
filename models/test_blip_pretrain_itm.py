@@ -156,5 +156,31 @@ class TestForwardItmMix(unittest.TestCase):
         self.assertFalse(torch.equal(negtxt_t, pos_t))
 
 
+class TestForwardItmMixMinilmStudent(unittest.TestCase):
+    """CPU smoke: minilm student (the production BERT size — all shipping
+    itm_A/B/C configs run my_bert_size='minilm', never 'base') forward with
+    itm_mix set. TestForwardItmMix above only ever builds a 'base' student, so
+    nothing on this branch previously exercised a minilm forward with itm_mix.
+    Construction ~1-2 min, like the base-student fixture."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.model = blip_pretrain(image_size=224, vit="base", my_bert_size="minilm", queue_size=240)
+        cls.model.eval()
+        cls.image = torch.randn(2, 3, 224, 224)
+        cls.caption = ["a green field", "a red car"]
+
+    def _forward(self, **kw):
+        return self.model(self.image, self.caption, alpha=0.0, update_train_state=False, **kw)
+
+    def test_student_neg_w_positive_with_teacher(self):
+        teacher = OnlineTeacher(checkpoint="", image_size=224, vit="base",
+                                bert="base", queue_size=240, keep=("itm",))
+        itm_mix = {'neg_source': 'student', 'soft_weight': 0.4, 'temp': 1.0, 'sel_scale': 14.29}
+        loss_itm = self._forward(online_teacher=teacher, itm_mix=itm_mix)[1]
+        self.assertTrue(torch.isfinite(loss_itm))
+        self.assertTrue(loss_itm.requires_grad)
+
+
 if __name__ == "__main__":
     unittest.main()
