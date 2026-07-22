@@ -96,7 +96,29 @@ class TestOnlineTeacherKeepBoth(unittest.TestCase):
     def test_unknown_keep_raises(self):
         with self.assertRaises(ValueError):
             OnlineTeacher(checkpoint="", image_size=224, vit="base",
-                          bert="base", queue_size=240, keep=("itm",))
+                          bert="base", queue_size=240, keep=("bogus",))
+
+
+class TestOnlineTeacherKeepItm(unittest.TestCase):
+    """keep=('itm',): visual_encoder + text_encoder + itm_head 생존, 나머지 해제."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.teacher = OnlineTeacher(checkpoint="", image_size=224, vit="base",
+                                    bert="base", queue_size=240, keep=("itm",))
+
+    def test_kept_and_freed(self):
+        m = self.teacher.model
+        for attr in ("visual_encoder", "text_encoder", "itm_head"):
+            self.assertIsNotNone(getattr(m, attr), f"{attr} should be kept")
+        for attr in ("vision_proj", "text_proj", "visual_encoder_m",
+                     "text_encoder_m", "vision_proj_m", "text_proj_m", "text_decoder"):
+            self.assertIsNone(getattr(m, attr), f"{attr} should be freed")
+
+    def test_teacher_scale_default(self):
+        # no checkpoint -> default temp 0.07 -> scale ~14.29
+        self.assertAlmostEqual(self.teacher.teacher_temp, 0.07, places=5)
+        self.assertAlmostEqual(self.teacher.teacher_scale, 1.0 / 0.07, places=3)
 
 
 class TestOnlineTeacherLargeConstruction(unittest.TestCase):

@@ -7,6 +7,7 @@ from models.blip_pretrain import blip_pretrain
 NEEDS = {
     "itc": {"visual_encoder", "text_encoder", "vision_proj", "text_proj"},
     "lm": {"visual_encoder", "text_decoder"},
+    "itm": {"visual_encoder", "text_encoder", "itm_head"},
 }
 ALL_SUBMODULES = {
     "visual_encoder", "text_encoder", "vision_proj", "text_proj", "text_decoder",
@@ -15,6 +16,7 @@ ALL_SUBMODULES = {
 CRITICAL_PREFIXES = {
     "itc": ("visual_encoder.", "text_encoder.", "vision_proj.", "text_proj."),
     "lm": ("visual_encoder.", "text_decoder."),
+    "itm": ("visual_encoder.", "text_encoder.", "itm_head."),
 }
 
 
@@ -29,6 +31,7 @@ class OnlineTeacher:
         if unknown:
             raise ValueError(f"unknown keep paths: {sorted(unknown)} (choose from {sorted(NEEDS)})")
         self.keep = tuple(keep)
+        self.teacher_temp = 0.07   # overwritten from checkpoint below if present
 
         model = blip_pretrain(image_size=image_size, vit=vit, my_bert_size=bert,
                               queue_size=queue_size,
@@ -38,6 +41,10 @@ class OnlineTeacher:
         if checkpoint:
             ckpt = torch.load(checkpoint, map_location="cpu", weights_only=False)
             state = ckpt.get("model", ckpt) if isinstance(ckpt, dict) else ckpt
+            # teacher's learned ITC temperature (for teacher-guided neg selection scale).
+            # model_large.pth carries `temp` (=0.0157); the reparam'd model has none, so read it here.
+            if "temp" in state:
+                self.teacher_temp = float(state["temp"])
             msg = model.load_state_dict(state, strict=False)
             print("teacher load:", msg)
             critical_prefixes = tuple(p for k in self.keep for p in CRITICAL_PREFIXES[k])
@@ -48,6 +55,8 @@ class OnlineTeacher:
                     f"for keep={self.keep} (architecture mismatch vs vit='{vit}', bert='{bert}'?). "
                     f"First few: {critical_missing[:5]}"
                 )
+
+        self.teacher_scale = 1.0 / self.teacher_temp
 
         # keep 합집합 외 서브모듈/버퍼 해제 (로드 후 → .to(device) 전이므로 GPU엔 안 올라감)
         needed = set().union(*(NEEDS[k] for k in self.keep))
