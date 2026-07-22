@@ -39,6 +39,12 @@ class TestOnlineTeacher(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             self.teacher.lm_logits(torch.randn(1, 3, 224, 224), ["a cat"])
 
+    def test_itm_soft_raises_without_itm_keep(self):
+        image = torch.randn(1, 3, 224, 224)
+        ids = torch.zeros(1, 30, dtype=torch.long)
+        with self.assertRaises(RuntimeError):
+            self.teacher.itm_soft(image, ids, ids, [0], [0], temp=1.0)
+
 
 class TestOnlineTeacherKeepLm(unittest.TestCase):
     """keep=('lm',): visual_encoder + text_decoder만 생존해야 한다."""
@@ -119,6 +125,21 @@ class TestOnlineTeacherKeepItm(unittest.TestCase):
         # no checkpoint -> default temp 0.07 -> scale ~14.29
         self.assertAlmostEqual(self.teacher.teacher_temp, 0.07, places=5)
         self.assertAlmostEqual(self.teacher.teacher_scale, 1.0 / 0.07, places=3)
+
+    def test_itm_soft_contract(self):
+        B = 3
+        image = torch.randn(B, 3, 224, 224)
+        text = self.teacher.tokenizer(["a green field", "a red car", "a blue sky"],
+                                      padding="max_length", truncation=True,
+                                      max_length=30, return_tensors="pt")
+        enc_ids = text.input_ids.clone()
+        enc_ids[:, 0] = self.teacher.tokenizer.enc_token_id
+        out = self.teacher.itm_soft(image, enc_ids, text.attention_mask,
+                                    [1, 2, 0], [2, 0, 1], temp=1.0)
+        self.assertEqual(tuple(out.shape), (3 * B, 2))
+        self.assertFalse(out.requires_grad)
+        self.assertTrue(torch.allclose(out.float().sum(1), torch.ones(3 * B), atol=1e-3))
+        self.assertTrue(torch.isfinite(out.float()).all())
 
 
 class TestOnlineTeacherLargeConstruction(unittest.TestCase):

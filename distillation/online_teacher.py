@@ -117,3 +117,31 @@ class OnlineTeacher:
                                           encoder_attention_mask=image_atts,
                                           return_dict=True)   # labels 없음 → logits만
         return out.logits, decoder_input_ids
+
+    @torch.no_grad()
+    def itm_soft(self, image, enc_input_ids, attention_mask,
+                 neg_idx_img, neg_idx_txt, temp):
+        """Teacher ITM match distribution over the SAME 3B triplets the student built.
+        enc_input_ids/attention_mask come from the student (identical tokenizer, pos-0
+        already set to enc_token_id). neg_idx_img/neg_idx_txt: length-B int sequences.
+        Returns softmax(teacher_itm_logits / temp) as [3B, 2] (no grad)."""
+        self._require("itm")
+        device = image.device
+        bs = image.size(0)
+        with torch.amp.autocast(device_type=device.type, dtype=torch.bfloat16):
+            image_embeds = self.model.visual_encoder(image)
+            image_atts = torch.ones(image_embeds.size()[:-1], dtype=torch.long, device=device)
+            img_neg = torch.stack([image_embeds[neg_idx_img[b]] for b in range(bs)])
+            txt_neg = torch.stack([enc_input_ids[neg_idx_txt[b]] for b in range(bs)])
+            txt_neg_atts = torch.stack([attention_mask[neg_idx_txt[b]] for b in range(bs)])
+            text_ids_all = torch.cat([enc_input_ids, enc_input_ids, txt_neg], dim=0)
+            text_atts_all = torch.cat([attention_mask, attention_mask, txt_neg_atts], dim=0)
+            image_embeds_all = torch.cat([image_embeds, img_neg, image_embeds], dim=0)
+            image_atts_all = torch.cat([image_atts, image_atts, image_atts], dim=0)
+            out = self.model.text_encoder(text_ids_all,
+                                          attention_mask=text_atts_all,
+                                          encoder_hidden_states=image_embeds_all,
+                                          encoder_attention_mask=image_atts_all,
+                                          return_dict=True)
+            logits = self.model.itm_head(out.last_hidden_state[:, 0, :]).float()
+        return F.softmax(logits / temp, dim=1)
