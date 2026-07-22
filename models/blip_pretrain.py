@@ -19,7 +19,7 @@ import torch.nn.functional as F
 from custom_functions.dinov3_encoder import DINOv3_Wrapper # custom function으로 이동한 후에 임포트
 
 from models.blip import create_vit, init_tokenizer, load_checkpoint
-from distillation.losses import itc_distill_loss, lm_distill_loss
+from distillation.losses import itc_distill_loss, lm_distill_loss, itm_target_mix_loss
 
 #### 수정부분 시작: 실험 4 - temp 나누기 대신 logit_scale 곱하기로 reparam ####
 # 기존 temp clamp 범위 (0.001, 0.5) -> effective scale(1/temp) 범위는 (2, 1000).
@@ -346,7 +346,8 @@ class BLIP_Pretrain(nn.Module):
 
     def forward(self, image, caption, alpha, update_train_state=None,
                 teacher_img_feat=None, teacher_text_feat=None, distill_temp=0.05,
-                teacher_lm_logits=None, teacher_lm_input_ids=None, lm_distill_temp=2.0):
+                teacher_lm_logits=None, teacher_lm_input_ids=None, lm_distill_temp=2.0,
+                online_teacher=None, itm_mix=None):
     #### 수정부분 시작: validation-safe forward option 추가 ####
         """
         update_train_state:
@@ -434,59 +435,59 @@ class BLIP_Pretrain(nn.Module):
 
         ###============== Image-text Matching ===================###
         encoder_input_ids = text.input_ids.clone()
-        encoder_input_ids[:,0] = self.tokenizer.enc_token_id
-        
-        # forward the positve image-text pair
+        encoder_input_ids[:, 0] = self.tokenizer.enc_token_id
         bs = image.size(0)
-        output_pos = self.text_encoder(encoder_input_ids,
-                                       attention_mask = text.attention_mask,
-                                       encoder_hidden_states = image_embeds,
-                                       encoder_attention_mask = image_atts,      
-                                       return_dict = True,
-                                      )            
-        with torch.no_grad():       
-            weights_t2i = F.softmax(sim_t2i[:,:bs],dim=1)+1e-4 
-            weights_t2i.fill_diagonal_(0)            
-            weights_i2t = F.softmax(sim_i2t[:,:bs],dim=1)+1e-4  
-            weights_i2t.fill_diagonal_(0)   
-            
-        # select a negative image for each text
-        image_embeds_neg = []    
-        for b in range(bs):
-            neg_idx = torch.multinomial(weights_t2i[b], 1).item()
-            image_embeds_neg.append(image_embeds[neg_idx])
-        image_embeds_neg = torch.stack(image_embeds_neg,dim=0)   
 
-        # select a negative text for each image
-        text_ids_neg = []
-        text_atts_neg = []
-        for b in range(bs):
-            neg_idx = torch.multinomial(weights_i2t[b], 1).item()
-            text_ids_neg.append(encoder_input_ids[neg_idx])
-            text_atts_neg.append(text.attention_mask[neg_idx])
+        # negative-mining sampling weights: teacher-sim (itm_mix teacher) or student-sim.
+        if itm_mix is not None and itm_mix['neg_source'] == 'teacher':
+            assert teacher_img_feat is not None and teacher_text_feat is not None, \
+                "itm_mix neg_source='teacher' requires teacher_img_feat/teacher_text_feat"
+            with torch.no_grad():
+                t_img = teacher_img_feat.to(image.device)
+                t_txt = teacher_text_feat.to(image.device)
+                s = itm_mix['sel_scale']
+                weights_i2t = F.softmax(t_img @ t_txt.t() * s, dim=1) + 1e-4
+                weights_t2i = F.softmax(t_txt @ t_img.t() * s, dim=1) + 1e-4
+                weights_i2t.fill_diagonal_(0)
+                weights_t2i.fill_diagonal_(0)
+        else:
+            with torch.no_grad():
+                weights_t2i = F.softmax(sim_t2i[:, :bs], dim=1) + 1e-4
+                weights_i2t = F.softmax(sim_i2t[:, :bs], dim=1) + 1e-4
+                weights_t2i.fill_diagonal_(0)
+                weights_i2t.fill_diagonal_(0)
 
-        text_ids_neg = torch.stack(text_ids_neg,dim=0)   
-        text_atts_neg = torch.stack(text_atts_neg,dim=0)      
+        # draw one negative index per sample (neg image for each text, neg text for each image)
+        neg_idx_img = [torch.multinomial(weights_t2i[b], 1).item() for b in range(bs)]
+        neg_idx_txt = [torch.multinomial(weights_i2t[b], 1).item() for b in range(bs)]
+        image_embeds_neg = torch.stack([image_embeds[neg_idx_img[b]] for b in range(bs)])
+        text_ids_neg = torch.stack([encoder_input_ids[neg_idx_txt[b]] for b in range(bs)])
+        text_atts_neg = torch.stack([text.attention_mask[neg_idx_txt[b]] for b in range(bs)])
 
-        text_ids_all = torch.cat([encoder_input_ids, text_ids_neg],dim=0)     
-        text_atts_all = torch.cat([text.attention_mask, text_atts_neg],dim=0)     
+        # one merged 3B forward: rows [pos B | neg-image B | neg-text B]
+        text_ids_all = torch.cat([encoder_input_ids, encoder_input_ids, text_ids_neg], dim=0)
+        text_atts_all = torch.cat([text.attention_mask, text.attention_mask, text_atts_neg], dim=0)
+        image_embeds_all = torch.cat([image_embeds, image_embeds_neg, image_embeds], dim=0)
+        image_atts_all = torch.cat([image_atts, image_atts, image_atts], dim=0)
+        output_all = self.text_encoder(text_ids_all,
+                                       attention_mask=text_atts_all,
+                                       encoder_hidden_states=image_embeds_all,
+                                       encoder_attention_mask=image_atts_all,
+                                       return_dict=True)
+        vl_output = self.itm_head(output_all.last_hidden_state[:, 0, :])   # [3B, 2]
+        itm_labels = torch.cat([torch.ones(bs, dtype=torch.long),
+                                torch.zeros(2 * bs, dtype=torch.long)], dim=0).to(image.device)
 
-        image_embeds_all = torch.cat([image_embeds_neg,image_embeds],dim=0)
-        image_atts_all = torch.cat([image_atts,image_atts],dim=0)
-
-        output_neg = self.text_encoder(text_ids_all,
-                                       attention_mask = text_atts_all,
-                                       encoder_hidden_states = image_embeds_all,
-                                       encoder_attention_mask = image_atts_all,      
-                                       return_dict = True,
-                                      )                            
-
-        vl_embeddings = torch.cat([output_pos.last_hidden_state[:,0,:], output_neg.last_hidden_state[:,0,:]],dim=0)
-        vl_output = self.itm_head(vl_embeddings)            
-
-        itm_labels = torch.cat([torch.ones(bs,dtype=torch.long),torch.zeros(2*bs,dtype=torch.long)],
-                               dim=0).to(image.device)
-        loss_itm = F.cross_entropy(vl_output, itm_labels)  
+        # ITM loss: teacher target-mix (W>0) or plain CE.
+        if itm_mix is not None and itm_mix['soft_weight'] > 0 and online_teacher is not None:
+            teacher_soft = online_teacher.itm_soft(
+                image, encoder_input_ids, text.attention_mask,
+                neg_idx_img, neg_idx_txt, itm_mix['temp'])                 # [3B, 2], no grad
+            loss_itm = itm_target_mix_loss(vl_output, itm_labels,
+                                           teacher_soft.to(image.device),
+                                           itm_mix['soft_weight'])
+        else:
+            loss_itm = F.cross_entropy(vl_output, itm_labels)
         
         ##================= LM ========================##     
         decoder_input_ids = text.input_ids.clone()      # 얘는 어떻게 생겼길래? input_ids가? 입력 토큰처럼 생겼나?
