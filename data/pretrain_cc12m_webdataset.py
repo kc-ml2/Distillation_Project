@@ -7,7 +7,7 @@ from data.utils import pre_caption
 
 
 class cc12m_webdataset(IterableDataset):
-    def __init__(self, tar_root, transform, batch_size):
+    def __init__(self, tar_root, transform, batch_size, shardshuffle_size=100):
         super().__init__()
         self.tar_root = tar_root
         self.transform = transform
@@ -26,7 +26,7 @@ class cc12m_webdataset(IterableDataset):
         self.pipeline = (
             wds.WebDataset(
                 self.tar_files,
-                shardshuffle=True,
+                shardshuffle=shardshuffle_size,
                 nodesplitter=wds.split_by_node,  # 멀티 GPU 분할 가속
                 handler=wds.warn_and_continue    # 에러 방어선
             )
