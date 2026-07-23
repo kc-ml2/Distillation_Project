@@ -27,8 +27,8 @@ def autocontrast_func(img, cutoff=0):
         if high <= low:
             table = np.arange(n_bins)
         else:
-            scale = (n_bins - 1) / (high - low)
-            offset = -low * scale
+            scale = (n_bins - 1) / (int(high) - int(low))
+            offset = -int(low) * scale
             table = np.arange(n_bins) * scale + offset
             table[table < 0] = 0
             table[table > n_bins - 1] = n_bins - 1
