@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>경량 VLM 지식 증류 — 기술 보고서</title>
+<style>
+  :root {
+    --bg: #ffffff; --fg: #1a1d23; --muted: #5c6470; --line: #e3e6ea;
+    --accent: #0f766e; --accent-soft: #f0fdfa; --card: #f8f9fb;
+    --good: #16803c; --bad: #b42318; --warn: #b54708; --code-bg: #f1f3f5;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #14161a; --fg: #e6e8eb; --muted: #9aa3ad; --line: #2b2f36;
+      --accent: #2dd4bf; --accent-soft: #132a27; --card: #1a1d23;
+      --good: #4ade80; --bad: #f87171; --warn: #fbbf24; --code-bg: #22262c;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg);
+    font-family: 'Pretendard', 'Noto Sans KR', -apple-system, 'Segoe UI', sans-serif;
+    font-size: 15.5px; line-height: 1.7; }
+  .wrap { max-width: 880px; margin: 0 auto; padding: 48px 24px 96px; }
+  header.doc { border-bottom: 2px solid var(--fg); padding-bottom: 20px; }
+  header.doc h1 { font-size: 1.75rem; margin: 0 0 10px; letter-spacing: -0.02em; line-height: 1.35; }
+  header.doc .meta { color: var(--muted); font-size: 0.92rem; }
+  header.doc .meta b { color: var(--fg); font-weight: 600; }
+  h2 { font-size: 1.3rem; margin: 52px 0 14px; letter-spacing: -0.01em;
+       padding-bottom: 8px; border-bottom: 1px solid var(--line); }
+  h2 .no { color: var(--accent); font-family: ui-monospace, monospace; margin-right: 8px; }
+  h3 { font-size: 1.05rem; margin: 30px 0 10px; }
+  code { font-family: ui-monospace, 'SF Mono', Consolas, monospace; font-size: 0.86em;
+         background: var(--code-bg); padding: 1px 5px; border-radius: 4px; }
+  table { border-collapse: collapse; width: 100%; margin: 14px 0 22px; font-size: 0.9rem; }
+  th, td { border: 1px solid var(--line); padding: 7px 11px; text-align: left; vertical-align: top; }
+  th { background: var(--card); font-weight: 600; }
+  td.r, th.r { text-align: right; font-variant-numeric: tabular-nums; }
+  .scroll { overflow-x: auto; }
+  .key { background: var(--accent-soft); border-left: 3px solid var(--accent);
+         padding: 12px 18px; margin: 18px 0; border-radius: 0 8px 8px 0; }
+  .key b:first-child { color: var(--accent); }
+  .good { color: var(--good); font-weight: 600; }
+  .bad { color: var(--bad); font-weight: 600; }
+  .warn { color: var(--warn); font-weight: 600; }
+  .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+                  gap: 14px; margin: 22px 0; }
+  .summary-card { background: var(--card); border: 1px solid var(--line); border-radius: 10px;
+                  padding: 16px 18px; }
+  .summary-card .n { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.02em; }
+  .summary-card .l { color: var(--muted); font-size: 0.86rem; margin-top: 4px; }
+  ul { padding-left: 22px; } li { margin: 5px 0; }
+  ol { padding-left: 22px; } ol li { margin: 7px 0; }
+  footer { margin-top: 64px; color: var(--muted); font-size: 0.85rem;
+           border-top: 1px solid var(--line); padding-top: 16px; }
+  .hl-row td { background: var(--accent-soft); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="doc">
+  <h1>경량 Vision-Language 모델 지식 증류<br>기술 보고서</h1>
+  <div class="meta">
+    <b>프로젝트</b> BLIP 기반 경량 VLM 사전학습 및 BLIP-large 티처 지식 증류 ·
+    <b>기간</b> 2026-05-12 ~ 2026-07-15 (진행 중) · <b>작성</b> 2026-07-16<br>
+    <b>베이스</b> Salesforce BLIP (공식 구현 fork) ·
+    시간순 맥락은 자매 문서 <b>development-timeline.html</b> 참조
+  </div>
+</header>
+
+<h2>요약 (Executive Summary)</h2>
+
+<p>BLIP-base 대비 <b>30% 파라미터(73.8M)의 경량 학생 모델</b>(DINOv3 ViT-S + MiniLM)을 구축하고,
+frozen BLIP-large(469.4M) 티처로부터 지식 증류를 수행했다.</p>
+
+<div class="summary-grid">
+  <div class="summary-card"><div class="n good">CIDEr +2.5%</div>
+    <div class="l">LM logit 증류 vs 동일 학생 solo (1.076→1.103), SPICE +2.0%, 전 에폭 일관 우위</div></div>
+  <div class="summary-card"><div class="n">96% @ 30%</div>
+    <div class="l">base 모델 CIDEr의 96%를 30% 파라미터로 달성 (73.8M vs 247.2M)</div></div>
+  <div class="summary-card"><div class="n">collapse 해결</div>
+    <div class="l">temperature 폭주의 원인을 gradient 구조로 특정, 통제 ablation으로 검증</div></div>
+  <div class="summary-card"><div class="n">×τ² 한계 실측</div>
+    <div class="l">Hinton 보정의 적용 regime을 gradient crossover로 입증, ITC-KD 실패 원인 정량 규명</div></div>
+</div>
+
+<ol>
+  <li><b>LM logit 증류로 zero-shot 캡션 성능 확정 개선</b> — CIDEr +2.5%, SPICE +2.0%,
+    전 에폭에서 일관 우위.</li>
+  <li><b>학습 안정성 문제(temperature collapse)의 근본 해결</b> — CLIP식 logit_scale
+    재파라미터화 + weight-decay 제외. 통제 ablation으로 검증.</li>
+  <li><b>ITC(contrastive) 증류의 실패 원인 정량 규명</b> — gradient 불균형(6.7×)과 기하
+    압축-상쇄(margin×scale 불변)를 진단, 2차 실험(×τ+λ 정합, target-mixing) 진행 중.</li>
+  <li><b>재현 가능한 평가 인프라</b> — 상시 retrieval/caption 평가, scale-오염 없는 지표 원칙,
+    자동 collapse 감시.</li>
+</ol>
+
+<h2><span class="no">1</span>문제 정의와 목표</h2>
+
+<div class="scroll"><table>
+<tr><th style="width:130px">항목</th><th>내용</th></tr>
+<tr><td>목표</td><td>경량 VLM이 대형 티처의 성능에 근접하도록 사전학습 단계에서 지식 증류</td></tr>
+<tr><td>학생</td><td>DINOv3 ViT-S (reg tokens, 21.6M) + MiniLM 계열 텍스트 인코더/디코더 (52.3M) — 캡션 모델 기준 73.8M</td></tr>
+<tr><td>티처</td><td>공식 BLIP-large pretrain 체크포인트 (469.4M), frozen</td></tr>
+<tr><td>데이터</td><td>COCO(566K 캡션) + Visual Genome region caption(5.4M) — VG가 mixture의 ~90%</td></tr>
+<tr><td>평가</td><td>COCO 5k retrieval (r_mean) · COCO Karpathy test zero-shot 캡션 (BLEU/METEOR/ROUGE/CIDEr/SPICE)</td></tr>
+<tr><td>성공 기준</td><td>증류 학생 &gt; solo 학생 (필수), base 모델(66.2+) 근접 (목표)</td></tr>
+</table></div>
+
+<p><b>학습 레시피 (전 실험 공통, 1-변수 통제):</b> batch 40×4GPU (eff 160), lr 1e-5 (cosine),
+warmup 37,000 steps, 20 epochs, image 224², queue 57,600, AMP(bf16), weight decay 0.05.</p>
+
+<h2><span class="no">2</span>시스템 아키텍처</h2>
+
+<h3>2.1 학생 모델</h3>
+<p>BLIP의 3-loss 구조(ITC/ITM/LM)를 유지하되 양쪽 백본을 교체 가능하게 재설계:</p>
+<ul>
+  <li><b>비전:</b> timm DINOv3 wrapper — register token 제어, <code>global_pool=''</code> 출력 차원
+    정합, DINOv3 체크포인트 pos_embed interpolation 가드. <code>vit: small_reg</code> 옵션.</li>
+  <li><b>텍스트:</b> <code>my_bert_size</code> 옵션으로 BERT-base/medium/MiniLM 선택 —
+    encoder/decoder config 쌍, decoder <code>encoder_width=vision_width</code> 연결.</li>
+  <li>캡션 디코더도 동일 옵션으로 선택 → pretrain 모델에서 zero-shot 생성 가능
+    (<code>BLIP_Pretrain.generate()</code>).</li>
+</ul>
+
+<h3>2.2 모델 크기와 캡션 성능 (zero-shot, COCO Karpathy test)</h3>
+<div class="scroll"><table>
+<tr><th>모델</th><th class="r">파라미터</th><th class="r">CIDEr</th><th class="r">SPICE</th></tr>
+<tr><td>BLIP-large (티처)</td><td class="r">469.4M</td><td class="r">1.236</td><td class="r">0.227</td></tr>
+<tr><td>BLIP-base (official)</td><td class="r">247.2M</td><td class="r">1.150</td><td class="r">0.219</td></tr>
+<tr><td>base 재학습 (amp)</td><td class="r">247.2M</td><td class="r">1.120</td><td class="r">0.210</td></tr>
+<tr><td>base 재학습 (nodecay)</td><td class="r">247.2M</td><td class="r">1.113</td><td class="r">0.211</td></tr>
+<tr class="hl-row"><td><b>student + LM 증류</b></td><td class="r"><b>73.8M</b></td><td class="r"><b>1.103</b></td><td class="r"><b>0.207</b></td></tr>
+<tr><td>student solo</td><td class="r">73.8M</td><td class="r">1.076</td><td class="r">0.203</td></tr>
+</table></div>
+
+<h2><span class="no">3</span>학습 안정화: temperature collapse</h2>
+
+<h3>3.1 증상과 원인 분석</h3>
+<p>baseline 런이 epoch 0.5~4 안정 plateau(logit_scale 38~58) 후 epoch ~4.3부터 폭주,
+epoch 6에 클램프 상한(scale ~1000 = temp 0.001) 고정, <code>loss_val/ita</code> 동반 악화.</p>
+<ul>
+  <li>weight decay의 temp 드리프트 기여 계산 ~1.5%/epoch — 관측된 30~40% 변동을 설명 불가.</li>
+  <li>원본 BLIP의 <code>sim / temp</code> 구조: temp가 클램프 바닥에 접근할수록
+    <b>1/temp² gradient 증폭</b>이 걸리는 양성 피드백으로 판단.</li>
+  <li>독립 요인 — <b>VG 데이터 버그</b>: region caption이 bbox crop이 아닌 전체 이미지 사용
+    (mixture의 90% 오염). bbox crop + bounds-clamp로 수정.</li>
+</ul>
+
+<h3>3.2 통제 ablation과 해결</h3>
+<div class="scroll"><table>
+<tr><th>exp</th><th>조작</th><th>목적</th></tr>
+<tr><td>1.vg_crop</td><td>VG bbox fix만</td><td>데이터 요인 분리</td></tr>
+<tr><td>2.no_decay_temp</td><td>+ temp를 decay 제외</td><td>decay 단독 가설 검증</td></tr>
+<tr><td>3 (생략)</td><td>reparam만</td><td>수학적 분석으로 대체, GPU 절약</td></tr>
+<tr class="hl-row"><td><b>4.logit_scale_no_decay</b></td><td><b>CLIP식 reparam + decay 제외</b></td><td>결합 해법 → 표준 레시피로 정착</td></tr>
+</table></div>
+<p>exp4: <code>logit_scale = nn.Parameter(log(1/0.07))</code>, <code>sim × exp(logit_scale)</code>,
+<b>log-space 클램프로 유효 범위 [2, 1000] 동일 유지</b> (파라미터화만 변경 — 교란 변수 차단).
+결과 base r_mean 66.20 (best 66.83).</p>
+<div class="key"><b>반증 사례 기록</b> — exp5-lrup은 logit_scale 110.9에 도달하고도 retrieval
+최고(67.97) → "높은 scale 자체가 병리" 가설 기각. scale은 증상이며, 문제는 저-temp 구간의
+gradient 구조. 이 교훈이 §5.2(c) 진단에서 재사용된다.</div>
+<p>부속 안전장치: collapse 자동 정지 트리거(logit_scale&gt;700 지속 10,000스텝) +
+TB 이벤트 직독 외부 감시(cron + push 알림).</p>
+
+<h2><span class="no">4</span>평가 인프라</h2>
+
+<div class="scroll"><table>
+<tr><th>층</th><th>도구</th><th>케이던스</th><th>비고</th></tr>
+<tr><td>retrieval</td><td><code>RetrievalValRunner</code> (COCO 5k, ITC-only + ITM-rerank 2티어)</td>
+  <td>ITC 1000스텝 / ITM 에폭 2회</td><td>ITM rerank는 비싸 저빈도</td></tr>
+<tr><td>caption (in-loop)</td><td><code>CaptionValRunner</code> (DDP 샤딩 생성→gather/dedup→채점→TB)</td>
+  <td>경량지표 에폭 2회, SPICE 에폭 1회</td><td>SPICE 62s/회, 32코어 캡</td></tr>
+<tr><td>caption (offline)</td><td><code>train_caption.py --evaluate</code> + SPICE 오프라인 재계산</td>
+  <td>체크포인트 sweep</td><td>에폭 궤적 A/B</td></tr>
+</table></div>
+
+<div class="key"><b>지표 선택 원칙</b> (Phase 0 진단에서 확립) — retrieval은 rank 기반이라 유사도의
+단조 변환(logit_scale 곱 포함)에 불변. 반면 val ITC loss는 softmax(sim×scale) CE라
+<b>scale이 다른 두 런 간 비교 불가</b>. "loss는 내려가는데 retrieval은 나쁘다"는 모순이 아니라
+scale 오염이다. ⇒ 런 간 비교와 모델 선택은 retrieval(및 생성 지표)로만 수행한다.</div>
+
+<p>공학적 하드닝: rank0 채점 예외 non-fatal 처리(체크포인트 유실 방지, collective 이후라 DDP-safe),
+SPICE CPU affinity 제한(MPS 동시 2잡 스래싱 방지, 32C=64C 실측 동속),
+DDP gather/dedup 정합성 검증(single vs 2-GPU CIDEr 동일치).</p>
+
+<h2><span class="no">5</span>지식 증류</h2>
+
+<h3>5.1 LM logit 증류 (exp8) — 확정 성과</h3>
+<p><b>방법:</b> frozen 티처가 매 스텝 동일 증강 배치에 teacher-forced 디코더 로짓 [B, 30, 30524]
+생성 → token-level KL (shift frame 정렬, pad mask, T=2.0, ×T²) → <code>total + w·loss_lm_kd</code> (w=1.0).</p>
+<p><b>결과:</b> <span class="good">CIDEr +2.5%, SPICE +2.0%</span>, 전 평가 에폭(2·5·7·10·13·16·19)에서
+distill &gt; solo.</p>
+<ul>
+  <li><b>headroom 측정:</b> 티처 val LM CE 3.732 vs 학생 3.760 (~0.03 nats). 티처가 pretrain ckpt라
+    CE로는 증류 효과가 원리적으로 안 보임을 사전 규명 → 평가를 downstream 생성 지표로 설계.</li>
+  <li><b>SPICE 분해:</b> CIDEr는 전 모델 ep16 피크, SPICE(의미)는 ep10에서 포화. 단 solo SPICE는
+    ep10 이후 완전 플래토(0.203), <b>distill만 계속 상승(→0.207)</b> — 증류가 유창성이 아닌
+    의미(scene-graph) 내용을 추가 전달한다는 증거.</li>
+  <li><b>성공 요인 (사후 가설):</b> ① teacher-forced에서 티처 top-1 ≈ 정답 토큰 (CE와 비충돌),
+    ② T=2&gt;1은 Hinton softening regime이라 ×T² 유효, ③ logit_scale 같은 공유 도피 노브 부재 —
+    §5.2와 정확히 대비되는 조건.</li>
+</ul>
+
+<h3>5.2 ITC (contrastive) 증류 — 실패의 정량 규명</h3>
+<p><b>방법:</b> 학생·티처의 L2-normalized feature로 in-batch B×B cosine 유사도 → 공통 τ softmax
+분포 간 양방향 KL (relational KD). offline feature 캐시로 시작 → aug 불일치로 online teacher
+(bf16, no_grad)로 피벗.</p>
+
+<h3 style="font-size:0.98rem">(a) ×τ² 계수 버그 — Hinton 보정의 적용 한계</h3>
+<p>초기 런에서 <code>loss_itc_kd ≈ 0.0034</code> (ita 7.73의 1/2250). Hinton(2015)의 ×T² 보정은
+<b>고온 극한(T ≫ 로짓 차)에서만 유도</b>되는데, 본 설정은 τ=0.05 ≪ 1 (sharpening)이라
+grad ~ 1/τ regime — ×τ²는 순 τ배로 신호를 죽인다. <b>gradient probe로 crossover 실측:</b></p>
+<div class="scroll"><table>
+<tr><th>τ</th><th class="r">0.022</th><th class="r">0.05</th><th class="r">0.1</th><th class="r">0.15</th><th class="r">0.3</th></tr>
+<tr><td>|g_kd|·τ (1/τ regime이면 상수)</td><td class="r">0.95</td><td class="r">1.15</td><td class="r">0.98</td><td class="r">0.70</td><td class="r">0.35</td></tr>
+<tr><td>|g_kd|·τ² (Hinton regime이면 상수)</td><td class="r">0.021</td><td class="r">0.057</td><td class="r">0.098</td><td class="r"><b>0.105</b></td><td class="r"><b>0.104</b></td></tr>
+</table></div>
+<p>τ≥0.15에서만 Hinton 보정 성립, τ≤0.05는 1/τ regime → <b>본 설정의 올바른 정규화는 ×τ</b>.</p>
+
+<h3 style="font-size:0.98rem">(b) τ 선정 — 티처 유사도 실측 기반</h3>
+<ul>
+  <li>티처를 실제 학습 배치에 forward, 4,000 pos / 156,000 neg: 임베딩이 좁은 콘([0.2, 0.6])에 압축 —
+    pos 0.42 / neg 0.31, per-row margin(pos−hardest neg) aug ON <b>0.016</b> / clean 0.030.
+    증강이 positive 유사도만 선택적으로 훼손.</li>
+  <li><b>argmax=diag 58.7%</b> — 티처가 옮길 수 있는 top-1 신호의 상한. 오답 대부분(31~41%p)은
+    티처·데이터 고유(캡션 모호성, VG degenerate region), aug 기여 ~6%p.</li>
+  <li>정보가 살아있는 τ 창 <b>0.022~0.07</b> (τ≥0.1 균등화). τ=0.022: diag질량 0.51/유효서포트 4.2,
+    τ=0.05: 0.23/19.4.</li>
+</ul>
+
+<h3 style="font-size:0.98rem">(c) exp 6.1/6.2 결과와 Phase 0 진단</h3>
+<div class="scroll"><table>
+<tr><th>런</th><th>구성</th><th class="r">ep1 r_mean</th><th class="r">ep20 r_mean</th><th class="r">scale@20</th></tr>
+<tr><td>baseline (exp7)</td><td>증류 없음</td><td class="r">21.9</td><td class="r"><b>63.4</b></td><td class="r">59.1</td></tr>
+<tr><td>6.1 droptau</td><td>τ=0.022, ×τ² 제거, λ=1</td><td class="r"><b>40.2</b></td><td class="r">59.5</td><td class="r">88.1</td></tr>
+<tr><td>6.2 keeptau2</td><td>×τ² 유지</td><td class="r">16.0</td><td class="r">62.7</td><td class="r">65.7</td></tr>
+</table></div>
+<p>6.1의 <span class="good">ep1 +18.3은 티처 신호의 실효 가치 증명</span> — 문제는 신호가 아니라
+크기 관리. 6.2는 유효 ratio 0.003의 no-op 대조군. 6.1의 최종 <span class="bad">−3.9</span> 원인 3종 실측:</p>
+<ol>
+  <li><b>gradient 불균형:</b> λ=1에서 |g_kd|/|g_ita| = 6.66(ep0)→2.56(ep19) — KD가 전 구간 압도.
+    cos(g_kd, g_ita) 전 조합 음수(−0.06~−0.34): 순 갱신의 ITC 방향 성분 1+6.66×(−0.24) ≈ <b>−0.6</b>
+    (초반 학습이 주 손실 gradient를 거슬러 진행).</li>
+  <li><b>기하 압축과 상쇄:</b> KD가 학생 margin 0.082→0.054 압축(티처의 콘 강제), ITC가
+    logit_scale 59→88 인플레로 정확히 상쇄 — <b>margin×scale 4.84 vs 4.77 (불변)</b>.
+    줄다리기의 순위 재배열이 retrieval 손상.</li>
+  <li><b>지표 오염:</b> 6.1의 val ITC loss 하락은 scale 오염 — 개선의 증거가 아님 (§4 원칙의 출처).</li>
+</ol>
+
+<h3>5.3 진행 중: 2차 실험 (2026-07-14 ~ )</h3>
+<p><b>Phase 1 — ×τ 보정 + λ 크기 정합</b> (dev <code>fe23681</code>, <span class="warn">07-14부터 가동 중</span>):</p>
+<ul>
+  <li>loss ×τ 반환 → 두 τ의 |g_kd| 자동 정합 → <b>단일 공유 λ=2.5</b> (목표 ep0 ratio ~0.4,
+    6.1 대비 16× 약한 압력). 명시적 anneal 없음 — ratio가 학습 중 ~3× 자연 감쇠.</li>
+  <li><b>Arm T</b> (τ=0.022, sharp): ITC 방향 보존 +0.91 / <b>Arm S</b> (τ=0.05, soft): +0.85 —
+    "같은 압력, 다른 sharpness", τ 1-변수 통제.</li>
+  <li>게이트: ep20 r_mean ≥63.4 필수, 목표 66+. 미달 시 Phase 1.5 = gradient surgery
+    (PCGrad류 충돌 성분 사영 제거, 비용 ~1.4×).</li>
+</ul>
+<p><b>exp9 — teacher-target-mixing</b> (브랜치 <code>exp9_teacher_target_mix</code>,
+<span class="warn">GPU 스모크 대기</span>):</p>
+<ul>
+  <li>접근 전환: 별도 KD loss(두 gradient의 벡터 합 타협) 대신 <b>티처를 ITC soft-target에 혼합</b> —
+    손실 단일화로 gradient 충돌이 정의상 소멸.</li>
+  <li><code>target = 0.6·one-hot + 0.4·[γ·teacher_soft + (1−γ)·momentum_soft]</code>, 양방향 대칭.
+    γ: 2ep 홀드(초기 scaffold) → ep12까지 선형 감쇠 → 이후 baseline 동일.</li>
+  <li>variant 9.1 in_batch / 9.2 queue(frozen 티처 feature 큐, momentum 큐와 페어 enqueue).
+    γ=0 이후 티처 forward 스킵(불변식 assert) — 런당 ~1일 절약.</li>
+  <li>검증: 단위테스트 9/9, OFF 분기 baseline bit-identical, CPU 스모크, 전 브랜치 리뷰 통과.</li>
+</ul>
+<p><b>부속 실험 — VG min_scale 0.5 (완료, 무승부):</b> exp4 대비 66.34 vs 66.20 (노이즈 범위).
+함의: VG 문제의 지렛대는 crop 강도가 아니라 <b>region 크기/내용 선택</b>
+(VG&lt;32²px 63%, 티처 co-match 오답 VG 35.8% vs COCO 5.4%) → Phase 2 content-gating 근거.</p>
+
+<h2><span class="no">6</span>정량 결과 종합</h2>
+
+<h3>6.1 Retrieval (COCO 5k, ITC r_mean @ ep20)</h3>
+<div class="scroll"><table>
+<tr><th>런</th><th class="r">r_mean</th><th>비고</th></tr>
+<tr><td>base exp5-lrup</td><td class="r">66.74 (best 67.97)</td><td>전체 최고 (레시피 상이)</td></tr>
+<tr><td>base exp4 (표준 레시피)</td><td class="r">66.20 (best 66.83)</td><td>학생의 목표선</td></tr>
+<tr><td>base vg_min0.5</td><td class="r">66.34</td><td>exp4와 무승부</td></tr>
+<tr><td>student + LM 증류 (exp8)</td><td class="r">≈64.2</td><td></td></tr>
+<tr class="hl-row"><td><b>student solo (exp7)</b></td><td class="r"><b>63.4</b></td><td>증류 실험의 필수 게이트</td></tr>
+<tr><td>student + ITC KD 6.2 (no-op)</td><td class="r">62.7</td><td>대조군</td></tr>
+<tr><td>student + ITC KD 6.1 (λ=1)</td><td class="r">59.5</td><td>실패 사례 — §5.2(c) 진단</td></tr>
+<tr><td>Phase 1 armT / armS</td><td class="r">(가동 중)</td><td>게이트 ≥63.4, 목표 66+</td></tr>
+</table></div>
+
+<h3>6.2 Zero-shot 캡션 (COCO Karpathy test, ep20 매칭 A/B)</h3>
+<p>§2.2 표 참조. 핵심: <span class="good">LM 증류 학생(73.8M) CIDEr 1.103 = base official(247.2M)의
+96%</span>, distill &gt; solo 전 에폭 성립, SPICE 궤적에서 의미 내용 전달 확인.</p>
+
+<h2><span class="no">7</span>결론 및 향후 과제</h2>
+
+<p><b>확립된 것:</b></p>
+<ol>
+  <li>경량 학생(30% 파라미터)이 LM logit 증류로 base급 캡션 성능의 96%에 도달 — 증류 효과는
+    CE가 아닌 downstream 생성 지표(특히 SPICE 궤적)로 검증해야 함.</li>
+  <li>contrastive 증류에서 Hinton ×T² 보정은 sharpening regime(τ&lt;1)에 적용 불가 — 올바른
+    정규화(×τ)와 gradient norm 정합(λ)을 실측으로 도출하는 방법론 확립.</li>
+  <li>티처 신호의 가치(ep1 +18)와 한계(top-1 정확도 58.7%, 좁은 유사도 콘)를 분리 정량화.</li>
+  <li>scale-불변 지표만으로 런을 비교하는 평가 원칙.</li>
+</ol>
+<p><b>진행 중 (go/no-go 게이트 명시):</b></p>
+<ul>
+  <li>Phase 1 (armT/armS): ep20 r_mean ≥63.4 필수, 66+ 목표. 실패 시 gradient surgery (Phase 1.5).</li>
+  <li>exp9 (target-mixing): gradient 충돌의 구조적 제거가 λ 튜닝보다 나은지 검증. 9.1/9.2 대조.</li>
+</ul>
+<p><b>후속 후보 (Phase 2):</b></p>
+<ul>
+  <li>content-gating KD — VG degenerate region 다운웨이트/제외 (COCO 가중 또는 region-area 기준).</li>
+  <li>caption-finetuned 티처로 LM 증류 headroom 확장 (해상도 224/384 trade-off 검토).</li>
+  <li>LM-KD 성공 요인의 probe 검증 — cos(∇L_lm_kd, ∇L_lm) 측정 (미실시).</li>
+</ul>
+
+<h2>부록 A — 재현성</h2>
+<div class="scroll"><table>
+<tr><th style="width:180px">항목</th><th>위치</th></tr>
+<tr><td>표준 레시피 config</td><td><code>configs/pretrain.yaml</code> (단일 파일 제어, <code>88ea5d4</code>)</td></tr>
+<tr><td>Phase 1 config</td><td><code>configs/pretrain_itc_distill_{armT,armS}.yaml</code> (dev <code>fe23681</code>)</td></tr>
+<tr><td>exp9 config</td><td><code>configs/pretrain_ttm_{inbatch,queue}.yaml</code> (<code>exp9_teacher_target_mix</code>)</td></tr>
+<tr><td>학습 명령</td><td><code>CUDA_VISIBLE_DEVICES=0,1,2,3 torchrun --nproc_per_node=4 --master_port=295xx pretrain.py --config &lt;cfg&gt;</code></td></tr>
+<tr><td>티처 ckpt</td><td><code>output/official_pretrain_checkpoint/model_large.pth</code> (missing <code>logit_scale</code>/unexpected <code>temp</code> 경고는 정상 — reparam 차이)</td></tr>
+<tr><td>측정 스크립트</td><td><code>critical_bugfix/2026-07-{07,14}_*/</code> — 스크립트·캐시(.pt/.npz)·재현 명령 포함</td></tr>
+<tr><td>진단 주의사항</td><td>폐기된 itc_distill_only 워크트리의 losses.py는 keep-τ² 로컬 수정 상태였음 — Phase 1 전 원복 완료 확인됨</td></tr>
+</table></div>
+
+<h2>부록 B — 실험 명명 체계</h2>
+<p><code>exp</code> 태그 (config) ↔ <code>output/</code> 런 디렉터리 ↔ TB run name 3중 대응.
+주요 계보: 1.vg_crop / 2.no_decay_temp / 4.logit_scale_no_decay / 5.noaug·lrup /
+6.itc_distill(6.1, 6.2) / 7.student_baseline / 8.lm_distill / Phase 1(armT/armS) /
+9.teacher_target_mix(9.1, 9.2).</p>
+
+<footer>
+  원자료: git 전 브랜치 로그 (118커밋) · docs/superpowers/ 설계문서 7건 · critical_bugfix/ 진단 기록 2건 · 실험 메모.
+  마크다운 버전: <code>docs/history/technical-report.md</code>
+</footer>
+
+</div>
+</body>
+</html>
