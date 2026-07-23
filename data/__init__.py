@@ -122,25 +122,6 @@ def create_loader(datasets, samplers, batch_size, num_workers, is_trains, collat
         )
         loaders.append(loader)
 
-        # # train 상태이고, cc12m경로가 있으면 컴바인드 로더로 업그레이드
-        # elif isinstance(dataset, cc12m_webdataset):
-        #     cc12m_loader = wds.WebLoader(
-        #         dataset,
-        #         batch_size=None, # 흠 I/O speed면에선 이게 맞다고함. 이미 데이터셋이 배치사이즈로 묶어서 주는것
-        #         num_workers=n_worker,
-        #         pin_memory=True
-        #     )
-        #     import torch.distributed as dist
-        #     if dist.is_initialized():
-        #         world_size = dist.get_world_size()
-        #         num_tars = len(dataset.tar_files)
-        #         cc12m_loader = cc12m_loader.ddp_equalize(num_tars // world_size)
-
-        #     loaders.append(cc12m_loader)
-        
-        # else:
-        #     raise ValueError("잘못된 데이터셋")
-
     return loaders    
 
 

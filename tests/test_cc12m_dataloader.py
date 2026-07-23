@@ -63,3 +63,10 @@ def test_pretrain_has_no_inline_cc12m_wiring():
     src = inspect.getsource(pretrain.main)
     assert 'wds.WebLoader(' not in src
     assert 'CombinedLoader(' not in src
+
+
+def test_create_loader_no_dead_cc12m_comment():
+    src = inspect.getsource(data_pkg.create_loader)
+    assert 'ddp_equalize' not in src
+    assert '잘못된 데이터셋' not in src
+    assert 'cc12m_loader = wds.WebLoader' not in src
