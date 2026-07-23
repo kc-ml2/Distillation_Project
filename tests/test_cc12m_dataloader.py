@@ -1,4 +1,6 @@
 import inspect
+import os
+import unittest
 
 import data as data_pkg
 from data.pretrain_cc12m_webdataset import cc12m_webdataset
@@ -70,3 +72,49 @@ def test_create_loader_no_dead_cc12m_comment():
     assert 'ddp_equalize' not in src
     assert '잘못된 데이터셋' not in src
     assert 'cc12m_loader = wds.WebLoader' not in src
+
+
+CC12M_SHARD_DIR = "/home/minwoo/Distillation_Project/datasets/vision/cc12m/cc12m_dataset"
+
+
+class CC12MBehavioralRegression(unittest.TestCase):
+    def setUp(self):
+        try:
+            import torch  # noqa: F401
+            import webdataset  # noqa: F401
+            import torchvision  # noqa: F401
+        except Exception:
+            self.skipTest("torch/webdataset/torchvision not available")
+        if not os.path.isdir(CC12M_SHARD_DIR) or not any(
+            f.endswith('.tar') for f in os.listdir(CC12M_SHARD_DIR)
+        ):
+            self.skipTest("cc12m shards not present on this machine")
+
+    def test_batch_format_and_with_epoch_cap(self):
+        import torch
+        import webdataset as wds
+        from torchvision import transforms
+        from torchvision.transforms.functional import InterpolationMode
+        from data.pretrain_cc12m_webdataset import cc12m_webdataset
+
+        norm = transforms.Normalize(
+            (0.48145466, 0.4578275, 0.40821073),
+            (0.26862954, 0.26130258, 0.27577711))
+        tf = transforms.Compose([
+            transforms.RandomResizedCrop(
+                224, scale=(0.2, 1.0), interpolation=InterpolationMode.BICUBIC),
+            transforms.ToTensor(),
+            norm,
+        ])
+        ds = cc12m_webdataset(tar_root=CC12M_SHARD_DIR, transform=tf, batch_size=8)
+        loader = wds.WebLoader(ds, batch_size=None, num_workers=2).with_epoch(3)
+
+        n = 0
+        for img, cap in loader:
+            self.assertIsInstance(img, torch.Tensor)
+            self.assertEqual(tuple(img.shape), (8, 3, 224, 224))
+            self.assertTrue(img.dtype == torch.float32)
+            self.assertIsInstance(cap, (list, tuple))
+            self.assertEqual(len(cap), 8)
+            n += 1
+        self.assertEqual(n, 3)  # with_epoch(3) caps the epoch to 3 batches
