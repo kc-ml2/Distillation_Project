@@ -24,8 +24,6 @@ import torch.nn.functional as F
 import torch.backends.cudnn as cudnn
 import torch.distributed as dist
 from torch.utils.data import DataLoader
-from data.combined_loader import CombinedLoader
-import webdataset as wds # 웹데이터셋용으로 추가
 
 
 
@@ -33,7 +31,7 @@ from models.blip_pretrain import blip_pretrain
 from distillation.distill_config import need_teacher_image_embeds
 import utils
 from utils import warmup_lr_schedule, step_lr_schedule
-from data import create_dataset, create_sampler, create_loader # init에 있는 놈들임
+from data.pretrain_loader import build_pretrain_dataloader
 #### 수정부분 시작: validation loss 모듈 import ####
 from data import eval_validation_loss
 #### 수정부분 끝 ####
@@ -340,42 +338,9 @@ def main(args, config): # configs.pretrain.yaml
     random.seed(seed)
     cudnn.benchmark = True
 
-    #### Dataset #### 
-    print("Creating dataset") # base_dataset으로 이름 변경
-    base_datasets = [create_dataset('pretrain', config, min_scale=0.2)] # 이미지 루트 인자 추가
-    print('number of training samples: %d'%len(base_datasets[0]))
-
-    num_tasks = utils.get_world_size()
-    global_rank = utils.get_rank()            
-    samplers = create_sampler(base_datasets, [True], num_tasks, global_rank) 
-
-    base_loader = create_loader(base_datasets,samplers,batch_size=[config['batch_size']], num_workers=[4], is_trains=[True], collate_fns=[None])[0]      
-
-    #### cc12m dataset ####
-    if config['cc12m_tar_path']:
-        print("Creating cc12m dataset")
-        cc12m_datasets = create_dataset('pretrain_cc12m_webdataset', config, min_scale=0.2) # 여기서 이미 배치가 완성되서 나감
-        # 여긴 넘버를 적을 수 없음. 스킵.
-        cc12m_loader = wds.WebLoader(
-            cc12m_datasets,
-            batch_size=None, # 데이터셋에서 이미 배치 완성함
-            num_workers=4,
-            pin_memory=True
-        )
-        ### ddp equlizer for stable webdataloading ####
-        if num_tasks > 1:
-            ratio = config["cc12m_ratio"]
-            batches_per_gpu = len(base_loader) * ratio
-            print(f"하나의 gpu가 소모하는 배치 양: {batches_per_gpu}")
-            cc12m_loader = cc12m_loader.with_epoch(batches_per_gpu) # ddp 메서드 대신 하나의 gpu가 소모하는 양 체크
-
-        data_loader = CombinedLoader(
-            loader_map=base_loader,
-            loader_iterable=cc12m_loader,
-            ratio=config['cc12m_ratio']
-        )
-    else: # 패스를 빼주면 원래대로 가도록 수정함.
-        data_loader = base_loader
+    #### Dataset ####
+    print("Creating dataset")
+    data_loader = build_pretrain_dataloader(config, min_scale=0.2)
     
     #### 수정부분 시작: validation loss runner 생성 ####
     # 여기서 COCO Karpathy validation json을 rank별로 한 번 읽고,

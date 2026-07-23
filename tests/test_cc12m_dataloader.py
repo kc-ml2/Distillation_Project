@@ -49,3 +49,17 @@ def test_factory_docstring_has_operational_notes():
     doc = build_pretrain_dataloader.__doc__ or ''
     assert 'torchrun' in doc        # queue distill 분산 필수 note
     assert 'warmup_steps' in doc     # 에폭 길이 커플링 note
+
+
+import pretrain
+
+
+def test_pretrain_uses_factory():
+    src = inspect.getsource(pretrain.main)
+    assert 'build_pretrain_dataloader(' in src
+
+
+def test_pretrain_has_no_inline_cc12m_wiring():
+    src = inspect.getsource(pretrain.main)
+    assert 'wds.WebLoader(' not in src
+    assert 'CombinedLoader(' not in src
