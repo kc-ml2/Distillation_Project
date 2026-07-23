@@ -7,6 +7,7 @@ from models.blip_pretrain import blip_pretrain
 NEEDS = {
     "itc": {"visual_encoder", "text_encoder", "vision_proj", "text_proj"},
     "lm": {"visual_encoder", "text_decoder"},
+    "itm": {"visual_encoder", "text_encoder", "itm_head"},
 }
 ALL_SUBMODULES = {
     "visual_encoder", "text_encoder", "vision_proj", "text_proj", "text_decoder",
@@ -15,6 +16,7 @@ ALL_SUBMODULES = {
 CRITICAL_PREFIXES = {
     "itc": ("visual_encoder.", "text_encoder.", "vision_proj.", "text_proj."),
     "lm": ("visual_encoder.", "text_decoder."),
+    "itm": ("visual_encoder.", "text_encoder.", "itm_head."),
 }
 
 
@@ -29,6 +31,7 @@ class OnlineTeacher:
         if unknown:
             raise ValueError(f"unknown keep paths: {sorted(unknown)} (choose from {sorted(NEEDS)})")
         self.keep = tuple(keep)
+        self.teacher_temp = 0.07   # overwritten from checkpoint below if present
 
         model = blip_pretrain(image_size=image_size, vit=vit, my_bert_size=bert,
                               queue_size=queue_size,
@@ -38,6 +41,10 @@ class OnlineTeacher:
         if checkpoint:
             ckpt = torch.load(checkpoint, map_location="cpu", weights_only=False)
             state = ckpt.get("model", ckpt) if isinstance(ckpt, dict) else ckpt
+            # teacher's learned ITC temperature (for teacher-guided neg selection scale).
+            # model_large.pth carries `temp` (=0.0157); the reparam'd model has none, so read it here.
+            if "temp" in state:
+                self.teacher_temp = float(state["temp"])
             msg = model.load_state_dict(state, strict=False)
             print("teacher load:", msg)
             critical_prefixes = tuple(p for k in self.keep for p in CRITICAL_PREFIXES[k])
@@ -48,6 +55,8 @@ class OnlineTeacher:
                     f"for keep={self.keep} (architecture mismatch vs vit='{vit}', bert='{bert}'?). "
                     f"First few: {critical_missing[:5]}"
                 )
+
+        self.teacher_scale = 1.0 / self.teacher_temp
 
         # keep 합집합 외 서브모듈/버퍼 해제 (로드 후 → .to(device) 전이므로 GPU엔 안 올라감)
         needed = set().union(*(NEEDS[k] for k in self.keep))
@@ -108,3 +117,31 @@ class OnlineTeacher:
                                           encoder_attention_mask=image_atts,
                                           return_dict=True)   # labels 없음 → logits만
         return out.logits, decoder_input_ids
+
+    @torch.no_grad()
+    def itm_soft(self, image, enc_input_ids, attention_mask,
+                 neg_idx_img, neg_idx_txt, temp):
+        """Teacher ITM match distribution over the SAME 3B triplets the student built.
+        enc_input_ids/attention_mask come from the student (identical tokenizer, pos-0
+        already set to enc_token_id). neg_idx_img/neg_idx_txt: length-B int sequences.
+        Returns softmax(teacher_itm_logits / temp) as [3B, 2] (no grad)."""
+        self._require("itm")
+        device = image.device
+        bs = image.size(0)
+        with torch.amp.autocast(device_type=device.type, dtype=torch.bfloat16):
+            image_embeds = self.model.visual_encoder(image)
+            image_atts = torch.ones(image_embeds.size()[:-1], dtype=torch.long, device=device)
+            img_neg = torch.stack([image_embeds[neg_idx_img[b]] for b in range(bs)])
+            txt_neg = torch.stack([enc_input_ids[neg_idx_txt[b]] for b in range(bs)])
+            txt_neg_atts = torch.stack([attention_mask[neg_idx_txt[b]] for b in range(bs)])
+            text_ids_all = torch.cat([enc_input_ids, enc_input_ids, txt_neg], dim=0)
+            text_atts_all = torch.cat([attention_mask, attention_mask, txt_neg_atts], dim=0)
+            image_embeds_all = torch.cat([image_embeds, img_neg, image_embeds], dim=0)
+            image_atts_all = torch.cat([image_atts, image_atts, image_atts], dim=0)
+            out = self.model.text_encoder(text_ids_all,
+                                          attention_mask=text_atts_all,
+                                          encoder_hidden_states=image_embeds_all,
+                                          encoder_attention_mask=image_atts_all,
+                                          return_dict=True)
+            logits = self.model.itm_head(out.last_hidden_state[:, 0, :]).float()
+        return F.softmax(logits / temp, dim=1)
