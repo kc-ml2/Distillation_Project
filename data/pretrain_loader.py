@@ -39,7 +39,7 @@ def build_pretrain_dataloader(config, min_scale=0.2):
         cc12m_dataset, batch_size=None, num_workers=4, pin_memory=True)
     # #6 with_epoch 일관 적용(단일 GPU·DDP 공통): rank당 배치수를 len(base)*ratio로 고정.
     #    DDP에서 split_by_node로 rank별 샤드 수가 달라도 collective를 동기화한다.
-    cc12m_loader = cc12m_loader.with_epoch(len(base_loader) * ratio)
+    cc12m_loader = cc12m_loader.with_epoch(int(len(base_loader) * ratio))
 
     return CombinedLoader(
         loader_map=base_loader, loader_iterable=cc12m_loader, ratio=ratio)
