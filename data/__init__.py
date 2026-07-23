@@ -45,9 +45,13 @@ def create_dataset(dataset, config, min_scale=0.5):
         return dataset
     
     elif dataset=='pretrain_cc12m_webdataset':
+        # base('pretrain')와 동일 규칙: pretrain_train_aug로 aug/no-aug 선택.
+        # online teacher distillation은 aug ON 필요(no-aug는 NO-GO). 기본 True.
+        use_train_aug = config.get('pretrain_train_aug', True)
+        cc12m_transform = transform_train if use_train_aug else transform_test
         dataset = cc12m_webdataset(
             tar_root=config['cc12m_tar_path'],
-            transform=transform_train,
+            transform=cc12m_transform,
             batch_size=config['batch_size'] # 이 코드는 여기서 받아와야함.
         )
         return dataset
