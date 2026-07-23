@@ -182,6 +182,37 @@ class TestOnlineTeacherKeepItm(unittest.TestCase):
         self.assertTrue(torch.equal(negtxt_i, pos_i))          # neg-text: image unswapped
 
 
+class TestOnlineTeacherKeepAllThree(unittest.TestCase):
+    """keep=('itc','itm','lm'): 3-way 합집합 생존 — 3개 증류 메커니즘이 동시에 켜지는
+    병합 config(pretrain_itc_itm_lm_targetmix_smoke.yaml)가 요구하는 조합."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.teacher = OnlineTeacher(checkpoint="", image_size=224, vit="base",
+                                    bert="base", queue_size=240, keep=("itc", "itm", "lm"))
+
+    def test_union_kept(self):
+        m = self.teacher.model
+        for attr in ("visual_encoder", "text_encoder", "vision_proj",
+                     "text_proj", "text_decoder", "itm_head"):
+            self.assertIsNotNone(getattr(m, attr), f"{attr} should be kept")
+        for attr in ("visual_encoder_m", "text_encoder_m", "vision_proj_m", "text_proj_m"):
+            self.assertIsNone(getattr(m, attr), f"{attr} should be freed")
+
+    def test_all_three_entry_points_work(self):
+        image = torch.randn(2, 3, 224, 224)
+        caption = ["a green field", "a red car"]
+        img_feat, txt_feat = self.teacher.itc_feats(image, caption)
+        self.assertEqual(tuple(img_feat.shape), (2, 256))
+        logits, dec_ids = self.teacher.lm_logits(image, caption)
+        self.assertEqual(tuple(dec_ids.shape), (2, 30))
+        enc_ids = txt_feat.new_zeros(2, 5, dtype=torch.long)  # dummy encoder-side ids
+        atts = txt_feat.new_ones(2, 5, dtype=torch.long)
+        soft = self.teacher.itm_soft(image, enc_ids, atts,
+                                     neg_idx_img=[1, 0], neg_idx_txt=[1, 0], temp=1.0)
+        self.assertEqual(tuple(soft.shape), (6, 2))
+
+
 class TestOnlineTeacherLargeConstruction(unittest.TestCase):
     """실제 티처 아키텍처(vit='large')의 생성 회귀. timm 1.x에서 BLIP 원본의
     in21k load_custom_pretrained 경로가 깨지므로(DefaultCfg.get 부재), 티처는
