@@ -1,5 +1,6 @@
 import unittest
-from distillation.distill_config import derive_teacher_keep, validate_itm_mix_config
+from distillation.distill_config import (
+    derive_teacher_keep, validate_itm_mix_config, need_teacher_image_embeds)
 
 
 class TestDeriveTeacherKeep(unittest.TestCase):
@@ -62,6 +63,26 @@ class TestValidateItmMixConfig(unittest.TestCase):
         with self.assertRaises(AssertionError):
             validate_itm_mix_config({'itm_target_mix': {'enabled': True, 'neg_source': 'teacher',
                                                         'soft_weight': 0.4, 'schedule': 'decay_to_floor'}})
+
+
+class TestNeedTeacherImageEmbeds(unittest.TestCase):
+    def test_all_false(self):
+        self.assertFalse(need_teacher_image_embeds(False, False, False, 0.0))
+
+    def test_itc_alone(self):
+        self.assertTrue(need_teacher_image_embeds(True, False, False, 0.0))
+
+    def test_lm_alone(self):
+        self.assertTrue(need_teacher_image_embeds(False, True, False, 0.0))
+
+    def test_itm_mix_enabled_but_soft_weight_zero(self):
+        self.assertFalse(need_teacher_image_embeds(False, False, True, 0.0))
+
+    def test_itm_mix_enabled_with_soft_weight(self):
+        self.assertTrue(need_teacher_image_embeds(False, False, True, 0.4))
+
+    def test_all_three(self):
+        self.assertTrue(need_teacher_image_embeds(True, True, True, 0.4))
 
 
 if __name__ == "__main__":

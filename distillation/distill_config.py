@@ -35,3 +35,10 @@ def validate_itm_mix_config(distill_cfg):
     sched = itm.get('schedule', 'constant')
     assert sched == 'constant', \
         f"itm_target_mix.schedule only 'constant' implemented, got {sched!r}"
+
+
+def need_teacher_image_embeds(need_teacher_itc, lm_kd_enabled, itm_mix_enabled, itm_soft_weight):
+    """Whether this training step needs the teacher's image_embeds for ANY of
+    itc_feats/lm_logits/itm_soft — decides whether OnlineTeacher.encode_image()
+    should be called once this step (see pretrain.py train loop)."""
+    return bool(need_teacher_itc or lm_kd_enabled or (itm_mix_enabled and itm_soft_weight > 0))

@@ -58,6 +58,21 @@ class TestForwardItmMix(unittest.TestCase):
         with self.assertRaises(AssertionError):
             self._forward(itm_mix=itm_mix)   # teacher feats not provided
 
+    def test_teacher_image_embeds_threaded_into_itm_soft(self):
+        teacher = OnlineTeacher(checkpoint="", image_size=224, vit="base",
+                                bert="base", queue_size=240, keep=("itm",))
+        precomputed_embeds = teacher.encode_image(self.image)
+        captured = {}
+        real_itm_soft = teacher.itm_soft
+        def spy(*args, **kwargs):
+            captured['image_embeds'] = kwargs.get('image_embeds')
+            return real_itm_soft(*args, **kwargs)
+        itm_mix = {'neg_source': 'student', 'soft_weight': 0.4, 'temp': 1.0, 'sel_scale': 14.29,
+                   'teacher_image_embeds': precomputed_embeds}
+        with unittest.mock.patch.object(teacher, 'itm_soft', side_effect=spy):
+            self._forward(online_teacher=teacher, itm_mix=itm_mix)
+        self.assertIs(captured['image_embeds'], precomputed_embeds)
+
     def test_teacher_neg_source_selects_successfully(self):
         # Exercise the neg_source='teacher' selection path (t_img @ t_txt.t() * sel_scale
         # + fill_diagonal_) end-to-end. soft_weight=0.0 keeps it fast (plain CE, no

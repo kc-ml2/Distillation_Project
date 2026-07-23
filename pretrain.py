@@ -30,6 +30,7 @@ import webdataset as wds # 웹데이터셋용으로 추가
 
 
 from models.blip_pretrain import blip_pretrain
+from distillation.distill_config import need_teacher_image_embeds
 import utils
 from utils import warmup_lr_schedule, step_lr_schedule
 from data import create_dataset, create_sampler, create_loader # init에 있는 놈들임
@@ -153,14 +154,25 @@ def train(model, data_loader, optimizer, epoch, device, config, writer=None, val
             or (ttm_enabled and gamma is not None and gamma > 0)
             or (itm_mix_enabled and itm_neg_source == 'teacher')
         )
+        # perf: compute the teacher's image_embeds at most ONCE per step and reuse it
+        # across itc_feats/lm_logits/itm_soft (each would otherwise re-run visual_encoder).
+        need_embeds = need_teacher_image_embeds(need_teacher_itc, lm_kd_enabled,
+                                                itm_mix_enabled, itm_soft_weight)
+        teacher_image_embeds = (
+            online_teacher.encode_image(image)
+            if (need_embeds and online_teacher is not None) else None
+        )
+
         if need_teacher_itc and online_teacher is not None:
-            teacher_img_feat, teacher_text_feat = online_teacher.itc_feats(image, caption)
+            teacher_img_feat, teacher_text_feat = online_teacher.itc_feats(
+                image, caption, image_embeds=teacher_image_embeds)
         else:
             teacher_img_feat = teacher_text_feat = None
 
         # online teacher: same augmented batch -> LM decoder logits (bf16, no_grad). None when distill off.
         if lm_kd_enabled and online_teacher is not None:
-            teacher_lm_logits, teacher_lm_ids = online_teacher.lm_logits(image, caption)
+            teacher_lm_logits, teacher_lm_ids = online_teacher.lm_logits(
+                image, caption, image_embeds=teacher_image_embeds)
         else:
             teacher_lm_logits = teacher_lm_ids = None
 
@@ -173,7 +185,8 @@ def train(model, data_loader, optimizer, epoch, device, config, writer=None, val
         itm_mix = None
         if itm_mix_enabled:
             itm_mix = {'neg_source': itm_neg_source, 'soft_weight': itm_soft_weight,
-                       'temp': itm_teacher_temp, 'sel_scale': itm_sel_scale}
+                       'temp': itm_teacher_temp, 'sel_scale': itm_sel_scale,
+                       'teacher_image_embeds': teacher_image_embeds}
         itm_online_teacher = online_teacher if itm_mix_enabled else None
         # if device == "cuda": # 이 부분 수정할 예정
         if device.type == "cuda":

@@ -517,7 +517,8 @@ class BLIP_Pretrain(nn.Module):
         if itm_mix is not None and itm_mix['soft_weight'] > 0 and online_teacher is not None:
             teacher_soft = online_teacher.itm_soft(
                 image, encoder_input_ids, text.attention_mask,
-                neg_idx_img, neg_idx_txt, itm_mix['temp'])                 # [3B, 2], no grad
+                neg_idx_img, neg_idx_txt, itm_mix['temp'],
+                image_embeds=itm_mix.get('teacher_image_embeds'))          # [3B, 2], no grad
             loss_itm = itm_target_mix_loss(vl_output, itm_labels,
                                            teacher_soft.to(image.device),
                                            itm_mix['soft_weight'])
