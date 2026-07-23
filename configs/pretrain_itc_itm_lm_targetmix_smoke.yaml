@@ -1,0 +1,76 @@
+train_file: ['/home/minwoo/Distillation_Project/datasets/vision/coco/annotations/coco_karpathy_train.json',
+             '/home/minwoo/Distillation_Project/datasets/vision/vg/annotations/vg_train.json'
+             ]
+laion_path: ''
+image_root_coco: '/home/minwoo/Distillation_Project/datasets/vision/coco/images/'
+image_root_vg: '/home/minwoo/Distillation_Project/datasets/vision/vg/images/'
+
+cc12m_tar_path: ''
+cc12m_ratio: 5
+
+used_dataset: 'coco_vg'
+
+# ===== Phase 1 병합 스모크: itc_target_mix + itm_target_mix(arm C) + lm distill 동시 ON =====
+# 설계: docs/superpowers/specs/2026-07-23-itc-itm-lm-targetmix-merge-design.md §5-2
+# 목적: 세 증류 메커니즘을 동시에 켰을 때 teacher_keep=('itc','itm','lm')로 뜨고
+# 예외 없이 forward/backward가 도는지 GPU 1대·몇 스텝만 확인. 실제 학습(수렴) 목적 아님.
+output_dir: '/home/minwoo/Distillation_Project/output/pt_itc_itm_lm_targetmix_smoke'
+
+exp: '11.merge_smoke_itc_itm_lm'
+pretrain_train_aug: true
+
+tb_train_log_interval: 50
+tb_val_log_interval: 1000
+
+vit: 'small_reg'
+vit_grad_ckpt: False
+vit_ckpt_layer: 0
+
+my_bert_size: 'minilm'
+
+# ===== 스모크 목적상 검증 루프는 전부 끔 (병합 자체와 무관한 부가 기능) =====
+val_loss_enabled: false
+val_retrieval_enabled: false
+
+image_size: 224
+batch_size: 40
+
+queue_size: 57600
+alpha: 0.4
+
+weight_decay: 0.05
+init_lr: 1.0e-5
+
+min_lr: 0.0667e-6
+warmup_lr: 0.0667e-6
+lr_decay_rate: 0.9
+max_epoch: 20
+warmup_steps: 37000
+
+# ====== knowledge distillation: 3개 메커니즘 동시 ON ======
+distill:
+  itc:
+    enabled: false          # itc_target_mix와 상호배타 (assert)
+    weight: 1.0
+    temp: 0.05
+  lm:
+    enabled: true
+    weight: 1.0
+    temp: 2.0
+  itc_target_mix:
+    enabled: true
+    variant: queue
+    temp: 0.05
+    soft_weight: 0.4
+    hold_epochs: 2
+    decay_end_epochs: 12
+  itm_target_mix:            # arm C: 가장 빡센 조합(teacher neg + soft label)
+    enabled: true
+    neg_source: teacher
+    soft_weight: 0.4
+    temp: 1.0
+    schedule: constant
+
+teacher:
+  arch: 'blip_large'
+  checkpoint: '/home/minwoo/Distillation_Project/output/official_pretrain_checkpoint/model_large.pth'
