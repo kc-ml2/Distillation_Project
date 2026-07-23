@@ -213,6 +213,110 @@ class TestOnlineTeacherKeepAllThree(unittest.TestCase):
         self.assertEqual(tuple(soft.shape), (6, 2))
 
 
+class TestOnlineTeacherImageEmbedsSharing(unittest.TestCase):
+    """Phase 2: encode_image() 신규 + itc_feats/lm_logits/itm_soft의 image_embeds 재사용."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.teacher = OnlineTeacher(checkpoint="", image_size=224, vit="base",
+                                    bert="base", queue_size=240, keep=("itc", "lm", "itm"))
+
+    def test_encode_image_contract(self):
+        image = torch.randn(2, 3, 224, 224)
+        embeds = self.teacher.encode_image(image)
+        self.assertEqual(embeds.shape[0], 2)
+        self.assertFalse(embeds.requires_grad)
+
+    def test_itc_feats_reuses_precomputed_embeds(self):
+        torch.manual_seed(0)
+        image = torch.randn(2, 3, 224, 224)
+        caption = ["a green field", "a red car"]
+        embeds = self.teacher.encode_image(image)
+        img_feat_direct, txt_feat_direct = self.teacher.itc_feats(image, caption)
+
+        call_count = {'n': 0}
+        real_forward = self.teacher.model.visual_encoder.forward
+        def spy(*args, **kwargs):
+            call_count['n'] += 1
+            return real_forward(*args, **kwargs)
+        with unittest.mock.patch.object(self.teacher.model.visual_encoder, 'forward', side_effect=spy):
+            img_feat_reused, txt_feat_reused = self.teacher.itc_feats(
+                image, caption, image_embeds=embeds)
+
+        self.assertEqual(call_count['n'], 0)
+        self.assertTrue(torch.allclose(img_feat_direct.float(), img_feat_reused.float(), atol=1e-4))
+        self.assertTrue(torch.allclose(txt_feat_direct.float(), txt_feat_reused.float(), atol=1e-4))
+
+    def test_lm_logits_reuses_precomputed_embeds(self):
+        torch.manual_seed(0)
+        image = torch.randn(2, 3, 224, 224)
+        caption = ["a green field", "a red car"]
+        embeds = self.teacher.encode_image(image)
+        logits_direct, ids_direct = self.teacher.lm_logits(image, caption)
+
+        call_count = {'n': 0}
+        real_forward = self.teacher.model.visual_encoder.forward
+        def spy(*args, **kwargs):
+            call_count['n'] += 1
+            return real_forward(*args, **kwargs)
+        with unittest.mock.patch.object(self.teacher.model.visual_encoder, 'forward', side_effect=spy):
+            logits_reused, ids_reused = self.teacher.lm_logits(image, caption, image_embeds=embeds)
+
+        self.assertEqual(call_count['n'], 0)
+        self.assertTrue(torch.equal(ids_direct, ids_reused))
+        self.assertTrue(torch.allclose(logits_direct.float(), logits_reused.float(), atol=1e-3))
+
+    def test_itm_soft_reuses_precomputed_embeds(self):
+        torch.manual_seed(0)
+        image = torch.randn(2, 3, 224, 224)
+        text = self.teacher.tokenizer(["a green field", "a red car"],
+                                      padding="max_length", truncation=True,
+                                      max_length=30, return_tensors="pt")
+        enc_ids = text.input_ids.clone()
+        enc_ids[:, 0] = self.teacher.tokenizer.enc_token_id
+        embeds = self.teacher.encode_image(image)
+        soft_direct = self.teacher.itm_soft(image, enc_ids, text.attention_mask,
+                                            neg_idx_img=[1, 0], neg_idx_txt=[1, 0], temp=1.0)
+
+        call_count = {'n': 0}
+        real_forward = self.teacher.model.visual_encoder.forward
+        def spy(*args, **kwargs):
+            call_count['n'] += 1
+            return real_forward(*args, **kwargs)
+        with unittest.mock.patch.object(self.teacher.model.visual_encoder, 'forward', side_effect=spy):
+            soft_reused = self.teacher.itm_soft(image, enc_ids, text.attention_mask,
+                                                neg_idx_img=[1, 0], neg_idx_txt=[1, 0], temp=1.0,
+                                                image_embeds=embeds)
+
+        self.assertEqual(call_count['n'], 0)
+        self.assertTrue(torch.allclose(soft_direct.float(), soft_reused.float(), atol=1e-3))
+
+    def test_visual_encoder_called_exactly_once_across_all_three(self):
+        """헤드라인 테스트: encode_image()를 한 번 계산해서 세 메서드에 재사용하면
+        visual_encoder는 총 1번만 호출된다(세 메커니즘이 다 켜진 최악 케이스를 모사)."""
+        image = torch.randn(2, 3, 224, 224)
+        caption = ["a green field", "a red car"]
+        text = self.teacher.tokenizer(caption, padding="max_length", truncation=True,
+                                      max_length=30, return_tensors="pt")
+        enc_ids = text.input_ids.clone()
+        enc_ids[:, 0] = self.teacher.tokenizer.enc_token_id
+
+        call_count = {'n': 0}
+        real_forward = self.teacher.model.visual_encoder.forward
+        def spy(*args, **kwargs):
+            call_count['n'] += 1
+            return real_forward(*args, **kwargs)
+        with unittest.mock.patch.object(self.teacher.model.visual_encoder, 'forward', side_effect=spy):
+            embeds = self.teacher.encode_image(image)
+            self.teacher.itc_feats(image, caption, image_embeds=embeds)
+            self.teacher.lm_logits(image, caption, image_embeds=embeds)
+            self.teacher.itm_soft(image, enc_ids, text.attention_mask,
+                                  neg_idx_img=[1, 0], neg_idx_txt=[1, 0], temp=1.0,
+                                  image_embeds=embeds)
+
+        self.assertEqual(call_count['n'], 1)
+
+
 class TestOnlineTeacherLargeConstruction(unittest.TestCase):
     """실제 티처 아키텍처(vit='large')의 생성 회귀. timm 1.x에서 BLIP 원본의
     in21k load_custom_pretrained 경로가 깨지므로(DefaultCfg.get 부재), 티처는

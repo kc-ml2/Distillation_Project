@@ -83,11 +83,22 @@ class OnlineTeacher:
             )
 
     @torch.no_grad()
-    def itc_feats(self, image, caption):
+    def encode_image(self, image):
+        """Compute teacher visual_encoder(image) fresh — NOT a cache, recomputes every
+        call. Callers needing this for more than one of itc_feats/lm_logits/itm_soft in
+        the same step should call this ONCE and pass the result via image_embeds= to
+        each, to avoid redundant ViT forwards on the identical input."""
+        device = image.device
+        with torch.amp.autocast(device_type=device.type, dtype=torch.bfloat16):
+            return self.model.visual_encoder(image)
+
+    @torch.no_grad()
+    def itc_feats(self, image, caption, image_embeds=None):
         self._require("itc")
         device = image.device
         with torch.amp.autocast(device_type=device.type, dtype=torch.bfloat16):
-            image_embeds = self.model.visual_encoder(image)
+            if image_embeds is None:
+                image_embeds = self.model.visual_encoder(image)
             img_feat = F.normalize(self.model.vision_proj(image_embeds[:, 0, :]), dim=-1)
             text = self.tokenizer(caption, padding="max_length", truncation=True,
                                   max_length=30, return_tensors="pt").to(device)
@@ -98,14 +109,15 @@ class OnlineTeacher:
         return img_feat, txt_feat
 
     @torch.no_grad()
-    def lm_logits(self, image, caption):
+    def lm_logits(self, image, caption, image_embeds=None):
         """Teacher-forced decoder logits for the same augmented batch.
         학생 forward의 LM 경로와 동일한 토크나이즈/BOS 규칙 — forward 쪽에서
         decoder_input_ids 일치를 assert하므로 규칙이 어긋나면 즉시 검출된다."""
         self._require("lm")
         device = image.device
         with torch.amp.autocast(device_type=device.type, dtype=torch.bfloat16):
-            image_embeds = self.model.visual_encoder(image)
+            if image_embeds is None:
+                image_embeds = self.model.visual_encoder(image)
             image_atts = torch.ones(image_embeds.size()[:-1], dtype=torch.long, device=device)
             text = self.tokenizer(caption, padding="max_length", truncation=True,
                                   max_length=30, return_tensors="pt").to(device)
@@ -120,7 +132,7 @@ class OnlineTeacher:
 
     @torch.no_grad()
     def itm_soft(self, image, enc_input_ids, attention_mask,
-                 neg_idx_img, neg_idx_txt, temp):
+                 neg_idx_img, neg_idx_txt, temp, image_embeds=None):
         """Teacher ITM match distribution over the SAME 3B triplets the student built.
         enc_input_ids/attention_mask come from the student (identical tokenizer, pos-0
         already set to enc_token_id). neg_idx_img/neg_idx_txt: length-B int sequences.
@@ -129,7 +141,8 @@ class OnlineTeacher:
         device = image.device
         bs = image.size(0)
         with torch.amp.autocast(device_type=device.type, dtype=torch.bfloat16):
-            image_embeds = self.model.visual_encoder(image)
+            if image_embeds is None:
+                image_embeds = self.model.visual_encoder(image)
             image_atts = torch.ones(image_embeds.size()[:-1], dtype=torch.long, device=device)
             img_neg = torch.stack([image_embeds[neg_idx_img[b]] for b in range(bs)])
             txt_neg = torch.stack([enc_input_ids[neg_idx_txt[b]] for b in range(bs)])
