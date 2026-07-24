@@ -32,6 +32,9 @@ def validate_itm_mix_config(distill_cfg):
         f"itm_target_mix.neg_source must be 'teacher'|'student', got {ns!r}"
     w = float(itm.get('soft_weight', 0.0))
     assert 0.0 <= w <= 1.0, f"itm_target_mix.soft_weight must be in [0,1], got {w}"
+    variant = itm.get('variant', 'target_mix')
+    assert variant in ('target_mix', 'hinton_kd'), \
+        f"itm_target_mix.variant must be 'target_mix'|'hinton_kd', got {variant!r}"
     sched = itm.get('schedule', 'constant')
     assert sched == 'constant', \
         f"itm_target_mix.schedule only 'constant' implemented, got {sched!r}"

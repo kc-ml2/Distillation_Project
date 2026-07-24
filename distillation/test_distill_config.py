@@ -64,6 +64,23 @@ class TestValidateItmMixConfig(unittest.TestCase):
             validate_itm_mix_config({'itm_target_mix': {'enabled': True, 'neg_source': 'teacher',
                                                         'soft_weight': 0.4, 'schedule': 'decay_to_floor'}})
 
+    def test_variant_target_mix_ok(self):
+        validate_itm_mix_config({'itm_target_mix': {'enabled': True, 'neg_source': 'teacher',
+                                                    'soft_weight': 0.4, 'variant': 'target_mix'}})
+
+    def test_variant_hinton_kd_ok(self):
+        validate_itm_mix_config({'itm_target_mix': {'enabled': True, 'neg_source': 'teacher',
+                                                    'soft_weight': 0.4, 'variant': 'hinton_kd', 'temp': 2.0}})
+
+    def test_missing_variant_defaults_ok(self):   # 레거시 arm A/B/C (variant 없음)
+        validate_itm_mix_config({'itm_target_mix': {'enabled': True, 'neg_source': 'teacher',
+                                                    'soft_weight': 0.4}})
+
+    def test_bad_variant_raises(self):
+        with self.assertRaises(AssertionError):
+            validate_itm_mix_config({'itm_target_mix': {'enabled': True, 'neg_source': 'teacher',
+                                                        'soft_weight': 0.4, 'variant': 'foo'}})
+
 
 class TestNeedTeacherImageEmbeds(unittest.TestCase):
     def test_all_false(self):
