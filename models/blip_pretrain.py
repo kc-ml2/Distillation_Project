@@ -19,7 +19,7 @@ import torch.nn.functional as F
 from custom_functions.dinov3_encoder import DINOv3_Wrapper # custom function으로 이동한 후에 임포트
 
 from models.blip import create_vit, init_tokenizer, load_checkpoint
-from distillation.losses import itc_distill_loss, lm_distill_loss, itm_target_mix_loss
+from distillation.losses import itc_distill_loss, lm_distill_loss, itm_target_mix_loss, itm_hinton_kd_loss
 
 #### 수정부분 시작: 실험 4 - temp 나누기 대신 logit_scale 곱하기로 reparam ####
 # 기존 temp clamp 범위 (0.001, 0.5) -> effective scale(1/temp) 범위는 (2, 1000).
@@ -513,15 +513,22 @@ class BLIP_Pretrain(nn.Module):
         itm_labels = torch.cat([torch.ones(bs, dtype=torch.long),
                                 torch.zeros(2 * bs, dtype=torch.long)], dim=0).to(image.device)
 
-        # ITM loss: teacher target-mix (W>0) or plain CE.
+        # ITM loss: variant='hinton_kd'면 2텀 KD, 아니면(기본) target-mix. soft_weight=0이면 plain CE.
+        #   target_mix (arm A/C, 스킴 A(W=1)): (1-W)onehot + W*teacher_soft
+        #   hinton_kd  (스킴 B)              : (1-α)CE + α·T²·KL(teacher_soft‖σ(z/T))
         if itm_mix is not None and itm_mix['soft_weight'] > 0 and online_teacher is not None:
             teacher_soft = online_teacher.itm_soft(
                 image, encoder_input_ids, text.attention_mask,
                 neg_idx_img, neg_idx_txt, itm_mix['temp'],
                 image_embeds=itm_mix.get('teacher_image_embeds'))          # [3B, 2], no grad
-            loss_itm = itm_target_mix_loss(vl_output, itm_labels,
-                                           teacher_soft.to(image.device),
-                                           itm_mix['soft_weight'])
+            if itm_mix.get('variant', 'target_mix') == 'hinton_kd':
+                loss_itm = itm_hinton_kd_loss(vl_output, itm_labels,
+                                              teacher_soft.to(image.device),
+                                              itm_mix['soft_weight'], itm_mix['temp'])
+            else:
+                loss_itm = itm_target_mix_loss(vl_output, itm_labels,
+                                               teacher_soft.to(image.device),
+                                               itm_mix['soft_weight'])
         else:
             loss_itm = F.cross_entropy(vl_output, itm_labels)
         

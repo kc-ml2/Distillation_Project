@@ -1,5 +1,6 @@
 import unittest
 import torch
+import torch.nn.functional as F
 
 from models.blip_pretrain import blip_pretrain
 
@@ -52,6 +53,55 @@ class TestForwardLmKd(unittest.TestCase):
         with self.assertRaises(AssertionError):
             self.model(self.image, self.caption, alpha=0.4, update_train_state=False,
                        teacher_lm_logits=t_logits, teacher_lm_input_ids=bad)
+
+
+class TestForwardItmHintonKd(unittest.TestCase):
+    """variant='hinton_kd' forward 스모크 (mock 티처, neg_source=student로 티처-feat 배선 우회)."""
+
+    class _MockTeacher:
+        def itm_soft(self, image, enc_ids, att, neg_i, neg_t, temp, image_embeds=None):
+            bs = image.size(0)
+            return F.softmax(torch.randn(3 * bs, 2), dim=1)   # [3B, 2]
+
+    @classmethod
+    def setUpClass(cls):
+        torch.manual_seed(0)
+        cls.model = blip_pretrain(image_size=224, vit="base", my_bert_size="base", queue_size=240)
+        cls.model.eval()
+        cls.image = torch.randn(2, 3, 224, 224)
+        cls.caption = ["a green field", "a red car"]
+
+    def _itm_mix(self, variant):
+        m = {'neg_source': 'student', 'soft_weight': 0.4, 'temp': 2.0,
+             'sel_scale': 1.0, 'teacher_image_embeds': None}
+        if variant is not None:
+            m['variant'] = variant
+        return m
+
+    def _forward_loss_itm(self, variant, seed):
+        # 동일 seed → 동일 neg 샘플(multinomial)·동일 mock teacher_soft(randn) → vl_output/teacher_soft 동일.
+        # 그래서 두 forward의 차이는 오직 손실 함수(variant)뿐이다.
+        torch.manual_seed(seed)
+        out = self.model(self.image, self.caption, alpha=0.4, update_train_state=False,
+                         online_teacher=self._MockTeacher(), itm_mix=self._itm_mix(variant))
+        return out[1]
+
+    def test_hinton_kd_finite_and_grad(self):
+        loss_itm = self._forward_loss_itm('hinton_kd', seed=0)
+        self.assertTrue(torch.isfinite(loss_itm).all())
+        self.assertTrue(loss_itm.requires_grad)
+
+    def test_hinton_differs_from_target_mix(self):
+        # 분기가 실제로 동작해야만 통과 (fail-first): 배선 전엔 둘 다 target_mix라 동일 → 실패.
+        l_hinton = self._forward_loss_itm('hinton_kd', seed=1)
+        l_tmix = self._forward_loss_itm('target_mix', seed=1)
+        self.assertFalse(torch.allclose(l_hinton, l_tmix, atol=1e-4))
+
+    def test_missing_variant_equals_target_mix(self):
+        # 레거시 불변: variant 미지정 == 'target_mix'
+        l_none = self._forward_loss_itm(None, seed=2)
+        l_tmix = self._forward_loss_itm('target_mix', seed=2)
+        self.assertTrue(torch.allclose(l_none, l_tmix, atol=1e-6))
 
 
 if __name__ == "__main__":

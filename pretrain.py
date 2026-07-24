@@ -116,6 +116,7 @@ def train(model, data_loader, optimizer, epoch, device, config, writer=None, val
     itm_neg_source = distill_itm.get('neg_source', 'student')
     itm_soft_weight = float(distill_itm.get('soft_weight', 0.0))
     itm_teacher_temp = float(distill_itm.get('temp', 1.0))
+    itm_variant = distill_itm.get('variant', 'target_mix')
     itm_sel_scale = online_teacher.teacher_scale if online_teacher is not None else 1.0
 
     metric_logger = utils.MetricLogger(delimiter="  ")
@@ -186,7 +187,8 @@ def train(model, data_loader, optimizer, epoch, device, config, writer=None, val
         if itm_mix_enabled:
             itm_mix = {'neg_source': itm_neg_source, 'soft_weight': itm_soft_weight,
                        'temp': itm_teacher_temp, 'sel_scale': itm_sel_scale,
-                       'teacher_image_embeds': teacher_image_embeds}
+                       'teacher_image_embeds': teacher_image_embeds,
+                       'variant': itm_variant}
         itm_online_teacher = online_teacher if itm_mix_enabled else None
         # if device == "cuda": # 이 부분 수정할 예정
         if device.type == "cuda":
