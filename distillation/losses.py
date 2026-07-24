@@ -75,3 +75,25 @@ def itm_target_mix_loss(vl_output, itm_labels, teacher_soft, soft_weight):
     onehot = F.one_hot(itm_labels, num_classes=2).to(vl_output.dtype)
     target = (1.0 - soft_weight) * onehot + soft_weight * teacher_soft.to(vl_output.dtype)
     return -(target * F.log_softmax(vl_output, dim=1)).sum(dim=1).mean()
+
+
+def itm_hinton_kd_loss(vl_output, itm_labels, teacher_soft, alpha, temp):
+    """2-term Hinton KD for ITM (스킴 B): 하드 CE 앵커 + tempered 티처 KL.
+
+        loss = (1-alpha)*CE(z, itm_labels) + alpha * T^2 * KL(teacher_soft || softmax(z/T))
+
+    vl_output   : [N, 2] student ITM logits (z).
+    itm_labels  : [N]    long {0=no-match, 1=match}.
+    teacher_soft: [N, 2] = softmax(teacher_logits / temp), no grad. ×T^2 스케일이 성립하려면
+                  반드시 '동일 temp'로 tempered여야 한다 (OnlineTeacher.itm_soft(temp=T)).
+    alpha       : soft 항 가중(α). α=0이면 순수 하드 CE.
+    temp        : T. KL 항에서 student도 /T로 tempered.
+
+    itm_target_mix(확률 믹싱)와 달리 하드 라벨을 target에 '녹이지' 않고 CE를 별도 항으로
+    유지 → 갭 sharpening을 안 죽인다(균형 gap→teacher gap). lm_distill_loss의 KL·×T² 관례를 ITM에 적용.
+    """
+    hard = F.cross_entropy(vl_output, itm_labels)
+    kd = F.kl_div(F.log_softmax(vl_output / temp, dim=1),
+                  teacher_soft.to(vl_output.dtype),
+                  reduction='batchmean') * (temp ** 2)
+    return (1.0 - alpha) * hard + alpha * kd
