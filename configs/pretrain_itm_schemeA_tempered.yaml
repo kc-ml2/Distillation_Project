@@ -1,0 +1,111 @@
+train_file: ['/home/minwoo/Distillation_Project/datasets/vision/coco/annotations/coco_karpathy_train.json',
+             '/home/minwoo/Distillation_Project/datasets/vision/vg/annotations/vg_train.json'
+             ]
+laion_path: ''
+image_root_coco: '/home/minwoo/Distillation_Project/datasets/vision/coco/images/'
+image_root_vg: '/home/minwoo/Distillation_Project/datasets/vision/vg/images/'
+
+cc12m_tar_path: ''
+cc12m_ratio: 5
+
+used_dataset: 'coco_vg'
+
+# ===== SCHEME A: 티처만 temper한 soft-target ITM KD =====
+# critical_bugfix/2026-07-24_itm_distill_sharpness/README.md 참고.
+# arm C(W=0.4/T=1)에서 딱 두 값만 변경: soft_weight 0.4→1.0, temp 1.0→2.0.
+#   - W=1.0: onehot 믹싱 제거(하드라벨↔티처 정면충돌 제거) → target = softmax(teacher/T).
+#   - T=2.0: 학생 plain CE로 이 타깃 추종 → 균형 gap = teacher_gap/T (통제된 separation ~1.65).
+# 나머지는 arm C와 동일하게 두어 순수 비교(neg_source=teacher 유지).
+output_dir: '/home/minwoo/Distillation_Project/output/pt_itm_schemeA_tempered'
+
+# experiment 태그 (tensorboard run 이름에 사용)
+exp: '10.SA_itm_tempered_soft'
+# 이미지 증강 토글: distilled 런과 동일 조건 유지를 위해 ON
+pretrain_train_aug: true
+
+# new) tenserboard log interval
+tb_train_log_interval: 50
+tb_val_log_interval: 1000
+
+# ===== student architecture =====
+# DINOv3 small + register tokens (검증: small_reg + minilm 구성+forward OK, 2026-06-29)
+vit: 'small_reg'
+vit_grad_ckpt: False
+vit_ckpt_layer: 0
+
+# size of language model: base, medium, minilm 중 하나
+my_bert_size: 'minilm'
+
+
+## 벨리데이션 과정
+#### COCO Karpathy validation loss ####
+val_loss_enabled: true
+
+val_loss_file: '/home/minwoo/Distillation_Project/datasets/vision/coco/annotations/coco_karpathy_val.json'
+val_loss_image_root: '/home/minwoo/Distillation_Project/datasets/vision/coco/images/'
+
+val_loss_batch_size: 32
+val_loss_num_workers: 4
+val_loss_caption_mode: first
+val_loss_drop_last: true
+val_loss_pin_memory: true
+
+val_loss_print_freq: 50
+
+val_loss_interval_steps: 500
+val_loss_max_batches: 30 # 전체가 39더라
+
+val_loss_epoch_end: true
+val_loss_epoch_max_batches: 30
+
+val_loss_alpha_mode: current
+val_loss_restore_rng: true
+val_loss_amp: true
+
+#### COCO Karpathy retrieval validation (momentum 없는 student-only R@1/5/10) ####
+val_retrieval_enabled: true
+val_retrieval_ann_root: '/home/minwoo/Distillation_Project/datasets/vision/coco/annotations/'
+val_retrieval_image_root: '/home/minwoo/Distillation_Project/datasets/vision/coco/images/'
+val_retrieval_split: 'val'
+val_retrieval_batch_size: 64
+val_retrieval_num_workers: 4
+val_retrieval_amp: true
+k_test: 128
+
+val_retrieval_itc_interval_steps: 1000
+val_retrieval_itc_epoch_end: true
+
+val_retrieval_itm_interval_steps: 18675
+val_retrieval_itm_epoch_end: true
+
+image_size: 224
+batch_size: 40
+
+queue_size: 57600
+alpha: 0.4
+
+weight_decay: 0.05
+init_lr: 1.0e-5
+
+min_lr: 0.0667e-6
+warmup_lr: 0.0667e-6
+lr_decay_rate: 0.9
+max_epoch: 20
+warmup_steps: 37000
+
+# ====== knowledge distillation (SCHEME A) ======
+distill:
+  itc:
+    enabled: false
+    weight: 1.0
+    temp: 0.05
+  itm_target_mix:
+    enabled: true
+    neg_source: teacher     # 'teacher' | 'student' (arm C와 동일 유지)
+    soft_weight: 1.0        # W=1.0 → 순수 tempered-teacher soft target (onehot 믹싱 없음)
+    temp: 2.0               # T=2 → 균형 gap = teacher_gap/T (스킴 A, sep~1.65)
+    schedule: constant      # 'constant' only
+
+teacher:
+  arch: 'blip_large'
+  checkpoint: '/home/minwoo/Distillation_Project/output/official_pretrain_checkpoint/model_large.pth'
