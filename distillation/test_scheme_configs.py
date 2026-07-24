@@ -27,5 +27,23 @@ class TestSchemeAConfig(unittest.TestCase):
         self.assertEqual(derive_teacher_keep(_distill(self.PATH)), ('itc', 'itm'))
 
 
+class TestSchemeBConfig(unittest.TestCase):
+    PATH = 'configs/pretrain_itm_schemeB_hinton.yaml'
+
+    def test_validates(self):
+        validate_itm_mix_config(_distill(self.PATH))
+
+    def test_itm_block_values(self):
+        itm = _distill(self.PATH)['itm_target_mix']
+        self.assertTrue(itm['enabled'])
+        self.assertEqual(itm['neg_source'], 'teacher')
+        self.assertEqual(itm['variant'], 'hinton_kd')
+        self.assertEqual(float(itm['temp']), 2.0)
+        self.assertGreater(float(itm['soft_weight']), 0.0)      # α>0
+
+    def test_teacher_keep(self):
+        self.assertEqual(derive_teacher_keep(_distill(self.PATH)), ('itc', 'itm'))
+
+
 if __name__ == "__main__":
     unittest.main()
