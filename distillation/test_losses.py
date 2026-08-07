@@ -2,7 +2,7 @@ import unittest
 import torch
 import torch.nn.functional as F
 
-from distillation.losses import itc_distill_loss, lm_distill_loss
+from distillation.losses import itc_distill_loss, lm_distill_loss, itm_matrix_kd_loss
 
 
 def _norm(x):
@@ -146,6 +146,44 @@ class TestLmDistillLoss(unittest.TestCase):
         s = torch.randn(self.B, self.L, self.V)
         t = torch.randn(self.B, self.L, self.V)
         self.assertEqual(lm_distill_loss(s, t, self.targets, self.temp).dim(), 0)
+
+
+class TestItmMatrixKdLoss(unittest.TestCase):
+    def setUp(self):
+        torch.manual_seed(0)
+        self.B = 5
+        self.temp = 0.05
+
+    def test_identical_is_zero(self):
+        t = torch.randn(self.B, self.B, 2)
+        s = t.clone().requires_grad_(True)
+        self.assertLess(itm_matrix_kd_loss(s, t, "bidir", self.temp).item(), 1e-6)
+
+    def test_forward_uses_only_z2_channel(self):
+        base = torch.randn(self.B, self.B, 2)
+        s, t = base.clone(), base.clone()
+        s[:, :, 0] += torch.randn(self.B, self.B)          # z1(reverse)만 교란
+        self.assertLess(itm_matrix_kd_loss(s, t, "forward", self.temp).item(), 1e-6)
+        self.assertGreater(itm_matrix_kd_loss(s, t, "reverse", self.temp).item(), 1e-6)
+
+    def test_reverse_uses_only_z1_channel(self):
+        base = torch.randn(self.B, self.B, 2)
+        s, t = base.clone(), base.clone()
+        s[:, :, 1] += torch.randn(self.B, self.B)          # z2(forward)만 교란
+        self.assertLess(itm_matrix_kd_loss(s, t, "reverse", self.temp).item(), 1e-6)
+        self.assertGreater(itm_matrix_kd_loss(s, t, "forward", self.temp).item(), 1e-6)
+
+    def test_gradient_flows_to_student_not_teacher(self):
+        s = torch.randn(self.B, self.B, 2, requires_grad=True)
+        t = torch.randn(self.B, self.B, 2, requires_grad=True)
+        itm_matrix_kd_loss(s, t, "bidir", self.temp).backward()
+        self.assertIsNotNone(s.grad)
+        self.assertIsNone(t.grad)                          # 내부에서 detach
+
+    def test_invalid_direction_raises(self):
+        t = torch.randn(self.B, self.B, 2)
+        with self.assertRaises(ValueError):
+            itm_matrix_kd_loss(t, t, "sideways", self.temp)
 
 
 if __name__ == "__main__":

@@ -62,3 +62,33 @@ def lm_distill_loss(student_logits, teacher_logits, decoder_targets, temp):
         F.softmax(t / temp, dim=-1),
         reduction="batchmean",                   # N_valid로 나눔 = 유효 토큰당 평균
     ) * (temp ** 2)
+
+
+def itm_matrix_kd_loss(student_logits, teacher_logits, direction, temp):
+    """Full B×B ITM 매치-로짓 매트릭스 관계 KD (ITC KD의 ITM 미러).
+
+    student_logits, teacher_logits: [B, B, 2]. index 0=z1(no-match/reverse),
+      1=z2(match/forward). row i = image i vs 전 텍스트, col j = text j vs 전 이미지.
+    direction: 'forward'(z2) | 'reverse'(z1) | 'bidir'(둘).
+    temp: 증류 온도 τ.
+    반환: forward KL(T‖S) 평균 × τ. 채널별(선택)×축(row,col) KL을 평균.
+    """
+    channels = {"forward": [1], "reverse": [0], "bidir": [0, 1]}.get(direction)
+    if channels is None:
+        raise ValueError(f"direction must be forward/reverse/bidir, got {direction!r}")
+
+    s = student_logits.float()
+    t = teacher_logits.float().detach()
+
+    total = 0.0
+    n = 0
+    for c in channels:
+        ms, mt = s[:, :, c] / temp, t[:, :, c] / temp      # [B, B]
+        # i2t: row 분포 (dim=1 = 텍스트 축)
+        total = total + F.kl_div(F.log_softmax(ms, dim=1),
+                                 F.softmax(mt, dim=1), reduction="batchmean")
+        # t2i: col 분포 (transpose 후 dim=1 = 이미지 축)
+        total = total + F.kl_div(F.log_softmax(ms.t(), dim=1),
+                                 F.softmax(mt.t(), dim=1), reduction="batchmean")
+        n += 2
+    return (total / n) * temp
