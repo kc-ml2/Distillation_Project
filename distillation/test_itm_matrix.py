@@ -38,3 +38,19 @@ class TestItmBxbLogits(unittest.TestCase):
             for j in range(B):
                 self.assertAlmostEqual(logits[i, j, 0].item(), i)   # 행 = image i
                 self.assertAlmostEqual(logits[i, j, 1].item(), j)   # 열 = text j
+
+    def test_itm_head_forced_fp32_even_under_autocast(self):
+        """Verify itm_head stays fp32 even when outer autocast(bfloat16) is active."""
+        B = 3
+        image_embeds = torch.randn(B, 5, 8)  # FakeEncoder will output depth 2
+        image_atts = torch.ones(B, 5, dtype=torch.long)
+        input_ids = torch.zeros(B, 6, dtype=torch.long)
+        text_atts = torch.ones(B, 6, dtype=torch.long)
+        itm_head = nn.Linear(2, 2)  # autocast-sensitive matmul, unlike nn.Identity
+
+        with torch.autocast(device_type="cpu", dtype=torch.bfloat16, enabled=True):
+            logits = itm_bxb_logits(FakeEncoder(), itm_head,
+                                    image_embeds, image_atts, input_ids, text_atts)
+
+        self.assertEqual(logits.dtype, torch.float32)
+        self.assertEqual(itm_head.weight.dtype, torch.float32)  # head params stayed fp32
