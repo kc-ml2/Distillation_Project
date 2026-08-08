@@ -96,7 +96,39 @@ class TestOnlineTeacherKeepBoth(unittest.TestCase):
     def test_unknown_keep_raises(self):
         with self.assertRaises(ValueError):
             OnlineTeacher(checkpoint="", image_size=224, vit="base",
-                          bert="base", queue_size=240, keep=("itm",))
+                          bert="base", queue_size=240, keep=("unknown_path",))
+
+
+class TestOnlineTeacherKeepItm(unittest.TestCase):
+    """keep=('itm',): visual_encoder + text_encoder + itm_head만 생존."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.teacher = OnlineTeacher(checkpoint="", image_size=224, vit="base",
+                                    bert="base", queue_size=240, keep=("itm",))
+
+    def test_kept_and_freed(self):
+        m = self.teacher.model
+        self.assertIsNotNone(m.visual_encoder)
+        self.assertIsNotNone(m.text_encoder)
+        self.assertIsNotNone(m.itm_head)
+        for attr in ("text_decoder", "vision_proj", "text_proj",
+                     "visual_encoder_m", "text_encoder_m", "vision_proj_m", "text_proj_m"):
+            self.assertIsNone(getattr(m, attr), f"{attr} should be freed")
+
+    def test_itm_matrix_contract(self):
+        image = torch.randn(3, 3, 224, 224)
+        caption = ["a green field", "a red car", "a blue sky"]
+        M = self.teacher.itm_matrix(image, caption)
+        self.assertEqual(tuple(M.shape), (3, 3, 2))
+        self.assertEqual(M.dtype, torch.float32)
+        self.assertFalse(M.requires_grad)
+
+    def test_itm_matrix_raises_without_itm_keep(self):
+        itc_teacher = OnlineTeacher(checkpoint="", image_size=224, vit="base",
+                                    bert="base", queue_size=240, keep=("itc",))
+        with self.assertRaises(RuntimeError):
+            itc_teacher.itm_matrix(torch.randn(1, 3, 224, 224), ["a cat"])
 
 
 class TestOnlineTeacherLargeConstruction(unittest.TestCase):

@@ -2,11 +2,13 @@ import torch
 import torch.nn.functional as F
 
 from models.blip_pretrain import blip_pretrain
+from distillation.itm_matrix import itm_bxb_logits
 
 # 경로별 필요 서브모듈. momentum 4개·itm_head·큐는 학습 전용 장치라 어떤 keep에서도 해제.
 NEEDS = {
     "itc": {"visual_encoder", "text_encoder", "vision_proj", "text_proj"},
     "lm": {"visual_encoder", "text_decoder"},
+    "itm": {"visual_encoder", "text_encoder", "itm_head"},
 }
 ALL_SUBMODULES = {
     "visual_encoder", "text_encoder", "vision_proj", "text_proj", "text_decoder",
@@ -15,6 +17,7 @@ ALL_SUBMODULES = {
 CRITICAL_PREFIXES = {
     "itc": ("visual_encoder.", "text_encoder.", "vision_proj.", "text_proj."),
     "lm": ("visual_encoder.", "text_decoder."),
+    "itm": ("visual_encoder.", "text_encoder.", "itm_head."),
 }
 
 
@@ -108,3 +111,20 @@ class OnlineTeacher:
                                           encoder_attention_mask=image_atts,
                                           return_dict=True)   # labels 없음 → logits만
         return out.logits, decoder_input_ids
+
+    @torch.no_grad()
+    def itm_matrix(self, image, caption):
+        """전체 B×B ITM 매치-로짓 매트릭스 [B,B,2] fp32. 학생 ITM 조립과 동일 규칙
+        (enc_token_id). itm_head는 fp32(itm_bxb_logits 내부 강제)."""
+        self._require("itm")
+        device = image.device
+        with torch.amp.autocast(device_type=device.type, dtype=torch.bfloat16):
+            image_embeds = self.model.visual_encoder(image)
+            image_atts = torch.ones(image_embeds.size()[:-1], dtype=torch.long, device=device)
+            text = self.tokenizer(caption, padding="max_length", truncation=True,
+                                  max_length=30, return_tensors="pt").to(device)
+            encoder_input_ids = text.input_ids.clone()
+            encoder_input_ids[:, 0] = self.tokenizer.enc_token_id
+            logits = itm_bxb_logits(self.model.text_encoder, self.model.itm_head,
+                                    image_embeds, image_atts, encoder_input_ids, text.attention_mask)
+        return logits
