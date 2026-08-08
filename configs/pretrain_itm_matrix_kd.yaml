@@ -1,0 +1,109 @@
+train_file: ['/home/minwoo/Distillation_Project/datasets/vision/coco/annotations/coco_karpathy_train.json',
+             '/home/minwoo/Distillation_Project/datasets/vision/vg/annotations/vg_train.json'
+             ]
+laion_path: ''
+image_root_coco: '/home/minwoo/Distillation_Project/datasets/vision/coco/images/'
+image_root_vg: '/home/minwoo/Distillation_Project/datasets/vision/vg/images/'
+
+cc12m_tar_path: ''
+cc12m_ratio: 5
+
+used_dataset: 'coco_vg'
+
+# ===== ITM matrix KD 런 (student + frozen BLIP-large teacher) =====
+output_dir: '/home/minwoo/Distillation_Project/output/pt_smallreg_minilm_itm_matrix_kd'
+
+# experiment 태그 (tensorboard run 이름에 사용)
+exp: '10.itm_matrix_kd'
+# 이미지 증강 토글: distilled 런과 동일 조건 유지를 위해 ON
+pretrain_train_aug: true
+
+# new) tenserboard log interval
+tb_train_log_interval: 50
+tb_val_log_interval: 1000
+
+# ===== student architecture =====
+# DINOv3 small + register tokens (검증: small_reg + minilm 구성+forward OK, 2026-06-29)
+vit: 'small_reg'
+vit_grad_ckpt: False
+vit_ckpt_layer: 0
+
+# size of language model: base, medium, minilm 중 하나
+my_bert_size: 'minilm'
+
+
+## 벨리데이션 과정
+#### COCO Karpathy validation loss ####
+val_loss_enabled: true
+
+val_loss_file: '/home/minwoo/Distillation_Project/datasets/vision/coco/annotations/coco_karpathy_val.json'
+val_loss_image_root: '/home/minwoo/Distillation_Project/datasets/vision/coco/images/'
+
+val_loss_batch_size: 32
+val_loss_num_workers: 4
+val_loss_caption_mode: first
+val_loss_drop_last: true
+val_loss_pin_memory: true
+
+val_loss_print_freq: 50
+
+val_loss_interval_steps: 500
+val_loss_max_batches: 30 # 전체가 39더라
+
+val_loss_epoch_end: true
+val_loss_epoch_max_batches: 30
+
+val_loss_alpha_mode: current
+val_loss_restore_rng: true
+val_loss_amp: true
+
+#### COCO Karpathy retrieval validation (momentum 없는 student-only R@1/5/10) ####
+val_retrieval_enabled: true
+val_retrieval_ann_root: '/home/minwoo/Distillation_Project/datasets/vision/coco/annotations/'
+val_retrieval_image_root: '/home/minwoo/Distillation_Project/datasets/vision/coco/images/'
+val_retrieval_split: 'val'
+val_retrieval_batch_size: 64
+val_retrieval_num_workers: 4
+val_retrieval_amp: true
+k_test: 128
+
+val_retrieval_itc_interval_steps: 1000
+val_retrieval_itc_epoch_end: true
+
+val_retrieval_itm_interval_steps: 18675
+val_retrieval_itm_epoch_end: true
+
+image_size: 224
+batch_size: 40
+
+queue_size: 57600
+alpha: 0.4
+
+weight_decay: 0.05
+init_lr: 1.0e-5
+
+min_lr: 0.0667e-6
+warmup_lr: 0.0667e-6
+lr_decay_rate: 0.9
+max_epoch: 20
+warmup_steps: 37000
+
+# ====== knowledge distillation (ITM matrix KD) ======
+# Phase 1: ITM matrix KD단독 활성화 (ITC/LM은 비활성화)
+distill:
+  itc:
+    enabled: false
+    weight: 1.0
+    temp: 0.05
+  itm:
+    enabled: true
+    weight: 1.0
+    temp: 0.05
+    direction: bidir      # {forward, reverse, bidir}
+
+teacher:
+  arch: 'blip_large'
+  # 공식 Salesforce BLIP-large pretrain (ViT-L + BERT-base, 디코더 포함).
+  # BLIP 공식 README의 Pre-trained checkpoints 표에서 ViT-L(129M) 링크로 다운로드 후 경로 기입.
+  # 빈 값이면 pretrain.py가 FileNotFoundError로 즉시 실패함 (무작위 티처 증류 방지).
+  checkpoint: ''
