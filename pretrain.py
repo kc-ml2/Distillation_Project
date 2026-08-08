@@ -72,7 +72,7 @@ def make_tb_run_name(config):
     # 시계열 로깅 대신 이름+config.yaml 덤프로 기록
     distill_cfg = config.get("distill", {})
     kd_parts = [f"{k}_w{distill_cfg[k].get('weight', 1.0)}T{distill_cfg[k].get('temp')}"
-                for k in ("itc", "lm") if distill_cfg.get(k, {}).get("enabled", False)]
+                for k in ("itc", "lm", "itm") if distill_cfg.get(k, {}).get("enabled", False)]
     if kd_parts:
         tb_option_dict["kd"] = "+".join(kd_parts)
     return "__".join(f"{k}={v}" for k, v in tb_option_dict.items())
@@ -90,6 +90,12 @@ def train(model, data_loader, optimizer, epoch, device, config, writer=None, val
     lm_kd_enabled = distill_lm.get('enabled', False)
     lm_kd_weight = float(distill_lm.get('weight', 1.0))
     lm_kd_temp = float(distill_lm.get('temp', 2.0))
+
+    distill_itm = config.get('distill', {}).get('itm', {})
+    itm_kd_enabled = distill_itm.get('enabled', False)
+    itm_kd_weight = float(distill_itm.get('weight', 1.0))
+    itm_kd_temp = float(distill_itm.get('temp', 0.05))
+    itm_kd_direction = distill_itm.get('direction', 'bidir')
 
     metric_logger = utils.MetricLogger(delimiter="  ")
     metric_logger.add_meter('lr', utils.SmoothedValue(window_size=50, fmt='{value:.6f}'))
@@ -129,6 +135,12 @@ def train(model, data_loader, optimizer, epoch, device, config, writer=None, val
         else:
             teacher_lm_logits = teacher_lm_ids = None
 
+        # online teacher: same augmented batch -> ITM B×B matrix (bf16, no_grad). None when disabled.
+        if itm_kd_enabled and online_teacher is not None:
+            teacher_itm_logits = online_teacher.itm_matrix(image, caption)
+        else:
+            teacher_itm_logits = None
+
         # ramp up alpha in the first 2 epochs
         alpha = config['alpha']*min(1,(epoch*len(data_loader)+i)/(2*len(data_loader))) 
 
@@ -138,29 +150,37 @@ def train(model, data_loader, optimizer, epoch, device, config, writer=None, val
         # if device == "cuda": # 이 부분 수정할 예정
         if device.type == "cuda":
             with torch.amp.autocast(device_type='cuda', dtype=torch.bfloat16):
-                loss_ita, loss_itm, loss_lm, loss_itc_kd, loss_lm_kd = model(
+                loss_ita, loss_itm, loss_lm, loss_itc_kd, loss_lm_kd, loss_itm_kd = model(
                     image, caption, alpha=alpha,
                     teacher_img_feat=teacher_img_feat, teacher_text_feat=teacher_text_feat,
                     distill_temp=itc_kd_temp,
                     teacher_lm_logits=teacher_lm_logits, teacher_lm_input_ids=teacher_lm_ids,
-                    lm_distill_temp=lm_kd_temp)
+                    lm_distill_temp=lm_kd_temp,
+                    teacher_itm_logits=teacher_itm_logits, itm_distill_temp=itm_kd_temp,
+                    itm_distill_direction=itm_kd_direction)
                 loss = loss_ita + loss_itm + loss_lm
                 if itc_kd_enabled and loss_itc_kd is not None:
                     loss = loss + itc_kd_weight * loss_itc_kd
                 if lm_kd_enabled and loss_lm_kd is not None:
                     loss = loss + lm_kd_weight * loss_lm_kd
+                if itm_kd_enabled and loss_itm_kd is not None:
+                    loss = loss + itm_kd_weight * loss_itm_kd
         else:
-            loss_ita, loss_itm, loss_lm, loss_itc_kd, loss_lm_kd = model(
+            loss_ita, loss_itm, loss_lm, loss_itc_kd, loss_lm_kd, loss_itm_kd = model(
                 image, caption, alpha=alpha,
                 teacher_img_feat=teacher_img_feat, teacher_text_feat=teacher_text_feat,
                 distill_temp=itc_kd_temp,
                 teacher_lm_logits=teacher_lm_logits, teacher_lm_input_ids=teacher_lm_ids,
-                lm_distill_temp=lm_kd_temp)
+                lm_distill_temp=lm_kd_temp,
+                teacher_itm_logits=teacher_itm_logits, itm_distill_temp=itm_kd_temp,
+                itm_distill_direction=itm_kd_direction)
             loss = loss_ita + loss_itm + loss_lm
             if itc_kd_enabled and loss_itc_kd is not None:
                 loss = loss + itc_kd_weight * loss_itc_kd
             if lm_kd_enabled and loss_lm_kd is not None:
                 loss = loss + lm_kd_weight * loss_lm_kd
+            if itm_kd_enabled and loss_itm_kd is not None:
+                loss = loss + itm_kd_weight * loss_itm_kd
 
         loss.backward()
         optimizer.step()    
@@ -172,6 +192,8 @@ def train(model, data_loader, optimizer, epoch, device, config, writer=None, val
             metric_logger.update(loss_itc_kd=loss_itc_kd.item())
         if loss_lm_kd is not None:
             metric_logger.update(loss_lm_kd=loss_lm_kd.item())
+        if loss_itm_kd is not None:
+            metric_logger.update(loss_itm_kd=loss_itm_kd.item())
         metric_logger.update(lr=optimizer.param_groups[0]["lr"])
 
         # 로컬 기록 이후에 텐서보드 입력, config에 tb_log_interval을 적기
@@ -185,6 +207,8 @@ def train(model, data_loader, optimizer, epoch, device, config, writer=None, val
                     writer.add_scalar("loss_train/itc_kd", loss_itc_kd.item(), global_step)
                 if loss_lm_kd is not None:
                     writer.add_scalar("loss_train/lm_kd", loss_lm_kd.item(), global_step)
+                if loss_itm_kd is not None:
+                    writer.add_scalar("loss_train/itm_kd", loss_itm_kd.item(), global_step)
                 writer.add_scalar("loss_train/total", loss.item(), global_step)
                 writer.add_scalar("optim/lr", optimizer.param_groups[0]["lr"], global_step)
                 writer.add_scalar("train/alpha", alpha, global_step)
@@ -397,7 +421,7 @@ def main(args, config): # configs.pretrain.yaml
     #### online teacher (distillation) — replicate per rank, frozen, not DDP-wrapped ####
     online_teacher = None
     distill_cfg = config.get('distill', {})
-    teacher_keep = tuple(k for k in ('itc', 'lm') if distill_cfg.get(k, {}).get('enabled', False))
+    teacher_keep = tuple(k for k in ('itc', 'lm', 'itm') if distill_cfg.get(k, {}).get('enabled', False))
     if teacher_keep:
         ckpt_path = config.get('teacher', {}).get('checkpoint', '')
         if not ckpt_path or not os.path.isfile(ckpt_path):
