@@ -19,7 +19,8 @@ import torch.nn.functional as F
 from custom_functions.dinov3_encoder import DINOv3_Wrapper # custom function으로 이동한 후에 임포트
 
 from models.blip import create_vit, init_tokenizer, load_checkpoint
-from distillation.losses import itc_distill_loss, lm_distill_loss
+from distillation.losses import itc_distill_loss, lm_distill_loss, itm_matrix_kd_loss
+from distillation.itm_matrix import itm_bxb_logits
 
 #### 수정부분 시작: 실험 4 - temp 나누기 대신 logit_scale 곱하기로 reparam ####
 # 기존 temp clamp 범위 (0.001, 0.5) -> effective scale(1/temp) 범위는 (2, 1000).
@@ -346,7 +347,8 @@ class BLIP_Pretrain(nn.Module):
 
     def forward(self, image, caption, alpha, update_train_state=None,
                 teacher_img_feat=None, teacher_text_feat=None, distill_temp=0.05,
-                teacher_lm_logits=None, teacher_lm_input_ids=None, lm_distill_temp=2.0):
+                teacher_lm_logits=None, teacher_lm_input_ids=None, lm_distill_temp=2.0,
+                teacher_itm_logits=None, itm_distill_temp=0.05, itm_distill_direction='bidir'):
     #### 수정부분 시작: validation-safe forward option 추가 ####
         """
         update_train_state:
@@ -522,7 +524,17 @@ class BLIP_Pretrain(nn.Module):
                                          teacher_lm_logits.to(image.device),
                                          decoder_targets, lm_distill_temp)
 
-        return loss_ita, loss_itm, loss_lm, loss_itc_kd, loss_lm_kd
+        # external-teacher ITM matrix distillation (full B×B relational KL); None when disabled.
+        loss_itm_kd = None
+        if teacher_itm_logits is not None:
+            student_itm_matrix = itm_bxb_logits(
+                self.text_encoder, self.itm_head,
+                image_embeds, image_atts, encoder_input_ids, text.attention_mask)
+            loss_itm_kd = itm_matrix_kd_loss(
+                student_itm_matrix, teacher_itm_logits.to(image.device),
+                itm_distill_direction, itm_distill_temp)
+
+        return loss_ita, loss_itm, loss_lm, loss_itc_kd, loss_lm_kd, loss_itm_kd
  
 
 
