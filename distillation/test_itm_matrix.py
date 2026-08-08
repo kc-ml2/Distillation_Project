@@ -54,3 +54,25 @@ class TestItmBxbLogits(unittest.TestCase):
 
         self.assertEqual(logits.dtype, torch.float32)
         self.assertEqual(itm_head.weight.dtype, torch.float32)  # head params stayed fp32
+
+    def test_checkpoint_matches_noncheckpoint_and_flows_grad(self):
+        """checkpoint on/off 출력 동일(투명) + checkpoint 경로로 grad가 image_embeds까지 흐른다."""
+        torch.manual_seed(0)
+        B = 4
+        image_embeds = torch.randn(B, 5, 4, requires_grad=True)
+        image_atts = torch.ones(B, 5, dtype=torch.long)
+        input_ids = torch.zeros(B, 6, dtype=torch.long)
+        for j in range(B):
+            input_ids[j, 1] = j
+        text_atts = torch.ones(B, 6, dtype=torch.long)
+        head = nn.Linear(2, 2)  # FakeEncoder는 depth-2 cls를 뱉으므로 2->2
+
+        out_plain = itm_bxb_logits(FakeEncoder(), head, image_embeds, image_atts,
+                                   input_ids, text_atts, use_checkpoint=False)
+        out_ckpt = itm_bxb_logits(FakeEncoder(), head, image_embeds, image_atts,
+                                  input_ids, text_atts, use_checkpoint=True)
+        self.assertTrue(torch.allclose(out_plain, out_ckpt, atol=1e-5))
+
+        out_ckpt.sum().backward()
+        self.assertIsNotNone(image_embeds.grad)
+        self.assertTrue(torch.isfinite(image_embeds.grad).all())
