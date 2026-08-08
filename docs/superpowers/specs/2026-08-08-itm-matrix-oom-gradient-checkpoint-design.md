@@ -54,9 +54,19 @@ torch.OutOfMemoryError: CUDA out of memory
 - **baseline OFF 불변:** 학생 경로에만, grad-enabled일 때만. 티처·eval·비증류 무영향.
 - **teacher no_grad:** `is_grad_enabled()=False`로 자동 plain.
 
-## 6. 측정 (구현 후)
-- **ON**(itm-kd + checkpoint) vs **OFF**(baseline, `distill.itm.enabled=false`) 50-step 간격 step-time, 1×4090.
-- 보고: 스텝당/50스텝당 시간, **OFF 대비 배수**. 이 수치가 Phase 1(full+checkpoint) 채택 vs Phase 2(서브샘플) 결정의 근거.
+## 6. 측정 결과 (2026-08-08, 1×RTX4090, bs=40, bidir)
+
+| | OFF (baseline) | ON (full B×B + checkpoint) |
+|---|---|---|
+| step-time (steady, step100) | **~0.21 s/step** | **3.18 s/step** |
+| 50-step 간격 | ~10.5 s | ~160 s (2.7분) |
+| max mem | 7.57 GiB | **10.44 GiB** (OOM 해소, checkpoint 前 22GB+) |
+| 1-epoch eta (single GPU) | ~9.3 시간 | ~5.5 일 |
+| loss_itm_kd | — | ~0.185 (유한·안정, CE 안 삼킴) |
+
+**→ 배수 ≈ 15× per step.** checkpointing이 OOM은 완전히 해결(10.4GB, 여유). 하지만 full B×B(1600 student fwd + 1600 recompute + 1600 teacher fwd)가 스텝을 15× 무겁게 만듦 → **20에폭 실런은 single-GPU ~110일 / 4-GPU ~27일**로 비현실적(baseline 4-GPU ~1.9일).
+
+**결론: full B×B는 되지만(fit+신호 유효) 너무 느림 → Phase 2(fixed 2-gather, 작은 k)가 필요.** 투영: k=8이면 셀 720/1600≈45% → ~7× 예상, k=4면 ~4.5×(+ 작은 k는 checkpoint 불필요). checkpointing은 "full-B×B를 꼭 살릴 때"의 옵션으로 남고, 실런은 Phase 2로 간다.
 
 ## 7. 범위 밖
 - Phase 2 fixed-alloc 서브샘플(다음 스펙).
