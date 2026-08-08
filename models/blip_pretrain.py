@@ -529,7 +529,8 @@ class BLIP_Pretrain(nn.Module):
         if teacher_itm_logits is not None:
             student_itm_matrix = itm_bxb_logits(
                 self.text_encoder, self.itm_head,
-                image_embeds, image_atts, encoder_input_ids, text.attention_mask)
+                image_embeds, image_atts, encoder_input_ids, text.attention_mask,
+                use_checkpoint=True)
             loss_itm_kd = itm_matrix_kd_loss(
                 student_itm_matrix, teacher_itm_logits.to(image.device),
                 itm_distill_direction, itm_distill_temp)
