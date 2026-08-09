@@ -92,3 +92,20 @@ def itm_matrix_kd_loss(student_logits, teacher_logits, direction, temp):
                                  F.softmax(mt.t(), dim=1), reduction="batchmean")
         n += 2
     return (total / n) * temp
+
+
+def itm_gathered_kd_loss(s_i2t, t_i2t, s_t2i, t_t2i, direction, temp):
+    """Phase 2 서브샘플 ITM KD. 각 [B,k+1,2] (0=z1, 1=z2; dim1=k+1 후보, col0=positive).
+    gather(i2t,t2i 둘 다)별 × channel(direction)별 dim=1 softmax forward KL(T‖S) 평균 × temp."""
+    channels = {"forward": [1], "reverse": [0], "bidir": [0, 1]}.get(direction)
+    if channels is None:
+        raise ValueError(f"direction must be forward/reverse/bidir, got {direction!r}")
+    total, n = 0.0, 0
+    for s, t in ((s_i2t, t_i2t), (s_t2i, t_t2i)):
+        s = s.float()
+        t = t.float().detach()
+        for c in channels:
+            total = total + F.kl_div(F.log_softmax(s[:, :, c] / temp, dim=1),
+                                     F.softmax(t[:, :, c] / temp, dim=1), reduction="batchmean")
+            n += 1
+    return (total / n) * temp

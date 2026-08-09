@@ -2,7 +2,7 @@ import unittest
 import torch
 import torch.nn.functional as F
 
-from distillation.losses import itc_distill_loss, lm_distill_loss, itm_matrix_kd_loss
+from distillation.losses import itc_distill_loss, lm_distill_loss, itm_matrix_kd_loss, itm_gathered_kd_loss
 
 
 def _norm(x):
@@ -184,6 +184,41 @@ class TestItmMatrixKdLoss(unittest.TestCase):
         t = torch.randn(self.B, self.B, 2)
         with self.assertRaises(ValueError):
             itm_matrix_kd_loss(t, t, "sideways", self.temp)
+
+
+class TestItmGatheredKdLoss(unittest.TestCase):
+    def setUp(self):
+        torch.manual_seed(0)
+        self.B, self.M, self.temp = 5, 4, 0.05
+
+    def _rand(self):
+        return torch.randn(self.B, self.M, 2)
+
+    def test_identical_is_zero(self):
+        a, b = self._rand(), self._rand()
+        loss = itm_gathered_kd_loss(a.clone().requires_grad_(True), a,
+                                    b.clone().requires_grad_(True), b, "bidir", self.temp)
+        self.assertLess(loss.item(), 1e-6)
+
+    def test_forward_uses_only_z2(self):
+        i, t = self._rand(), self._rand()
+        si, st = i.clone(), t.clone()
+        si[:, :, 0] += torch.randn(self.B, self.M)      # z1만 교란
+        st[:, :, 0] += torch.randn(self.B, self.M)
+        self.assertLess(itm_gathered_kd_loss(si, i, st, t, "forward", self.temp).item(), 1e-6)
+        self.assertGreater(itm_gathered_kd_loss(si, i, st, t, "reverse", self.temp).item(), 1e-6)
+
+    def test_grad_student_not_teacher(self):
+        si = self._rand().requires_grad_(True); ti = self._rand().requires_grad_(True)
+        st = self._rand().requires_grad_(True); tt = self._rand().requires_grad_(True)
+        itm_gathered_kd_loss(si, ti, st, tt, "bidir", self.temp).backward()
+        self.assertIsNotNone(si.grad); self.assertIsNotNone(st.grad)
+        self.assertIsNone(ti.grad); self.assertIsNone(tt.grad)
+
+    def test_invalid_direction_raises(self):
+        a = self._rand()
+        with self.assertRaises(ValueError):
+            itm_gathered_kd_loss(a, a, a, a, "sideways", self.temp)
 
 
 if __name__ == "__main__":
