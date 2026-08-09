@@ -36,3 +36,23 @@ def itm_bxb_logits(text_encoder, itm_head, image_embeds, image_atts,
     with torch.autocast(device_type=image_embeds.device.type, enabled=False):
         logits = itm_head(cls.float())                         # [B, B, 2] fp32
     return logits
+
+
+def itm_pair_logits(text_encoder, itm_head, image_embeds, image_atts,
+                    enc_ids, text_atts, image_idx, text_idx):
+    """B×M 임의 (image,text) 쌍의 ITM 로짓. image_idx/text_idx [B,M] long이
+    pool(image_embeds/enc_ids)로의 인덱스; row r은 (image_embeds[image_idx[r,m]],
+    enc_ids[text_idx[r,m]]) M개를 채점 → [B,M,2] fp32. 단일 배치 forward(B*M).
+    itm_head는 autocast 밖 fp32(프로브 §7). enc_token_id는 호출자가 enc_ids에 설정."""
+    B, M = image_idx.shape
+    fi = image_idx.reshape(-1)                                 # [B*M]
+    ft = text_idx.reshape(-1)                                  # [B*M]
+    out = text_encoder(enc_ids[ft],
+                       attention_mask=text_atts[ft],
+                       encoder_hidden_states=image_embeds[fi],
+                       encoder_attention_mask=image_atts[fi],
+                       return_dict=True)
+    cls = out.last_hidden_state[:, 0, :]                       # [B*M, D]
+    with torch.autocast(device_type=image_embeds.device.type, enabled=False):
+        logits = itm_head(cls.float())                         # [B*M, 2]
+    return logits.reshape(B, M, 2)

@@ -3,7 +3,7 @@ from types import SimpleNamespace
 import torch
 import torch.nn as nn
 
-from distillation.itm_matrix import itm_bxb_logits
+from distillation.itm_matrix import itm_bxb_logits, itm_pair_logits
 
 
 class FakeEncoder(nn.Module):
@@ -76,3 +76,26 @@ class TestItmBxbLogits(unittest.TestCase):
         out_ckpt.sum().backward()
         self.assertIsNotNone(image_embeds.grad)
         self.assertTrue(torch.isfinite(image_embeds.grad).all())
+
+    def test_pair_logits_scores_given_pairs(self):
+        B, M = 3, 2
+        image_embeds = torch.zeros(4, 5, 8)     # pool=4 이미지 (B와 달라도 됨)
+        for i in range(4):
+            image_embeds[i, 0, 0] = i
+        image_atts = torch.ones(4, 5, dtype=torch.long)
+        enc_ids = torch.zeros(4, 6, dtype=torch.long)   # pool=4 텍스트
+        for j in range(4):
+            enc_ids[j, 1] = j
+        text_atts = torch.ones(4, 6, dtype=torch.long)
+        image_idx = torch.tensor([[0, 1], [2, 3], [1, 0]])
+        text_idx = torch.tensor([[3, 2], [0, 1], [2, 2]])
+
+        logits = itm_pair_logits(FakeEncoder(), nn.Identity(),
+                                 image_embeds, image_atts, enc_ids, text_atts,
+                                 image_idx, text_idx)
+        self.assertEqual(tuple(logits.shape), (B, M, 2))
+        self.assertEqual(logits.dtype, torch.float32)
+        for r in range(B):
+            for m in range(M):
+                self.assertAlmostEqual(logits[r, m, 0].item(), image_idx[r, m].item())
+                self.assertAlmostEqual(logits[r, m, 1].item(), text_idx[r, m].item())
