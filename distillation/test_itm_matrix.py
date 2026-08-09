@@ -99,3 +99,20 @@ class TestItmBxbLogits(unittest.TestCase):
             for m in range(M):
                 self.assertAlmostEqual(logits[r, m, 0].item(), image_idx[r, m].item())
                 self.assertAlmostEqual(logits[r, m, 1].item(), text_idx[r, m].item())
+
+    def test_pair_logits_forced_fp32_even_under_autocast(self):
+        """itm_pair_logits keeps itm_head output fp32 even under active bf16 autocast."""
+        image_embeds = torch.randn(4, 5, 4)
+        image_atts = torch.ones(4, 5, dtype=torch.long)
+        enc_ids = torch.zeros(4, 6, dtype=torch.long)
+        text_atts = torch.ones(4, 6, dtype=torch.long)
+        image_idx = torch.tensor([[0, 1], [2, 3], [1, 0]])
+        text_idx = torch.tensor([[3, 2], [0, 1], [2, 2]])
+        itm_head = nn.Linear(2, 2)  # autocast-sensitive, unlike nn.Identity
+
+        with torch.autocast(device_type="cpu", dtype=torch.bfloat16, enabled=True):
+            logits = itm_pair_logits(FakeEncoder(), itm_head, image_embeds, image_atts,
+                                     enc_ids, text_atts, image_idx, text_idx)
+
+        self.assertEqual(logits.dtype, torch.float32)
+        self.assertEqual(itm_head.weight.dtype, torch.float32)
