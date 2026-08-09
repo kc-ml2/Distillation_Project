@@ -92,6 +92,21 @@ distill:
 3. itm retrieval ≥ baseline + itm−itc>0 회복(학습 후, 별도).
 4. 손실 유한·CE 안 삼킴.
 
+## 6b. 측정 결과 (2026-08-09, 1×RTX4090, bs=40, bidir)
+
+| | baseline OFF | Phase2 **k=4** | Phase2 k=8 | (참고) full B×B+ckpt |
+|---|---|---|---|---|
+| step-time (steady) | ~0.21 s | **0.436 s** | OOM | 3.18 s |
+| **배수** | 1× | **~2.1×** | — | ~15× |
+| max mem | 7.6 GB | **18.1 GB** | >24GB(OOM) | 10.4 GB |
+| loss_itm_kd | — | ~0.087 안정 | — | ~0.185 |
+
+- **k=4 성공: ~2.1×** (full 15× → 7배 빠름, "한 자릿수" 목표 달성). loss 유한·CE 안 삼킴.
+- **DDP 티처-호출(⚠️) 해소:** k=4가 torchrun DDP서 크래시 없이 학습 → A-통일 설계 검증됨.
+- **k=8 OOM:** `itm_pair_logits`가 720 gather 시퀀스 activation을 checkpoint 없이 다 물음(OOM at 22.5GB). k=4(400 seq)는 18GB로 맞지만 헤드룸 빠듯.
+- **함의:** 24GB에선 **k≤4가 안전**. 더 큰 k(스윕 8/12)나 헤드룸이 필요하면 `itm_pair_logits`에 gradient checkpointing 추가가 다음 레버(현재 미적용).
+- 20에폭 4-GPU 투영: k=4 ≈ **~4일**(full 27일 / baseline 1.9일).
+
 ## 7. 범위 밖 (ponytail)
 - **union-dedup**: 동적 `|U|` 출렁임 회피로 기각(fixed가 목적). softmax 측정 실패 전엔 안 함.
 - **gradient checkpointing on 서브샘플**: 720 seq는 그냥 맞아서 불필요.
