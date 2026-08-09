@@ -100,6 +100,7 @@ distill:
     weight: 1.0
     temp: 0.05
     direction: bidir      # {forward, reverse, bidir}
+    topk: 8               # -1=full B×B(Phase1); k<B-1=fixed 2-gather(Phase2). 스윕 {4,8,12}
 
 teacher:
   arch: 'blip_large'
