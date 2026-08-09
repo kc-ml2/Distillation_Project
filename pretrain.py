@@ -96,6 +96,7 @@ def train(model, data_loader, optimizer, epoch, device, config, writer=None, val
     itm_kd_weight = float(distill_itm.get('weight', 1.0))
     itm_kd_temp = float(distill_itm.get('temp', 0.05))
     itm_kd_direction = distill_itm.get('direction', 'bidir')
+    itm_kd_topk = int(distill_itm.get('topk', -1))
 
     metric_logger = utils.MetricLogger(delimiter="  ")
     metric_logger.add_meter('lr', utils.SmoothedValue(window_size=50, fmt='{value:.6f}'))
@@ -135,12 +136,6 @@ def train(model, data_loader, optimizer, epoch, device, config, writer=None, val
         else:
             teacher_lm_logits = teacher_lm_ids = None
 
-        # online teacher: same augmented batch -> ITM B×B matrix (bf16, no_grad). None when disabled.
-        if itm_kd_enabled and online_teacher is not None:
-            teacher_itm_logits = online_teacher.itm_matrix(image, caption)
-        else:
-            teacher_itm_logits = None
-
         # ramp up alpha in the first 2 epochs
         alpha = config['alpha']*min(1,(epoch*len(data_loader)+i)/(2*len(data_loader))) 
 
@@ -156,7 +151,8 @@ def train(model, data_loader, optimizer, epoch, device, config, writer=None, val
                     distill_temp=itc_kd_temp,
                     teacher_lm_logits=teacher_lm_logits, teacher_lm_input_ids=teacher_lm_ids,
                     lm_distill_temp=lm_kd_temp,
-                    teacher_itm_logits=teacher_itm_logits, itm_distill_temp=itm_kd_temp,
+                    online_teacher=(online_teacher if itm_kd_enabled else None),
+                    itm_topk=itm_kd_topk, itm_distill_temp=itm_kd_temp,
                     itm_distill_direction=itm_kd_direction)
                 loss = loss_ita + loss_itm + loss_lm
                 if itc_kd_enabled and loss_itc_kd is not None:
@@ -172,7 +168,8 @@ def train(model, data_loader, optimizer, epoch, device, config, writer=None, val
                 distill_temp=itc_kd_temp,
                 teacher_lm_logits=teacher_lm_logits, teacher_lm_input_ids=teacher_lm_ids,
                 lm_distill_temp=lm_kd_temp,
-                teacher_itm_logits=teacher_itm_logits, itm_distill_temp=itm_kd_temp,
+                online_teacher=(online_teacher if itm_kd_enabled else None),
+                itm_topk=itm_kd_topk, itm_distill_temp=itm_kd_temp,
                 itm_distill_direction=itm_kd_direction)
             loss = loss_ita + loss_itm + loss_lm
             if itc_kd_enabled and loss_itc_kd is not None:
