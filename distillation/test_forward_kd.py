@@ -36,26 +36,27 @@ class TestForwardLmKd(unittest.TestCase):
         self.assertIsNone(loss_lm_kd)
         self.assertIsNone(loss_itm_kd)
 
-    def test_itm_kd_computed_when_teacher_matrix_given(self):
-        B = 2
-        teacher_itm = torch.randn(B, B, 2)
-        out = self.model(self.image, self.caption, alpha=0.4, update_train_state=False,
-                         teacher_itm_logits=teacher_itm, itm_distill_temp=0.05,
-                         itm_distill_direction="bidir")
-        loss_itm_kd = out[5]
-        self.assertIsNotNone(loss_itm_kd)
-        self.assertTrue(torch.isfinite(loss_itm_kd))
-
-    def test_itm_kd_end_to_end_with_teacher(self):
+    def test_itm_kd_full_with_online_teacher(self):
         from distillation.online_teacher import OnlineTeacher
         teacher = OnlineTeacher(checkpoint="", image_size=224, vit="base",
                                 bert="base", queue_size=240, keep=("itm",))
-        t_itm = teacher.itm_matrix(self.image, self.caption)
         out = self.model(self.image, self.caption, alpha=0.4, update_train_state=False,
-                         teacher_itm_logits=t_itm, itm_distill_direction="bidir")
-        loss = out[0] + out[1] + out[2] + 1.0 * out[5]
-        loss.backward()
-        self.assertTrue(torch.isfinite(loss))
+                         online_teacher=teacher, itm_topk=-1, itm_distill_direction="bidir")
+        loss_itm_kd = out[5]
+        self.assertIsNotNone(loss_itm_kd)
+        self.assertTrue(torch.isfinite(loss_itm_kd))
+        (out[0] + out[1] + out[2] + out[5]).backward()
+
+    def test_itm_kd_gathered_with_online_teacher(self):
+        from distillation.online_teacher import OnlineTeacher
+        teacher = OnlineTeacher(checkpoint="", image_size=224, vit="base",
+                                bert="base", queue_size=240, keep=("itm",))
+        out = self.model(self.image, self.caption, alpha=0.4, update_train_state=False,
+                         online_teacher=teacher, itm_topk=1, itm_distill_direction="bidir")
+        loss_itm_kd = out[5]
+        self.assertIsNotNone(loss_itm_kd)
+        self.assertTrue(torch.isfinite(loss_itm_kd))
+        (out[0] + out[1] + out[2] + out[5]).backward()
 
     def test_lm_kd_computed_when_teacher_logits_given(self):
         t_logits, t_ids = self._teacher_payload()
