@@ -18,7 +18,8 @@ Phase 1(full B×B) + checkpointing 실측(1×4090, bs=40, bidir): OOM은 해소�
 - **선택(학생):** `weights_i2t`/`weights_t2i`(forward가 3B ITM CE용으로 이미 계산, diagonal-zeroed, `blip_pretrain.py:448-451`)에서 `.topk(k)` → 순수 네거 k개. positive(대각선) **명시 prepend** → `idx_i2t_full`/`idx_t2i_full` `[B, k+1]`, positive는 항상 index 0.
 - **불변식:** 각 방향 분포 = positive + 네거 k = **k+1 고정**(topk와 독립적으로 positive 보장).
 - **티처:** 학생이 뽑은 **동일 인덱스** 재사용(같은 지지집합 비교).
-- **양방향(bidir):** i2t(이미지별 하드텍스트)·t2i(텍스트별 하드이미지) **각각 gather**(col 지지집합 함정 회피 — 2026-08-07 §4.2). 총 `2·B·(k+1)`. `direction=forward`면 i2t만, `reverse`면 t2i만(1 gather).
+- **두 gather 항상:** i2t(이미지별 하드텍스트)·t2i(텍스트별 하드이미지) **각각 gather**(col 지지집합 함정 회피 — 2026-08-07 §4.2). 총 forward `2·B·(k+1)`.
+- **direction = 채널 선택**(z2=forward / z1=reverse / bidir=둘) — **Phase 1과 동일 의미**. gather(축, i2t/t2i)와 **독립**: direction은 KL 항 수(채널)만 정하고 forward 수는 안 바꾼다. bidir이면 `{i2t,t2i}×{z1,z2}`=4 KL, forward면 `{i2t,t2i}×{z2}`=2 KL.
 - **checkpoint 불필요:** `2·B·(k+1)` ≤ ~720(k=8)이라 24GB에 그냥 맞음. Phase 1의 `use_checkpoint`는 full 경로 전용으로 남김.
 
 ## 3. 구현 — 재사용 최대, 신규 최소
@@ -48,9 +49,8 @@ def itm_pair_logits(text_encoder, itm_head, image_embeds, image_atts,
 ```
 def itm_gathered_kd_loss(s_i2t, t_i2t, s_t2i, t_t2i, direction, temp):
     # 각 [B,k+1,2]. channels = {forward:[1],reverse:[0],bidir:[0,1]}.
-    # dir별·channel별 softmax(dim=1) forward KL(T‖S) 평균 × temp. 티처 detach.
+    # gather(i2t·t2i 항상 둘)별 × channel별 softmax(dim=1) forward KL(T‖S) 평균 × temp. 티처 detach.
 ```
-(direction=forward/reverse면 해당 방향 gather 하나만.)
 
 ### 3.3 티처: `OnlineTeacher.itm_matrix_gathered(image, caption, idx_i2t, idx_t2i)`
 학생 인덱스로 `itm_pair_logits` 2회 → `(t_i2t, t_t2i)`. 기존 `itm_matrix`(full)와 나란히.
