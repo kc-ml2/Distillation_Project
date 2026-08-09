@@ -130,6 +130,19 @@ class TestOnlineTeacherKeepItm(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             itc_teacher.itm_matrix(torch.randn(1, 3, 224, 224), ["a cat"])
 
+    def test_itm_matrix_gathered_contract(self):
+        B, k = 3, 2
+        image = torch.randn(B, 3, 224, 224)
+        caption = ["a green field", "a red car", "a blue sky"]
+        ar = torch.arange(B)[:, None]
+        idx_i2t = torch.cat([ar, torch.tensor([[1, 2], [0, 2], [0, 1]])], dim=1)  # [B,k+1]
+        idx_t2i = torch.cat([ar, torch.tensor([[2, 1], [2, 0], [1, 0]])], dim=1)
+        t_i2t, t_t2i = self.teacher.itm_matrix_gathered(image, caption, idx_i2t, idx_t2i)
+        for t in (t_i2t, t_t2i):
+            self.assertEqual(tuple(t.shape), (B, k + 1, 2))
+            self.assertEqual(t.dtype, torch.float32)
+            self.assertFalse(t.requires_grad)
+
 
 class TestOnlineTeacherLargeConstruction(unittest.TestCase):
     """실제 티처 아키텍처(vit='large')의 생성 회귀. timm 1.x에서 BLIP 원본의

@@ -2,7 +2,7 @@ import torch
 import torch.nn.functional as F
 
 from models.blip_pretrain import blip_pretrain
-from distillation.itm_matrix import itm_bxb_logits
+from distillation.itm_matrix import itm_bxb_logits, itm_pair_logits
 
 # 경로별 필요 서브모듈. momentum 4개·itm_head·큐는 학습 전용 장치라 어떤 keep에서도 해제.
 NEEDS = {
@@ -128,3 +128,24 @@ class OnlineTeacher:
             logits = itm_bxb_logits(self.model.text_encoder, self.model.itm_head,
                                     image_embeds, image_atts, encoder_input_ids, text.attention_mask)
         return logits
+
+    @torch.no_grad()
+    def itm_matrix_gathered(self, image, caption, idx_i2t_full, idx_t2i_full):
+        """학생이 뽑은 인덱스로 gather된 티처 ITM 로짓 (t_i2t, t_t2i), 각 [B,k+1,2] fp32.
+        idx_*_full [B,k+1]: i2t=이미지별 텍스트 인덱스, t2i=텍스트별 이미지 인덱스(col0=positive)."""
+        self._require("itm")
+        device = image.device
+        with torch.amp.autocast(device_type=device.type, dtype=torch.bfloat16):
+            image_embeds = self.model.visual_encoder(image)
+            image_atts = torch.ones(image_embeds.size()[:-1], dtype=torch.long, device=device)
+            text = self.tokenizer(caption, padding="max_length", truncation=True,
+                                  max_length=30, return_tensors="pt").to(device)
+            enc_ids = text.input_ids.clone()
+            enc_ids[:, 0] = self.tokenizer.enc_token_id
+            B, M = idx_i2t_full.shape
+            ar = torch.arange(B, device=device)[:, None].expand(B, M)
+            t_i2t = itm_pair_logits(self.model.text_encoder, self.model.itm_head, image_embeds,
+                                    image_atts, enc_ids, text.attention_mask, ar, idx_i2t_full.to(device))
+            t_t2i = itm_pair_logits(self.model.text_encoder, self.model.itm_head, image_embeds,
+                                    image_atts, enc_ids, text.attention_mask, idx_t2i_full.to(device), ar)
+        return t_i2t, t_t2i
