@@ -2,38 +2,6 @@ import torch
 import torch.nn.functional as F
 
 
-def itc_distill_loss(image_feat_s, text_feat_s, teacher_img_feat, teacher_txt_feat, temp):
-    """In-batch B×B relational KD for the ITC signal.
-
-    Args:
-        image_feat_s, text_feat_s: student online features, [B, D], L2-normalized, require grad.
-        teacher_img_feat, teacher_txt_feat: teacher features, [B, D], L2-normalized (constants).
-        temp: distillation temperature τ (same for teacher and student).
-
-    Returns:
-        Scalar tensor = 0.5 * (KL_i2t + KL_t2i) * τ, with KL(teacher ‖ student).
-
-    Note: KD grad ∂L/∂z = (q−p)/τ. 여기 τ≪1(sharpening) saturation regime에선 (q−p)가 유계라
-    grad ∝ 1/τ. Hinton의 × τ² 보정은 고온(선형화) 전제에서만 grad를 O(1)로 되돌리며,
-    이 regime엔 과보정이라 grad를 τ배로 죽인다(2026-07-07 keeptau2 = no-op으로 실증).
-    → 이 regime의 올바른 정규화는 **× τ** (grad ∝ τ·(1/τ) = O(1)). 이러면 grad 크기가 τ에 무관해져
-    두 arm이 단일 λ(weight)로 자동 정합된다. crossover 실측·유도: critical_bugfix/2026-07-14.
-    크기 정합(ITC 대비 목표 ratio)은 λ_itc(weight)로 잡는다.
-    """
-    teacher_img_feat = teacher_img_feat.detach()
-    teacher_txt_feat = teacher_txt_feat.detach()
-
-    s_s = (image_feat_s @ text_feat_s.t()) / temp          # [B, B] student
-    s_t = (teacher_img_feat @ teacher_txt_feat.t()) / temp  # [B, B] teacher
-
-    # image->text: rows = images, distribution over texts (dim=1)
-    loss_i2t = F.kl_div(F.log_softmax(s_s, dim=1), F.softmax(s_t, dim=1), reduction="batchmean")
-    # text->image: transpose
-    loss_t2i = F.kl_div(F.log_softmax(s_s.t(), dim=1), F.softmax(s_t.t(), dim=1), reduction="batchmean")
-
-    return 0.5 * (loss_i2t + loss_t2i) * temp
-
-
 def lm_distill_loss(student_logits, teacher_logits, decoder_targets, temp):
     """Token-level LM logit KD (teacher-forced).
 

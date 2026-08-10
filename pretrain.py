@@ -82,11 +82,6 @@ def train(model, data_loader, optimizer, epoch, device, config, writer=None, val
     # train
     model.train()
 
-    distill_itc = config.get('distill', {}).get('itc', {})
-    itc_kd_enabled = distill_itc.get('enabled', False)
-    itc_kd_weight = float(distill_itc.get('weight', 1.0))
-    itc_kd_temp = float(distill_itc.get('temp', 0.05))
-
     distill_lm = config.get('distill', {}).get('lm', {})
     lm_kd_enabled = distill_lm.get('enabled', False)
     lm_kd_weight = float(distill_lm.get('weight', 1.0))
@@ -94,8 +89,6 @@ def train(model, data_loader, optimizer, epoch, device, config, writer=None, val
 
     distill_ttm = config.get('distill', {}).get('itc_target_mix', {})
     ttm_enabled = distill_ttm.get('enabled', False)
-    assert not (itc_kd_enabled and ttm_enabled), \
-        "distill.itc(별도 KD)와 distill.itc_target_mix 동시 사용 금지"
     ttm_soft_weight = float(distill_ttm.get('soft_weight', 0.4))
     ttm_hold_steps = int(distill_ttm.get('hold_epochs', 2) * len(data_loader))
     ttm_decay_end_steps = int(distill_ttm.get('decay_end_epochs', 12) * len(data_loader))
@@ -150,8 +143,7 @@ def train(model, data_loader, optimizer, epoch, device, config, writer=None, val
         # online teacher: same augmented batch -> ITC features (bf16, no_grad). None when not needed.
         # target-mix: teacher only while γ>0 (γ=0 tail is target-identical to baseline → skip teacher forward)
         need_teacher_itc = (
-            itc_kd_enabled
-            or (ttm_enabled and gamma is not None and gamma > 0)
+            (ttm_enabled and gamma is not None and gamma > 0)
             or (itm_mix_enabled and itm_neg_source == 'teacher')
         )
         # perf: compute the teacher's image_embeds at most ONCE per step and reuse it
@@ -191,29 +183,23 @@ def train(model, data_loader, optimizer, epoch, device, config, writer=None, val
         # if device == "cuda": # 이 부분 수정할 예정
         if device.type == "cuda":
             with torch.amp.autocast(device_type='cuda', dtype=torch.bfloat16):
-                loss_ita, loss_itm, loss_lm, loss_itc_kd, loss_lm_kd = model(
+                loss_ita, loss_itm, loss_lm, loss_lm_kd = model(
                     image, caption, alpha=alpha,
                     teacher_img_feat=teacher_img_feat, teacher_text_feat=teacher_text_feat,
-                    distill_temp=itc_kd_temp,
                     teacher_lm_logits=teacher_lm_logits, teacher_lm_input_ids=teacher_lm_ids,
                     lm_distill_temp=lm_kd_temp,
                     gamma=gamma, online_teacher=itm_online_teacher, itm_mix=itm_mix)
                 loss = loss_ita + loss_itm + loss_lm
-                if itc_kd_enabled and loss_itc_kd is not None:
-                    loss = loss + itc_kd_weight * loss_itc_kd
                 if lm_kd_enabled and loss_lm_kd is not None:
                     loss = loss + lm_kd_weight * loss_lm_kd
         else:
-            loss_ita, loss_itm, loss_lm, loss_itc_kd, loss_lm_kd = model(
+            loss_ita, loss_itm, loss_lm, loss_lm_kd = model(
                 image, caption, alpha=alpha,
                 teacher_img_feat=teacher_img_feat, teacher_text_feat=teacher_text_feat,
-                distill_temp=itc_kd_temp,
                 teacher_lm_logits=teacher_lm_logits, teacher_lm_input_ids=teacher_lm_ids,
                 lm_distill_temp=lm_kd_temp,
                 gamma=gamma, online_teacher=itm_online_teacher, itm_mix=itm_mix)
             loss = loss_ita + loss_itm + loss_lm
-            if itc_kd_enabled and loss_itc_kd is not None:
-                loss = loss + itc_kd_weight * loss_itc_kd
             if lm_kd_enabled and loss_lm_kd is not None:
                 loss = loss + lm_kd_weight * loss_lm_kd
 
@@ -223,8 +209,6 @@ def train(model, data_loader, optimizer, epoch, device, config, writer=None, val
         metric_logger.update(loss_ita=loss_ita.item())
         metric_logger.update(loss_itm=loss_itm.item())
         metric_logger.update(loss_lm=loss_lm.item())
-        if loss_itc_kd is not None:
-            metric_logger.update(loss_itc_kd=loss_itc_kd.item())
         if loss_lm_kd is not None:
             metric_logger.update(loss_lm_kd=loss_lm_kd.item())
         metric_logger.update(lr=optimizer.param_groups[0]["lr"])
@@ -236,8 +220,6 @@ def train(model, data_loader, optimizer, epoch, device, config, writer=None, val
                 writer.add_scalar("loss_train/ita", loss_ita.item(), global_step)
                 writer.add_scalar("loss_train/itm", loss_itm.item(), global_step)
                 writer.add_scalar("loss_train/lm", loss_lm.item(), global_step)
-                if loss_itc_kd is not None:
-                    writer.add_scalar("loss_train/itc_kd", loss_itc_kd.item(), global_step)
                 if loss_lm_kd is not None:
                     writer.add_scalar("loss_train/lm_kd", loss_lm_kd.item(), global_step)
                 writer.add_scalar("loss_train/total", loss.item(), global_step)

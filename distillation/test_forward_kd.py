@@ -26,13 +26,12 @@ class TestForwardLmKd(unittest.TestCase):
         dec_ids[:, 0] = tok.bos_token_id
         return torch.randn(2, 30, len(tok)), dec_ids
 
-    def test_five_tuple_with_nones_when_no_teacher(self):
+    def test_four_tuple_with_none_when_no_teacher(self):
         out = self.model(self.image, self.caption, alpha=0.4, update_train_state=False)
-        self.assertEqual(len(out), 5)
-        loss_ita, loss_itm, loss_lm, loss_itc_kd, loss_lm_kd = out
+        self.assertEqual(len(out), 4)
+        loss_ita, loss_itm, loss_lm, loss_lm_kd = out
         for l in (loss_ita, loss_itm, loss_lm):
             self.assertTrue(torch.isfinite(l).all())
-        self.assertIsNone(loss_itc_kd)
         self.assertIsNone(loss_lm_kd)
 
     def test_lm_kd_computed_when_teacher_logits_given(self):
@@ -40,7 +39,7 @@ class TestForwardLmKd(unittest.TestCase):
         out = self.model(self.image, self.caption, alpha=0.4, update_train_state=False,
                          teacher_lm_logits=t_logits, teacher_lm_input_ids=t_ids,
                          lm_distill_temp=2.0)
-        loss_lm_kd = out[4]
+        loss_lm_kd = out[3]
         self.assertIsNotNone(loss_lm_kd)
         self.assertTrue(torch.isfinite(loss_lm_kd))
         self.assertTrue(loss_lm_kd.requires_grad)   # 학생 로짓 경유 grad
