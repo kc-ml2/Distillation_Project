@@ -79,19 +79,7 @@ class BLIP_Pretrain(nn.Module):
                 from timm.models.helpers import load_custom_pretrained
                 from timm.models.vision_transformer import default_cfgs
                 load_custom_pretrained(self.visual_encoder,default_cfgs['vit_large_patch16_224_in21k'])
-        
-        elif vit=='small': # model for small vit, and 
-            # model: vit_small_patch16_dinov3
-            import timm
-            self.visual_encoder = timm.create_model(
-                model_name='vit_small_patch16_dinov3.lvd1689m',
-                pretrained=True,
-                img_size=224,
-                num_classes=0,
-                global_pool='',
-                num_reg_tokens=0 # do not have reg tokens
-            )
-        
+
         # add vit small with register tokens option (i don't know how skipping register token is working well?)
         elif vit=='small_reg':
             import timm
@@ -105,31 +93,8 @@ class BLIP_Pretrain(nn.Module):
             )
             self.visual_encoder = DINOv3_Wrapper(base_model=raw_model, model_register_tokens=4)
 
-        elif vit=='small_plus':
-            import timm
-            self.visual_encoder = timm.create_model(
-                model_name="vit_small_plus_patch16_dinov3.lvd1689m",
-                pretrained=True,
-                img_size=224,
-                num_classes=0,
-                global_pool='', # output
-                num_reg_tokens=0 # do not have reg tokens
-            )
-
-        elif vit=='small_plus_reg': 
-            import timm
-            raw_model = timm.create_model(
-                model_name="vit_small_plus_patch16_dinov3.lvd1689m",
-                pretrained=True,
-                img_size=224,
-                num_classes=0,
-                global_pool='', # output
-                num_reg_tokens=4 # default =4
-            )
-            self.visual_encoder = DINOv3_Wrapper(base_model=raw_model, model_register_tokens=4)
-        
         # additional conditions for small vit
-        if vit in ['small', 'small_plus', 'small_reg', 'small_plus_reg']:
+        if vit == 'small_reg':
             # embed_dim -> vision projection output
             # embed_dim = 384 # needs to be checked. it is raw output for model
             embed_dim = 256 # output layer 384 of vit to 256 projection bert also projected to 256 same.
@@ -149,10 +114,6 @@ class BLIP_Pretrain(nn.Module):
             "minilm": {
                 "hub_id": "microsoft/MiniLM-L12-H384-uncased",
                 "config": med_bert_MiniLM_config
-            },
-            "medium": {
-                "hub_id": "google/bert_uncased_L-8_H-512_A-8",
-                "config": med_bert_medium_config
             },
             "base": {
                 "hub_id": "bert-base-uncased",
@@ -178,56 +139,7 @@ class BLIP_Pretrain(nn.Module):
         else:
             raise ValueError(f"Unknown bert size: {my_bert_size}")
         print(f"bert size: {my_bert_size}")
-        assert my_bert_size in ["base", "medium", "minilm"], "bert size must be base, medium, minilm" # 버트를 만들고 나서
-
-        # ====================== depreciated ==============
-        '''
-        if my_bert_size == 'base':
-            self.tokenizer = init_tokenizer()   # -> blip.py file
-            encoder_config = BertConfig.from_json_file(med_config) # configs.bert_config.json, only vocab size is different
-            encoder_config.encoder_width = vision_width # when used as med - vit output is important - default = 768
-            # encoder_width = 외부 출력값을 받아들일 때 즉, 비전을 받아들일 때 이 width를 쓴다
-            self.text_encoder = BertModel.from_pretrained(
-                'bert-base-uncased',
-                config=encoder_config,
-                add_pooling_layer=False
-            )
-            self.text_encoder.resize_token_embeddings(len(self.tokenizer)) # 컨피그로 만든 임베딩 토큰 수가 다르니깐 다시 하는 것
-            text_width = self.text_encoder.config.hidden_size # 768 default 모델 내부의 고유한 벡터 차원.
-            med_config = med_config # 자기 자신-base 모델 사용
-        
-        # feat addition: small bert model import code
-        elif my_bert_size == 'medium':
-            self.tokenizer = init_tokenizer()   # additional two special token
-            encoder_config = BertConfig.from_json_file(med_bert_medium_config) # small model config
-
-            # encoder_width 는 우리가 따로 달은 컨피그임. 따라서 밑에서 바뀌게 됨
-            encoder_config.encoder_width = vision_width # 이건 자동으로 바꾸게 될 거고 384로
-            self.text_encoder = BertModel.from_pretrained(
-                'google/bert_uncased_L-8_H-512_A-8',
-                config=encoder_config,
-                add_pooling_layer=False
-            )
-            # https://huggingface.co/google/bert_uncased_L-8_H-512_A-8
-            self.text_encoder.resize_token_embeddings(len(self.tokenizer)) # 컨피그로 만든 임베딩 토큰 수가 다르니깐 다시 하는 것.
-            text_width = self.text_encoder.config.hidden_size # 512
-            med_config = med_bert_medium_config # 밑에서부터는 변경해서 들어가게
-        
-        elif my_bert_size == "MiniLM":
-            self.tokenizer = init_tokenizer()
-            encoder_config = BertConfig.from_json_file(med_bert_MiniLM_config)
-            encoder_config.encoder_width = vision_width
-            self.text_encoder = BertModel.from_pretrained(
-                'microsoft/MiniLM-L12-H384-uncased',
-                config=encoder_config,
-                add_pooling_layer=False
-            )
-            # https://huggingface.co/microsoft/MiniLM-L12-H384-uncased
-            self.text_encoder.resize_token_embeddings(len(self.tokenizer))
-            text_width = self.text_encoder.config.hidden_size # 384
-            med_config = med_bert_MiniLM_config # decoder와 momentum은 이제 이 컨피그를 보고 제작함
-        '''
-        # ================= depreciated ================
+        assert my_bert_size in ["base", "minilm"], "bert size must be base, minilm" # 버트를 만들고 나서
 
         # itc loss part
         self.vision_proj = nn.Linear(vision_width, embed_dim) # 256 in default 
@@ -311,15 +223,7 @@ class BLIP_Pretrain(nn.Module):
             )
             self.text_decoder.resize_token_embeddings(len(self.tokenizer)) # 위에서 이미 선언함
             tie_encoder_decoder_weights(self.text_encoder,self.text_decoder.bert,'','/attention') # 디코더 묶기
-        
-        # ========== depreciated =========
-        # decoder_config = BertConfig.from_json_file(med_config)
-        # decoder_config.encoder_width = vision_width      # 비전 인코더의 아웃풋 출력 = small은 384임  이 부분은 쓸때마다 바뀌기 때문인듯하다.
-        # self.text_decoder = BertLMHeadModel.from_pretrained('bert-base-uncased',config=decoder_config)    
-        # self.text_decoder.resize_token_embeddings(len(self.tokenizer)) 
-        # tie_encoder_decoder_weights(self.text_encoder,self.text_decoder.bert,'','/attention')
-        # =========== depreciated ========
-        
+
 
     def generate(self, image, sample=False, num_beams=3, max_length=20, min_length=5,
                  top_p=0.9, repetition_penalty=1.0, prompt=''):
