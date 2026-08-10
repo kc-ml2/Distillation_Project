@@ -348,6 +348,8 @@ class BLIP_Pretrain(nn.Module):
                     t_txt_all = torch.cat([tt.t(), self.teacher_text_queue.clone().detach()], dim=1)
                     teacher_i2t = teacher_soft_queue(ti, t_txt_all, self.ttm_temp)
                     teacher_t2i = teacher_soft_queue(tt, t_img_all, self.ttm_temp)
+                else:
+                    raise ValueError(f"itc_target_mix.variant must be 'queue' (in_batch removed), got {self.ttm_variant!r}")
                 sim_i2t_targets = mix_target(sim_targets, mom_i2t, teacher_i2t, gamma, self.ttm_soft_weight)
                 sim_t2i_targets = mix_target(sim_targets, mom_t2i, teacher_t2i, gamma, self.ttm_soft_weight)
             else:

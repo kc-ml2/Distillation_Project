@@ -73,7 +73,7 @@ def make_tb_run_name(config):
     # 시계열 로깅 대신 이름+config.yaml 덤프로 기록
     distill_cfg = config.get("distill", {})
     kd_parts = [f"{k}_w{distill_cfg[k].get('weight', 1.0)}T{distill_cfg[k].get('temp')}"
-                for k in ("itc", "lm") if distill_cfg.get(k, {}).get("enabled", False)]
+                for k in ("lm", "itm") if distill_cfg.get(k, {}).get("enabled", False)]
     if kd_parts:
         tb_option_dict["kd"] = "+".join(kd_parts)
     return "__".join(f"{k}={v}" for k, v in tb_option_dict.items())
