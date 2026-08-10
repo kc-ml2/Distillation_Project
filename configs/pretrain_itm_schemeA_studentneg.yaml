@@ -10,11 +10,17 @@ cc12m_ratio: 5
 
 used_dataset: 'coco_vg'
 
-# ===== SCHEME B: 2텀 Hinton KD for ITM =====
-# critical_bugfix/2026-07-24_itm_distill_sharpness/README.md 참고.
-# arm C(확률 target-mix, W=0.4/T=1)와 달리 하드 CE를 별도 항으로 유지:
-#   loss_itm = (1-α)·CE(z, hard) + α·T²·KL(teacher_soft ‖ σ(z/T))   (variant: hinton_kd)
-#   하드 앵커로 갭 sharpening 유지 + tempered 티처 KL로 랭킹 지식 전달(균형 gap→teacher).
+# ===== SCHEME A (재실행): tempered soft-target, 학생 표집 =====
+# 원 schemeA(`output/pt_itm_schemeA_tempered`, exp 10.SA)와 손실은 완전히 동일:
+#   loss_itm = -sum( softmax(u/T) * log_softmax(z) )      (variant: target_mix, W=1.0)
+#   W=1.0이므로 하드 앵커가 없고 평형 gap이 sigma^-1(0.980)=3.9 로 캡된다 -> 양성 천장.
+#
+# 원 런과 다른 점은 **neg_source: teacher -> student 하나뿐**이다.
+# 목적: 07-27 문서가 결론한 schemeA 사망 원인(양성 천장 = 손실 효과)이
+#       실제로 손실 때문인지, 아니면 티처 표집(더 어려운 하드네거) 때문인지 분리한다.
+#   - 메커니즘이 맞다면: 학생 표집으로 바꿔도 여전히 실패해야 한다(||w_d|| 정체, match_gap ~3.7 캡).
+#   - 여전히 실패하면 schemeB와의 비교가 '손실 형태' 단일 요인으로 확정된다.
+#   - 반대로 성공하면 07-24/07-27의 인과 서사가 틀렸다는 뜻 -> 전면 재검토.
 #
 # ★ neg_source=student (2026-07-30 변경). arm C·스킴 A는 teacher였고 baseline(하드라벨)은 학생 sim이라,
 #   "baseline vs 증류" 비교에 손실과 네거티브 표집이 함께 섞여 있었다.
@@ -24,10 +30,10 @@ used_dataset: 'coco_vg'
 #   부수 효과: derive_teacher_keep()이 ('itm',)만 반환 -> 티처가 vision_proj/text_proj/text_decoder를
 #   내려놓고 ITC feats forward도 건너뛴다(더 가볍다). 티처는 학생이 만든 쌍의 확률만 내놓는 역할.
 #   loss_itc_kd 로깅도 사라진다(티처 ITC feat이 없으므로).
-output_dir: '/home/minwoo/Distillation_Project/output/pt_itm_schemeB_hinton'
+output_dir: '/home/minwoo/Distillation_Project/output/pt_itm_schemeA_studentneg'
 
 # experiment 태그 (tensorboard run 이름에 사용)
-exp: '10.SB_itm_hinton_kd'
+exp: '10.SA2_itm_tempered_studentneg'
 # 이미지 증강 토글: distilled 런과 동일 조건 유지를 위해 ON
 pretrain_train_aug: true
 
@@ -110,8 +116,8 @@ distill:
   itm_target_mix:
     enabled: true
     neg_source: student     # ★ 'teacher' | 'student' — baseline과 표집 동일화(위 주석 참고)
-    variant: hinton_kd      # 2텀 KD: (1-α)CE + α·T²·KL
-    soft_weight: 0.4        # α (soft 항 가중) — variant=hinton_kd에선 α로 해석
+    variant: target_mix     # 확률 target-mix: (1-W)onehot + W*teacher_soft
+    soft_weight: 1.0        # W — 1.0이면 하드 앵커 완전 제거 (원 schemeA와 동일)
     temp: 2.0               # T
     schedule: constant      # 'constant' only
 
