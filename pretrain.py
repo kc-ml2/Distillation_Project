@@ -98,8 +98,8 @@ def train(model, data_loader, optimizer, epoch, device, config, writer=None, val
             f"itc_target_mix.soft_weight out of [0,1]: {ttm_soft_weight}"
         assert ttm_hold_steps <= ttm_decay_end_steps, \
             f"itc_target_mix hold_epochs must be <= decay_end_epochs (steps {ttm_hold_steps} > {ttm_decay_end_steps})"
-        assert distill_ttm.get('variant', 'in_batch') in ('in_batch', 'queue'), \
-            f"itc_target_mix.variant must be 'in_batch' or 'queue': {distill_ttm.get('variant')}"
+        assert distill_ttm.get('variant', 'queue') == 'queue', \
+            "minimal_mainline: itc_target_mix.variant는 'queue'만 지원(in_batch 제거됨)"
         assert abs(float(config['alpha']) - ttm_soft_weight) < 1e-9, \
             f"target-mix tail-skip requires config.alpha == soft_weight (got alpha={config['alpha']}, soft_weight={ttm_soft_weight}); " \
             f"else the γ=0 tail target diverges from baseline"
@@ -400,7 +400,7 @@ def main(args, config): # configs.pretrain.yaml
                           queue_size=config['queue_size'],
                           my_bert_size=config['my_bert_size'],
                           ttm_enabled=ttm_cfg.get('enabled', False),
-                          ttm_variant=ttm_cfg.get('variant', 'in_batch'),
+                          ttm_variant=ttm_cfg.get('variant', 'queue'),
                           ttm_temp=float(ttm_cfg.get('temp', 0.05)),
                           ttm_soft_weight=float(ttm_cfg.get('soft_weight', 0.4)))
 

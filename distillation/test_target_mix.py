@@ -3,7 +3,7 @@ import torch
 import torch.nn.functional as F
 
 from distillation.target_mix import (
-    ttm_gamma, teacher_soft_in_batch, teacher_soft_queue, mix_target, enqueue_all,
+    ttm_gamma, teacher_soft_queue, mix_target, enqueue_all,
 )
 
 
@@ -34,14 +34,6 @@ class TestTeacherSoftAndMix(unittest.TestCase):
     def setUp(self):
         torch.manual_seed(0)
         self.B, self.D, self.Q, self.tau = 4, 8, 6, 0.05
-
-    def test_in_batch_shape_and_zero_pad(self):
-        row, col = _norm(torch.randn(self.B, self.D)), _norm(torch.randn(self.B, self.D))
-        n_cols = self.B + self.Q
-        out = teacher_soft_in_batch(row, col, self.tau, n_cols)
-        self.assertEqual(tuple(out.shape), (self.B, n_cols))
-        self.assertTrue(torch.all(out[:, self.B:] == 0))            # queue 열 0
-        self.assertTrue(torch.allclose(out.sum(dim=1), torch.ones(self.B), atol=1e-5))  # 행 합 1
 
     def test_queue_shape_and_rowsum(self):
         row = _norm(torch.randn(self.B, self.D))

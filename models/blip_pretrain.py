@@ -40,7 +40,7 @@ class BLIP_Pretrain(nn.Module):
                  queue_size = 57600,
                  momentum = 0.995,
                  ttm_enabled = False,
-                 ttm_variant = 'in_batch',
+                 ttm_variant = 'queue',
                  ttm_temp = 0.05,
                  ttm_soft_weight = 0.4,
 
@@ -434,9 +434,7 @@ class BLIP_Pretrain(nn.Module):
             sim_targets.fill_diagonal_(1)
 
             if self.ttm_enabled and gamma is not None and teacher_img_feat is not None:
-                from distillation.target_mix import (
-                    teacher_soft_in_batch, teacher_soft_queue, mix_target)
-                n_cols = sim_i2t_m.shape[1]
+                from distillation.target_mix import teacher_soft_queue, mix_target
                 mom_i2t = F.softmax(sim_i2t_m, dim=1)
                 mom_t2i = F.softmax(sim_t2i_m, dim=1)
                 ti = teacher_img_feat.to(image.device).float()
@@ -446,9 +444,6 @@ class BLIP_Pretrain(nn.Module):
                     t_txt_all = torch.cat([tt.t(), self.teacher_text_queue.clone().detach()], dim=1)
                     teacher_i2t = teacher_soft_queue(ti, t_txt_all, self.ttm_temp)
                     teacher_t2i = teacher_soft_queue(tt, t_img_all, self.ttm_temp)
-                else:  # in_batch (D)
-                    teacher_i2t = teacher_soft_in_batch(ti, tt, self.ttm_temp, n_cols)
-                    teacher_t2i = teacher_soft_in_batch(tt, ti, self.ttm_temp, n_cols)
                 sim_i2t_targets = mix_target(sim_targets, mom_i2t, teacher_i2t, gamma, self.ttm_soft_weight)
                 sim_t2i_targets = mix_target(sim_targets, mom_t2i, teacher_t2i, gamma, self.ttm_soft_weight)
             else:
