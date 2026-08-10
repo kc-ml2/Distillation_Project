@@ -19,7 +19,8 @@ import torch.nn.functional as F
 from custom_functions.dinov3_encoder import DINOv3_Wrapper # custom function으로 이동한 후에 임포트
 
 from models.blip import create_vit, init_tokenizer, load_checkpoint
-from distillation.losses import lm_distill_loss, itm_target_mix_loss
+from distillation.losses import lm_distill_loss, itm_gathered_kd_loss, itm_matrix_kd_loss
+from distillation.itm_matrix import itm_bxb_logits, itm_pair_logits
 
 #### 수정부분 시작: 실험 4 - temp 나누기 대신 logit_scale 곱하기로 reparam ####
 # 기존 temp clamp 범위 (0.001, 0.5) -> effective scale(1/temp) 범위는 (2, 1000).
@@ -363,7 +364,8 @@ class BLIP_Pretrain(nn.Module):
     def forward(self, image, caption, alpha, update_train_state=None,
                 teacher_img_feat=None, teacher_text_feat=None,
                 teacher_lm_logits=None, teacher_lm_input_ids=None, lm_distill_temp=2.0,
-                gamma=None, online_teacher=None, itm_mix=None):
+                gamma=None, online_teacher=None, teacher_image_embeds=None,
+                itm_topk=-1, itm_distill_temp=0.05, itm_distill_direction='bidir'):
     #### 수정부분 시작: validation-safe forward option 추가 ####
         """
         update_train_state:
@@ -473,24 +475,12 @@ class BLIP_Pretrain(nn.Module):
         encoder_input_ids[:, 0] = self.tokenizer.enc_token_id
         bs = image.size(0)
 
-        # negative-mining sampling weights: teacher-sim (itm_mix teacher) or student-sim.
-        if itm_mix is not None and itm_mix['neg_source'] == 'teacher':
-            assert teacher_img_feat is not None and teacher_text_feat is not None, \
-                "itm_mix neg_source='teacher' requires teacher_img_feat/teacher_text_feat"
-            with torch.no_grad():
-                t_img = teacher_img_feat.to(image.device)
-                t_txt = teacher_text_feat.to(image.device)
-                s = itm_mix['sel_scale']
-                weights_i2t = F.softmax(t_img @ t_txt.t() * s, dim=1) + 1e-4
-                weights_t2i = F.softmax(t_txt @ t_img.t() * s, dim=1) + 1e-4
-                weights_i2t.fill_diagonal_(0)
-                weights_t2i.fill_diagonal_(0)
-        else:
-            with torch.no_grad():
-                weights_t2i = F.softmax(sim_t2i[:, :bs], dim=1) + 1e-4
-                weights_i2t = F.softmax(sim_i2t[:, :bs], dim=1) + 1e-4
-                weights_t2i.fill_diagonal_(0)
-                weights_i2t.fill_diagonal_(0)
+        # negative-mining sampling weights from student in-batch sim.
+        with torch.no_grad():
+            weights_t2i = F.softmax(sim_t2i[:, :bs], dim=1) + 1e-4
+            weights_i2t = F.softmax(sim_i2t[:, :bs], dim=1) + 1e-4
+            weights_t2i.fill_diagonal_(0)
+            weights_i2t.fill_diagonal_(0)
 
         # draw one negative index per sample (neg image for each text, neg text for each image)
         neg_idx_img = [torch.multinomial(weights_t2i[b], 1).item() for b in range(bs)]
@@ -513,17 +503,7 @@ class BLIP_Pretrain(nn.Module):
         itm_labels = torch.cat([torch.ones(bs, dtype=torch.long),
                                 torch.zeros(2 * bs, dtype=torch.long)], dim=0).to(image.device)
 
-        # ITM loss: teacher target-mix (W>0) or plain CE.
-        if itm_mix is not None and itm_mix['soft_weight'] > 0 and online_teacher is not None:
-            teacher_soft = online_teacher.itm_soft(
-                image, encoder_input_ids, text.attention_mask,
-                neg_idx_img, neg_idx_txt, itm_mix['temp'],
-                image_embeds=itm_mix.get('teacher_image_embeds'))          # [3B, 2], no grad
-            loss_itm = itm_target_mix_loss(vl_output, itm_labels,
-                                           teacher_soft.to(image.device),
-                                           itm_mix['soft_weight'])
-        else:
-            loss_itm = F.cross_entropy(vl_output, itm_labels)
+        loss_itm = F.cross_entropy(vl_output, itm_labels)
         
         ##================= LM ========================##     
         decoder_input_ids = text.input_ids.clone()      # 얘는 어떻게 생겼길래? input_ids가? 입력 토큰처럼 생겼나?
@@ -550,7 +530,37 @@ class BLIP_Pretrain(nn.Module):
                                          teacher_lm_logits.to(image.device),
                                          decoder_targets, lm_distill_temp)
 
-        return loss_ita, loss_itm, loss_lm, loss_lm_kd
+        # external-teacher ITM distillation (forward 안에서 티처 계산). None when disabled.
+        # dedup: teacher visual_encoder(image)는 스텝당 1회(pretrain.py) 계산되어
+        # teacher_image_embeds로 넘어오고, 티처 itm_matrix 경로가 이를 재사용한다.
+        loss_itm_kd = None
+        if online_teacher is not None:
+            if itm_topk is not None and itm_topk > 0:
+                k = int(itm_topk)
+                ar = torch.arange(bs, device=image.device)[:, None]
+                idx_i2t_full = torch.cat([ar, weights_i2t.topk(k, dim=1).indices], dim=1)  # [B,k+1]
+                idx_t2i_full = torch.cat([ar, weights_t2i.topk(k, dim=1).indices], dim=1)
+                arM = ar.expand(bs, k + 1)
+                s_i2t = itm_pair_logits(self.text_encoder, self.itm_head, image_embeds, image_atts,
+                                        encoder_input_ids, text.attention_mask, arM, idx_i2t_full)
+                s_t2i = itm_pair_logits(self.text_encoder, self.itm_head, image_embeds, image_atts,
+                                        encoder_input_ids, text.attention_mask, idx_t2i_full, arM)
+                t_i2t, t_t2i = online_teacher.itm_matrix_gathered(
+                    image, caption, idx_i2t_full, idx_t2i_full, image_embeds=teacher_image_embeds)
+                loss_itm_kd = itm_gathered_kd_loss(s_i2t, t_i2t.to(image.device),
+                                                   s_t2i, t_t2i.to(image.device),
+                                                   itm_distill_direction, itm_distill_temp)
+            else:
+                teacher_itm = online_teacher.itm_matrix(image, caption, image_embeds=teacher_image_embeds)
+                student_itm_matrix = itm_bxb_logits(
+                    self.text_encoder, self.itm_head,
+                    image_embeds, image_atts, encoder_input_ids, text.attention_mask,
+                    use_checkpoint=True)
+                loss_itm_kd = itm_matrix_kd_loss(
+                    student_itm_matrix, teacher_itm.to(image.device),
+                    itm_distill_direction, itm_distill_temp)
+
+        return loss_ita, loss_itm, loss_lm, loss_lm_kd, loss_itm_kd
  
 
 

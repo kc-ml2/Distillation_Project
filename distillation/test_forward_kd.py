@@ -26,13 +26,14 @@ class TestForwardLmKd(unittest.TestCase):
         dec_ids[:, 0] = tok.bos_token_id
         return torch.randn(2, 30, len(tok)), dec_ids
 
-    def test_four_tuple_with_none_when_no_teacher(self):
+    def test_five_tuple_with_none_kd_when_no_teacher(self):
         out = self.model(self.image, self.caption, alpha=0.4, update_train_state=False)
-        self.assertEqual(len(out), 4)
-        loss_ita, loss_itm, loss_lm, loss_lm_kd = out
+        self.assertEqual(len(out), 5)
+        loss_ita, loss_itm, loss_lm, loss_lm_kd, loss_itm_kd = out
         for l in (loss_ita, loss_itm, loss_lm):
             self.assertTrue(torch.isfinite(l).all())
         self.assertIsNone(loss_lm_kd)
+        self.assertIsNone(loss_itm_kd)
 
     def test_lm_kd_computed_when_teacher_logits_given(self):
         t_logits, t_ids = self._teacher_payload()

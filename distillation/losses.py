@@ -32,19 +32,6 @@ def lm_distill_loss(student_logits, teacher_logits, decoder_targets, temp):
     ) * (temp ** 2)
 
 
-def itm_target_mix_loss(vl_output, itm_labels, teacher_soft, soft_weight):
-    """Soft-target CE for ITM: target = (1-W)*onehot(itm_labels) + W*teacher_soft.
-
-    vl_output   : [N, 2] student ITM logits.
-    itm_labels  : [N]    long class indices in {0=no-match, 1=match}.
-    teacher_soft: [N, 2] teacher match distribution (rows sum to 1, no grad).
-    soft_weight : W in [0, 1]. W=0 reduces exactly to F.cross_entropy(vl_output, itm_labels).
-    """
-    onehot = F.one_hot(itm_labels, num_classes=2).to(vl_output.dtype)
-    target = (1.0 - soft_weight) * onehot + soft_weight * teacher_soft.to(vl_output.dtype)
-    return -(target * F.log_softmax(vl_output, dim=1)).sum(dim=1).mean()
-
-
 def itm_matrix_kd_loss(student_logits, teacher_logits, direction, temp):
     """Full B×B ITM 매치-로짓 매트릭스 관계 KD (ITC KD의 ITM 미러).
 

@@ -40,11 +40,10 @@ class TestOnlineTeacher(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             self.teacher.lm_logits(torch.randn(1, 3, 224, 224), ["a cat"])
 
-    def test_itm_soft_raises_without_itm_keep(self):
+    def test_itm_matrix_raises_without_itm_keep(self):
         image = torch.randn(1, 3, 224, 224)
-        ids = torch.zeros(1, 30, dtype=torch.long)
         with self.assertRaises(RuntimeError):
-            self.teacher.itm_soft(image, ids, ids, [0], [0], temp=1.0)
+            self.teacher.itm_matrix(image, ["a cat"])
 
 
 class TestOnlineTeacherKeepLm(unittest.TestCase):
@@ -127,59 +126,15 @@ class TestOnlineTeacherKeepItm(unittest.TestCase):
         self.assertAlmostEqual(self.teacher.teacher_temp, 0.07, places=5)
         self.assertAlmostEqual(self.teacher.teacher_scale, 1.0 / 0.07, places=3)
 
-    def test_itm_soft_contract(self):
+    def test_itm_matrix_contract(self):
         B = 3
         image = torch.randn(B, 3, 224, 224)
-        text = self.teacher.tokenizer(["a green field", "a red car", "a blue sky"],
-                                      padding="max_length", truncation=True,
-                                      max_length=30, return_tensors="pt")
-        enc_ids = text.input_ids.clone()
-        enc_ids[:, 0] = self.teacher.tokenizer.enc_token_id
-        out = self.teacher.itm_soft(image, enc_ids, text.attention_mask,
-                                    [1, 2, 0], [2, 0, 1], temp=1.0)
-        self.assertEqual(tuple(out.shape), (3 * B, 2))
+        caption = ["a green field", "a red car", "a blue sky"]
+        out = self.teacher.itm_matrix(image, caption)
+        self.assertEqual(tuple(out.shape), (B, B, 2))       # full B×B match-logit matrix
         self.assertFalse(out.requires_grad)
-        self.assertTrue(torch.allclose(out.float().sum(1), torch.ones(3 * B), atol=1e-3))
-        self.assertTrue(torch.isfinite(out.float()).all())
-
-    def test_itm_soft_block_order_contract(self):
-        """Regression guard, symmetric to models/test_blip_pretrain_itm.py's
-        test_itm_block_order_contract: itm_soft hardcodes block order
-        [pos B | neg-image B | neg-text B] independently from forward()'s
-        identical hardcoded order — nothing else keeps them in sync. Spies on
-        text_encoder to inspect the actual assembled 3B input tensors and
-        asserts the block-order contract structurally: block1 (neg-image) must
-        keep the ORIGINAL text but swap in a DIFFERENT image; block2 (neg-text)
-        must swap in a DIFFERENT text but keep the ORIGINAL image."""
-        B = 2
-        image = torch.randn(B, 3, 224, 224)
-        text = self.teacher.tokenizer(["a green field", "a red car"],
-                                      padding="max_length", truncation=True,
-                                      max_length=30, return_tensors="pt")
-        enc_ids = text.input_ids.clone()
-        enc_ids[:, 0] = self.teacher.tokenizer.enc_token_id
-        neg_idx_img = [1, 0]   # explicit, no randomness needed
-        neg_idx_txt = [1, 0]
-
-        captured = {}
-        real_forward = self.teacher.model.text_encoder.forward
-        def spy(*args, **kwargs):
-            captured['text_ids'] = args[0] if args else kwargs['input_ids']
-            captured['image_embeds'] = kwargs['encoder_hidden_states']
-            return real_forward(*args, **kwargs)
-        with unittest.mock.patch.object(self.teacher.model.text_encoder, 'forward', side_effect=spy):
-            self.teacher.itm_soft(image, enc_ids, text.attention_mask,
-                                  neg_idx_img, neg_idx_txt, temp=1.0)
-
-        text_ids = captured['text_ids']
-        image_embeds = captured['image_embeds']
-        pos_t, negimg_t, negtxt_t = text_ids[:B], text_ids[B:2*B], text_ids[2*B:3*B]
-        pos_i, negimg_i, negtxt_i = image_embeds[:B], image_embeds[B:2*B], image_embeds[2*B:3*B]
-
-        self.assertTrue(torch.equal(negimg_t, pos_t))          # neg-image: text unswapped
-        self.assertFalse(torch.equal(negimg_i, pos_i))         # neg-image: image swapped
-        self.assertFalse(torch.equal(negtxt_t, pos_t))         # neg-text: text swapped
-        self.assertTrue(torch.equal(negtxt_i, pos_i))          # neg-text: image unswapped
+        self.assertEqual(out.dtype, torch.float32)          # itm_head forced fp32
+        self.assertTrue(torch.isfinite(out).all())
 
 
 class TestOnlineTeacherKeepAllThree(unittest.TestCase):
@@ -206,15 +161,12 @@ class TestOnlineTeacherKeepAllThree(unittest.TestCase):
         self.assertEqual(tuple(img_feat.shape), (2, 256))
         logits, dec_ids = self.teacher.lm_logits(image, caption)
         self.assertEqual(tuple(dec_ids.shape), (2, 30))
-        enc_ids = txt_feat.new_zeros(2, 5, dtype=torch.long)  # dummy encoder-side ids
-        atts = txt_feat.new_ones(2, 5, dtype=torch.long)
-        soft = self.teacher.itm_soft(image, enc_ids, atts,
-                                     neg_idx_img=[1, 0], neg_idx_txt=[1, 0], temp=1.0)
-        self.assertEqual(tuple(soft.shape), (6, 2))
+        itm = self.teacher.itm_matrix(image, caption)
+        self.assertEqual(tuple(itm.shape), (2, 2, 2))
 
 
 class TestOnlineTeacherImageEmbedsSharing(unittest.TestCase):
-    """Phase 2: encode_image() 신규 + itc_feats/lm_logits/itm_soft의 image_embeds 재사용."""
+    """Phase 2: encode_image() 신규 + itc_feats/lm_logits/itm_matrix의 image_embeds 재사용."""
 
     @classmethod
     def setUpClass(cls):
@@ -266,17 +218,12 @@ class TestOnlineTeacherImageEmbedsSharing(unittest.TestCase):
         self.assertTrue(torch.equal(ids_direct, ids_reused))
         self.assertTrue(torch.allclose(logits_direct.float(), logits_reused.float(), atol=1e-3))
 
-    def test_itm_soft_reuses_precomputed_embeds(self):
+    def test_itm_matrix_reuses_precomputed_embeds(self):
         torch.manual_seed(0)
         image = torch.randn(2, 3, 224, 224)
-        text = self.teacher.tokenizer(["a green field", "a red car"],
-                                      padding="max_length", truncation=True,
-                                      max_length=30, return_tensors="pt")
-        enc_ids = text.input_ids.clone()
-        enc_ids[:, 0] = self.teacher.tokenizer.enc_token_id
+        caption = ["a green field", "a red car"]
         embeds = self.teacher.encode_image(image)
-        soft_direct = self.teacher.itm_soft(image, enc_ids, text.attention_mask,
-                                            neg_idx_img=[1, 0], neg_idx_txt=[1, 0], temp=1.0)
+        itm_direct = self.teacher.itm_matrix(image, caption)
 
         call_count = {'n': 0}
         real_forward = self.teacher.model.visual_encoder.forward
@@ -284,22 +231,16 @@ class TestOnlineTeacherImageEmbedsSharing(unittest.TestCase):
             call_count['n'] += 1
             return real_forward(*args, **kwargs)
         with unittest.mock.patch.object(self.teacher.model.visual_encoder, 'forward', side_effect=spy):
-            soft_reused = self.teacher.itm_soft(image, enc_ids, text.attention_mask,
-                                                neg_idx_img=[1, 0], neg_idx_txt=[1, 0], temp=1.0,
-                                                image_embeds=embeds)
+            itm_reused = self.teacher.itm_matrix(image, caption, image_embeds=embeds)
 
         self.assertEqual(call_count['n'], 0)
-        self.assertTrue(torch.allclose(soft_direct.float(), soft_reused.float(), atol=1e-3))
+        self.assertTrue(torch.allclose(itm_direct.float(), itm_reused.float(), atol=1e-3))
 
     def test_visual_encoder_called_exactly_once_across_all_three(self):
         """헤드라인 테스트: encode_image()를 한 번 계산해서 세 메서드에 재사용하면
         visual_encoder는 총 1번만 호출된다(세 메커니즘이 다 켜진 최악 케이스를 모사)."""
         image = torch.randn(2, 3, 224, 224)
         caption = ["a green field", "a red car"]
-        text = self.teacher.tokenizer(caption, padding="max_length", truncation=True,
-                                      max_length=30, return_tensors="pt")
-        enc_ids = text.input_ids.clone()
-        enc_ids[:, 0] = self.teacher.tokenizer.enc_token_id
 
         call_count = {'n': 0}
         real_forward = self.teacher.model.visual_encoder.forward
@@ -310,9 +251,7 @@ class TestOnlineTeacherImageEmbedsSharing(unittest.TestCase):
             embeds = self.teacher.encode_image(image)
             self.teacher.itc_feats(image, caption, image_embeds=embeds)
             self.teacher.lm_logits(image, caption, image_embeds=embeds)
-            self.teacher.itm_soft(image, enc_ids, text.attention_mask,
-                                  neg_idx_img=[1, 0], neg_idx_txt=[1, 0], temp=1.0,
-                                  image_embeds=embeds)
+            self.teacher.itm_matrix(image, caption, image_embeds=embeds)
 
         self.assertEqual(call_count['n'], 1)
 

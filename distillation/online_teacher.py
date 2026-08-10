@@ -86,7 +86,7 @@ class OnlineTeacher:
     @torch.no_grad()
     def encode_image(self, image):
         """Compute teacher visual_encoder(image) fresh — NOT a cache, recomputes every
-        call. Callers needing this for more than one of itc_feats/lm_logits/itm_soft in
+        call. Callers needing this for more than one of itc_feats/lm_logits/itm_matrix in
         the same step should call this ONCE and pass the result via image_embeds= to
         each, to avoid redundant ViT forwards on the identical input."""
         device = image.device
@@ -132,42 +132,15 @@ class OnlineTeacher:
         return out.logits, decoder_input_ids
 
     @torch.no_grad()
-    def itm_soft(self, image, enc_input_ids, attention_mask,
-                 neg_idx_img, neg_idx_txt, temp, image_embeds=None):
-        """Teacher ITM match distribution over the SAME 3B triplets the student built.
-        enc_input_ids/attention_mask come from the student (identical tokenizer, pos-0
-        already set to enc_token_id). neg_idx_img/neg_idx_txt: length-B int sequences.
-        Returns softmax(teacher_itm_logits / temp) as [3B, 2] (no grad)."""
+    def itm_matrix(self, image, caption, image_embeds=None):
+        """전체 B×B ITM 매치-로짓 매트릭스 [B,B,2] fp32. 학생 ITM 조립과 동일 규칙
+        (enc_token_id). itm_head는 fp32(itm_bxb_logits 내부 강제). image_embeds가
+        주어지면 visual_encoder를 재실행하지 않고 재사용(스텝당 ViT 1회 dedup)."""
         self._require("itm")
         device = image.device
-        bs = image.size(0)
         with torch.amp.autocast(device_type=device.type, dtype=torch.bfloat16):
             if image_embeds is None:
                 image_embeds = self.model.visual_encoder(image)
-            image_atts = torch.ones(image_embeds.size()[:-1], dtype=torch.long, device=device)
-            img_neg = torch.stack([image_embeds[neg_idx_img[b]] for b in range(bs)])
-            txt_neg = torch.stack([enc_input_ids[neg_idx_txt[b]] for b in range(bs)])
-            txt_neg_atts = torch.stack([attention_mask[neg_idx_txt[b]] for b in range(bs)])
-            text_ids_all = torch.cat([enc_input_ids, enc_input_ids, txt_neg], dim=0)
-            text_atts_all = torch.cat([attention_mask, attention_mask, txt_neg_atts], dim=0)
-            image_embeds_all = torch.cat([image_embeds, img_neg, image_embeds], dim=0)
-            image_atts_all = torch.cat([image_atts, image_atts, image_atts], dim=0)
-            out = self.model.text_encoder(text_ids_all,
-                                          attention_mask=text_atts_all,
-                                          encoder_hidden_states=image_embeds_all,
-                                          encoder_attention_mask=image_atts_all,
-                                          return_dict=True)
-            logits = self.model.itm_head(out.last_hidden_state[:, 0, :]).float()
-        return F.softmax(logits / temp, dim=1)
-
-    @torch.no_grad()
-    def itm_matrix(self, image, caption):
-        """전체 B×B ITM 매치-로짓 매트릭스 [B,B,2] fp32. 학생 ITM 조립과 동일 규칙
-        (enc_token_id). itm_head는 fp32(itm_bxb_logits 내부 강제)."""
-        self._require("itm")
-        device = image.device
-        with torch.amp.autocast(device_type=device.type, dtype=torch.bfloat16):
-            image_embeds = self.model.visual_encoder(image)
             image_atts = torch.ones(image_embeds.size()[:-1], dtype=torch.long, device=device)
             text = self.tokenizer(caption, padding="max_length", truncation=True,
                                   max_length=30, return_tensors="pt").to(device)
@@ -178,13 +151,15 @@ class OnlineTeacher:
         return logits
 
     @torch.no_grad()
-    def itm_matrix_gathered(self, image, caption, idx_i2t_full, idx_t2i_full):
+    def itm_matrix_gathered(self, image, caption, idx_i2t_full, idx_t2i_full, image_embeds=None):
         """학생이 뽑은 인덱스로 gather된 티처 ITM 로짓 (t_i2t, t_t2i), 각 [B,k+1,2] fp32.
-        idx_*_full [B,k+1]: i2t=이미지별 텍스트 인덱스, t2i=텍스트별 이미지 인덱스(col0=positive)."""
+        idx_*_full [B,k+1]: i2t=이미지별 텍스트 인덱스, t2i=텍스트별 이미지 인덱스(col0=positive).
+        image_embeds가 주어지면 visual_encoder를 재실행하지 않고 재사용(스텝당 ViT 1회 dedup)."""
         self._require("itm")
         device = image.device
         with torch.amp.autocast(device_type=device.type, dtype=torch.bfloat16):
-            image_embeds = self.model.visual_encoder(image)
+            if image_embeds is None:
+                image_embeds = self.model.visual_encoder(image)
             image_atts = torch.ones(image_embeds.size()[:-1], dtype=torch.long, device=device)
             text = self.tokenizer(caption, padding="max_length", truncation=True,
                                   max_length=30, return_tensors="pt").to(device)

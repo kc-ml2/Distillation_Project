@@ -294,7 +294,7 @@ class PretrainValLossRunner:
                 image = image.to(self.device, non_blocking=True)
 
                 with autocast_context:
-                    loss_ita, loss_itm, loss_lm, _loss_lm_kd = model(
+                    loss_ita, loss_itm, loss_lm, _loss_lm_kd, _loss_itm_kd = model(
                         image,
                         caption,
                         alpha=alpha,
