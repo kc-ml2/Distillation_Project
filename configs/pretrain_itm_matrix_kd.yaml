@@ -98,7 +98,7 @@ distill:
   itm:
     enabled: true
     weight: 1.0
-    temp: 0.05
+    temp: 2.0             # traditional Hinton: softmax(z/T)+KL×T². ITM 로짓 std~2에 맞춘 중온(itc의 0.05 저온 오적용 정정). 스윕 {1,2}
     direction: bidir      # {forward, reverse, bidir}
     topk: 4               # -1=full B×B(Phase1); k<B-1=fixed 2-gather(Phase2). k≤4 safe on 24GB(k=8 OOMs); 스윕 {4,8,12}
 
@@ -107,4 +107,5 @@ teacher:
   # 공식 Salesforce BLIP-large pretrain (ViT-L + BERT-base, 디코더 포함).
   # BLIP 공식 README의 Pre-trained checkpoints 표에서 ViT-L(129M) 링크로 다운로드 후 경로 기입.
   # 빈 값이면 pretrain.py가 FileNotFoundError로 즉시 실패함 (무작위 티처 증류 방지).
-  checkpoint: ''
+  checkpoint: '/home/minwoo/Distillation_Project/output/official_pretrain_checkpoint/model_large.pth'
+  

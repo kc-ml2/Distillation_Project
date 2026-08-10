@@ -67,8 +67,8 @@ $$\mathcal{L}_{itm\text{-}kd} = \frac{1}{|K|\cdot 2}\sum_{d\in\{row,col\}}\sum_{
 | 결정 | 값 | 근거 |
 |---|---|---|
 | KL 방향 | forward `KL(T‖S)` | itc/lm 관례 동일 |
-| 온도 | 고정 τ (config, 기본 itc와 동일 오더) | — |
-| 정규화 | `×τ` 보정, KL 항 평균 | `itc_distill_loss` 관례(sharpening regime grad ∝ 1/τ 상쇄, critical_bugfix/2026-07-14) |
+| 온도 | 고정 τ **= 2.0** (config) ⚠️2026-08-09 정정 | ~~기본 itc 동일 오더(0.05)~~ → ITM은 헤드 raw 로짓(std~2)이라 0.05는 over-sharpen(near-one-hot, dark knowledge 뭉갬). 중온 τ~2. |
+| 정규화 | **`×τ²` (traditional Hinton)** ⚠️2026-08-09 정정, KL 항 평균 | ~~`×τ`(itc 저온 regime, 2026-07-14)~~ → τ~2 중온에선 grad∝1/τ²라 Hinton `×τ²`가 정답. `×τ`는 τ≪1 포화 전용. |
 | λ (총손실) | 1 (비율 보고 하향) | 관례 |
 | dtype | **fp32** | 프로브 §7: bf16이면 gap 오차 8000배 |
 
