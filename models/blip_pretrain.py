@@ -19,7 +19,7 @@ import torch.nn.functional as F
 from custom_functions.dinov3_encoder import DINOv3_Wrapper # custom function으로 이동한 후에 임포트
 
 from models.blip import create_vit, init_tokenizer, load_checkpoint
-from distillation.losses import itc_distill_loss, lm_distill_loss
+from distillation.losses import itc_distill_loss, lm_distill_loss, itm_target_mix_loss
 
 #### 수정부분 시작: 실험 4 - temp 나누기 대신 logit_scale 곱하기로 reparam ####
 # 기존 temp clamp 범위 (0.001, 0.5) -> effective scale(1/temp) 범위는 (2, 1000).
@@ -38,6 +38,10 @@ class BLIP_Pretrain(nn.Module):
                  embed_dim = 256,     
                  queue_size = 57600,
                  momentum = 0.995,
+                 ttm_enabled = False,
+                 ttm_variant = 'in_batch',
+                 ttm_temp = 0.05,
+                 ttm_soft_weight = 0.4,
 
                  # add option for language model
                  my_bert_size = "base", # default = bert (original)
@@ -269,7 +273,19 @@ class BLIP_Pretrain(nn.Module):
 
         self.image_queue = nn.functional.normalize(self.image_queue, dim=0) # norm?
         self.text_queue = nn.functional.normalize(self.text_queue, dim=0)
-        
+
+        #### teacher-target-mixing (exp9) — config-gated, 기본 OFF ####
+        self.ttm_enabled = ttm_enabled
+        self.ttm_variant = ttm_variant
+        self.ttm_temp = ttm_temp
+        self.ttm_soft_weight = ttm_soft_weight
+        if ttm_enabled and ttm_variant == 'queue':
+            # momentum 큐와 동형인 티처 큐 (frozen이라 드리프트 없음)
+            self.register_buffer("teacher_image_queue", torch.randn(embed_dim, queue_size))
+            self.register_buffer("teacher_text_queue", torch.randn(embed_dim, queue_size))
+            self.teacher_image_queue = nn.functional.normalize(self.teacher_image_queue, dim=0)
+            self.teacher_text_queue = nn.functional.normalize(self.teacher_text_queue, dim=0)
+
         self.queue_size = queue_size # 57600
         self.momentum = momentum # 0.995
         #### 수정부분 시작: 실험 4 - temp 나누기 대신 logit_scale 곱하기로 reparam ####
@@ -346,7 +362,8 @@ class BLIP_Pretrain(nn.Module):
 
     def forward(self, image, caption, alpha, update_train_state=None,
                 teacher_img_feat=None, teacher_text_feat=None, distill_temp=0.05,
-                teacher_lm_logits=None, teacher_lm_input_ids=None, lm_distill_temp=2.0):
+                teacher_lm_logits=None, teacher_lm_input_ids=None, lm_distill_temp=2.0,
+                gamma=None, online_teacher=None, itm_mix=None):
     #### 수정부분 시작: validation-safe forward option 추가 ####
         """
         update_train_state:
@@ -412,10 +429,29 @@ class BLIP_Pretrain(nn.Module):
             #### 수정부분 끝 ####
 
             sim_targets = torch.zeros(sim_i2t_m.size()).to(image.device)
-            sim_targets.fill_diagonal_(1)          
+            sim_targets.fill_diagonal_(1)
 
-            sim_i2t_targets = alpha * F.softmax(sim_i2t_m, dim=1) + (1 - alpha) * sim_targets
-            sim_t2i_targets = alpha * F.softmax(sim_t2i_m, dim=1) + (1 - alpha) * sim_targets        
+            if self.ttm_enabled and gamma is not None and teacher_img_feat is not None:
+                from distillation.target_mix import (
+                    teacher_soft_in_batch, teacher_soft_queue, mix_target)
+                n_cols = sim_i2t_m.shape[1]
+                mom_i2t = F.softmax(sim_i2t_m, dim=1)
+                mom_t2i = F.softmax(sim_t2i_m, dim=1)
+                ti = teacher_img_feat.to(image.device).float()
+                tt = teacher_text_feat.to(image.device).float()
+                if self.ttm_variant == 'queue':
+                    t_img_all = torch.cat([ti.t(), self.teacher_image_queue.clone().detach()], dim=1)
+                    t_txt_all = torch.cat([tt.t(), self.teacher_text_queue.clone().detach()], dim=1)
+                    teacher_i2t = teacher_soft_queue(ti, t_txt_all, self.ttm_temp)
+                    teacher_t2i = teacher_soft_queue(tt, t_img_all, self.ttm_temp)
+                else:  # in_batch (D)
+                    teacher_i2t = teacher_soft_in_batch(ti, tt, self.ttm_temp, n_cols)
+                    teacher_t2i = teacher_soft_in_batch(tt, ti, self.ttm_temp, n_cols)
+                sim_i2t_targets = mix_target(sim_targets, mom_i2t, teacher_i2t, gamma, self.ttm_soft_weight)
+                sim_t2i_targets = mix_target(sim_targets, mom_t2i, teacher_t2i, gamma, self.ttm_soft_weight)
+            else:
+                sim_i2t_targets = alpha * F.softmax(sim_i2t_m, dim=1) + (1 - alpha) * sim_targets
+                sim_t2i_targets = alpha * F.softmax(sim_t2i_m, dim=1) + (1 - alpha) * sim_targets
 
         #### 수정부분 시작: 실험 4 - temp 나누기 대신 logit_scale 곱하기 ####
         sim_i2t = image_feat @ text_feat_all * safe_scale
@@ -429,64 +465,65 @@ class BLIP_Pretrain(nn.Module):
     
         #### 수정부분 시작: validation에서는 queue 업데이트 금지 ####
         if update_train_state:
-            self._dequeue_and_enqueue(image_feat_m, text_feat_m)
+            self._dequeue_and_enqueue(image_feat_m, text_feat_m, teacher_img_feat, teacher_text_feat)
         #### 수정부분 끝 ####  
 
         ###============== Image-text Matching ===================###
         encoder_input_ids = text.input_ids.clone()
-        encoder_input_ids[:,0] = self.tokenizer.enc_token_id
-        
-        # forward the positve image-text pair
+        encoder_input_ids[:, 0] = self.tokenizer.enc_token_id
         bs = image.size(0)
-        output_pos = self.text_encoder(encoder_input_ids,
-                                       attention_mask = text.attention_mask,
-                                       encoder_hidden_states = image_embeds,
-                                       encoder_attention_mask = image_atts,      
-                                       return_dict = True,
-                                      )            
-        with torch.no_grad():       
-            weights_t2i = F.softmax(sim_t2i[:,:bs],dim=1)+1e-4 
-            weights_t2i.fill_diagonal_(0)            
-            weights_i2t = F.softmax(sim_i2t[:,:bs],dim=1)+1e-4  
-            weights_i2t.fill_diagonal_(0)   
-            
-        # select a negative image for each text
-        image_embeds_neg = []    
-        for b in range(bs):
-            neg_idx = torch.multinomial(weights_t2i[b], 1).item()
-            image_embeds_neg.append(image_embeds[neg_idx])
-        image_embeds_neg = torch.stack(image_embeds_neg,dim=0)   
 
-        # select a negative text for each image
-        text_ids_neg = []
-        text_atts_neg = []
-        for b in range(bs):
-            neg_idx = torch.multinomial(weights_i2t[b], 1).item()
-            text_ids_neg.append(encoder_input_ids[neg_idx])
-            text_atts_neg.append(text.attention_mask[neg_idx])
+        # negative-mining sampling weights: teacher-sim (itm_mix teacher) or student-sim.
+        if itm_mix is not None and itm_mix['neg_source'] == 'teacher':
+            assert teacher_img_feat is not None and teacher_text_feat is not None, \
+                "itm_mix neg_source='teacher' requires teacher_img_feat/teacher_text_feat"
+            with torch.no_grad():
+                t_img = teacher_img_feat.to(image.device)
+                t_txt = teacher_text_feat.to(image.device)
+                s = itm_mix['sel_scale']
+                weights_i2t = F.softmax(t_img @ t_txt.t() * s, dim=1) + 1e-4
+                weights_t2i = F.softmax(t_txt @ t_img.t() * s, dim=1) + 1e-4
+                weights_i2t.fill_diagonal_(0)
+                weights_t2i.fill_diagonal_(0)
+        else:
+            with torch.no_grad():
+                weights_t2i = F.softmax(sim_t2i[:, :bs], dim=1) + 1e-4
+                weights_i2t = F.softmax(sim_i2t[:, :bs], dim=1) + 1e-4
+                weights_t2i.fill_diagonal_(0)
+                weights_i2t.fill_diagonal_(0)
 
-        text_ids_neg = torch.stack(text_ids_neg,dim=0)   
-        text_atts_neg = torch.stack(text_atts_neg,dim=0)      
+        # draw one negative index per sample (neg image for each text, neg text for each image)
+        neg_idx_img = [torch.multinomial(weights_t2i[b], 1).item() for b in range(bs)]
+        neg_idx_txt = [torch.multinomial(weights_i2t[b], 1).item() for b in range(bs)]
+        image_embeds_neg = torch.stack([image_embeds[neg_idx_img[b]] for b in range(bs)])
+        text_ids_neg = torch.stack([encoder_input_ids[neg_idx_txt[b]] for b in range(bs)])
+        text_atts_neg = torch.stack([text.attention_mask[neg_idx_txt[b]] for b in range(bs)])
 
-        text_ids_all = torch.cat([encoder_input_ids, text_ids_neg],dim=0)     
-        text_atts_all = torch.cat([text.attention_mask, text_atts_neg],dim=0)     
+        # one merged 3B forward: rows [pos B | neg-image B | neg-text B]
+        text_ids_all = torch.cat([encoder_input_ids, encoder_input_ids, text_ids_neg], dim=0)
+        text_atts_all = torch.cat([text.attention_mask, text.attention_mask, text_atts_neg], dim=0)
+        image_embeds_all = torch.cat([image_embeds, image_embeds_neg, image_embeds], dim=0)
+        image_atts_all = torch.cat([image_atts, image_atts, image_atts], dim=0)
+        output_all = self.text_encoder(text_ids_all,
+                                       attention_mask=text_atts_all,
+                                       encoder_hidden_states=image_embeds_all,
+                                       encoder_attention_mask=image_atts_all,
+                                       return_dict=True)
+        vl_output = self.itm_head(output_all.last_hidden_state[:, 0, :])   # [3B, 2]
+        itm_labels = torch.cat([torch.ones(bs, dtype=torch.long),
+                                torch.zeros(2 * bs, dtype=torch.long)], dim=0).to(image.device)
 
-        image_embeds_all = torch.cat([image_embeds_neg,image_embeds],dim=0)
-        image_atts_all = torch.cat([image_atts,image_atts],dim=0)
-
-        output_neg = self.text_encoder(text_ids_all,
-                                       attention_mask = text_atts_all,
-                                       encoder_hidden_states = image_embeds_all,
-                                       encoder_attention_mask = image_atts_all,      
-                                       return_dict = True,
-                                      )                            
-
-        vl_embeddings = torch.cat([output_pos.last_hidden_state[:,0,:], output_neg.last_hidden_state[:,0,:]],dim=0)
-        vl_output = self.itm_head(vl_embeddings)            
-
-        itm_labels = torch.cat([torch.ones(bs,dtype=torch.long),torch.zeros(2*bs,dtype=torch.long)],
-                               dim=0).to(image.device)
-        loss_itm = F.cross_entropy(vl_output, itm_labels)  
+        # ITM loss: teacher target-mix (W>0) or plain CE.
+        if itm_mix is not None and itm_mix['soft_weight'] > 0 and online_teacher is not None:
+            teacher_soft = online_teacher.itm_soft(
+                image, encoder_input_ids, text.attention_mask,
+                neg_idx_img, neg_idx_txt, itm_mix['temp'],
+                image_embeds=itm_mix.get('teacher_image_embeds'))          # [3B, 2], no grad
+            loss_itm = itm_target_mix_loss(vl_output, itm_labels,
+                                           teacher_soft.to(image.device),
+                                           itm_mix['soft_weight'])
+        else:
+            loss_itm = F.cross_entropy(vl_output, itm_labels)
         
         ##================= LM ========================##     
         decoder_input_ids = text.input_ids.clone()      # 얘는 어떻게 생겼길래? input_ids가? 입력 토큰처럼 생겼나?
@@ -542,22 +579,21 @@ class BLIP_Pretrain(nn.Module):
 
 
     @torch.no_grad()
-    def _dequeue_and_enqueue(self, image_feat, text_feat):
-        # gather keys before updating queue
+    def _dequeue_and_enqueue(self, image_feat, text_feat,
+                             teacher_img_feat=None, teacher_text_feat=None):
+        from distillation.target_mix import enqueue_all
         image_feats = concat_all_gather(image_feat)
         text_feats = concat_all_gather(text_feat)
-
         batch_size = image_feats.shape[0]
-
         ptr = int(self.queue_ptr)
         assert self.queue_size % batch_size == 0  # for simplicity
 
-        # replace the keys at ptr (dequeue and enqueue)
-        self.image_queue[:, ptr:ptr + batch_size] = image_feats.T
-        self.text_queue[:, ptr:ptr + batch_size] = text_feats.T
-        ptr = (ptr + batch_size) % self.queue_size  # move pointer
-
-        self.queue_ptr[0] = ptr 
+        pairs = [(self.image_queue, image_feats.T), (self.text_queue, text_feats.T)]
+        if self.ttm_enabled and self.ttm_variant == 'queue' and teacher_img_feat is not None:
+            t_img = concat_all_gather(teacher_img_feat.float())
+            t_txt = concat_all_gather(teacher_text_feat.float())
+            pairs += [(self.teacher_image_queue, t_img.T), (self.teacher_text_queue, t_txt.T)]
+        self.queue_ptr[0] = enqueue_all(pairs, ptr, batch_size, self.queue_size)
 
 
 def blip_pretrain(**kwargs):
