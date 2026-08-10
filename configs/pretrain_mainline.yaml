@@ -1,0 +1,144 @@
+train_file: ['/home/minwoo/Distillation_Project/datasets/vision/coco/annotations/coco_karpathy_train.json',
+             '/home/minwoo/Distillation_Project/datasets/vision/vg/annotations/vg_train.json'
+             ]
+laion_path: ''
+image_root_coco: '/home/minwoo/Distillation_Project/datasets/vision/coco/images/'
+image_root_vg: '/home/minwoo/Distillation_Project/datasets/vision/vg/images/'
+
+cc12m_tar_path: ''
+cc12m_ratio: 5
+
+used_dataset: 'coco_vg'
+
+# ===== refactor/minimal_mainline: 3-메커니즘 전부 ON (본선 config) =====
+# 설계: docs/superpowers/specs/2026-08-10-refactor-minimal-mainline-design.md
+# 플랜: docs/superpowers/plans/2026-08-10-refactor-minimal-mainline.md (task 7)
+# 베이스 = pretrain_ttm_queue_lm_holdteacher.yaml(exp9.4: itc-ttm(queue) + lm-KD, 티처 γ 상시 유지)
+#   + itm k=4 traditional KD(itm_bxb_matrix_kd 브랜치에서 이식, task1/6)를 추가한 것.
+#
+# distill 3종 (전부 하드 손실 + KD 가산, 상호 배타 아님 — task3/4에서 공존 확인):
+#   itc_target_mix(queue): target = 0.6·onehot + 0.4·[γ·teacher_soft@0.05 + (1−γ)·momentum_soft]
+#     hold_epochs=2, decay_end_epochs=1e7 -> 20에폭 전 구간 사실상 γ=1 (exp9.4와 동일, "holdteacher").
+#   lm: 하드 CE + KL(teacher‖student @T=2, ×T²) traditional Hinton KD.
+#   itm: 하드 CE + KL(teacher‖student @T=2, ×T²) traditional Hinton KD, gathered top-k=4, bidir.
+#     temp=2.0은 itm_bxb_matrix_kd:configs/pretrain_itm_matrix_kd.yaml에서 확정된 값 —
+#     itc의 τ=0.05(저온)를 ITM 로짓 스케일(std~2)에 오적용했던 걸 정정한 결과.
+#     itc_target_mix.temp=0.05와는 별개 메커니즘의 별개 온도이니 혼동 주의(값을 공유하지 않음).
+#
+# 주의: pretrain.py에 `assert alpha == itc_target_mix.soft_weight`(γ=0 tail-skip 불변식) 있음.
+#       alpha=0.4 / soft_weight=0.4 로 충족.
+output_dir: '/home/minwoo/Distillation_Project/output/pt_refactor_mainline'
+
+# experiment 태그 (tensorboard run 이름에 사용)
+exp: 'refactor.mainline'
+# 이미지 증강 토글: 온라인 티처 증류는 augmentation ON 필수 (no-aug는 NO-GO였음)
+pretrain_train_aug: true
+
+# new) tenserboard log interval
+tb_train_log_interval: 50
+tb_val_log_interval: 1000
+
+# ===== student architecture (pretrain_student.yaml과 동일 — baseline 대비 변인 통제) =====
+vit: 'small_reg'
+vit_grad_ckpt: False
+vit_ckpt_layer: 0
+
+my_bert_size: 'minilm'
+
+
+## 벨리데이션 과정
+#### COCO Karpathy validation loss ####
+val_loss_enabled: true
+
+val_loss_file: '/home/minwoo/Distillation_Project/datasets/vision/coco/annotations/coco_karpathy_val.json'
+val_loss_image_root: '/home/minwoo/Distillation_Project/datasets/vision/coco/images/'
+
+val_loss_batch_size: 32
+val_loss_num_workers: 4
+val_loss_caption_mode: first
+val_loss_drop_last: true
+val_loss_pin_memory: true
+
+val_loss_print_freq: 50
+
+val_loss_interval_steps: 500
+val_loss_max_batches: 30 # 전체가 39더라
+
+val_loss_epoch_end: true
+val_loss_epoch_max_batches: 30
+
+val_loss_alpha_mode: current
+val_loss_restore_rng: true
+val_loss_amp: true
+
+#### COCO Karpathy retrieval validation (momentum 없는 student-only R@1/5/10) ####
+val_retrieval_enabled: true
+val_retrieval_ann_root: '/home/minwoo/Distillation_Project/datasets/vision/coco/annotations/'
+val_retrieval_image_root: '/home/minwoo/Distillation_Project/datasets/vision/coco/images/'
+val_retrieval_split: 'val'
+val_retrieval_batch_size: 64
+val_retrieval_num_workers: 4
+val_retrieval_amp: true
+k_test: 128
+
+val_retrieval_itc_interval_steps: 1000
+val_retrieval_itc_epoch_end: true
+
+val_retrieval_itm_interval_steps: 18675
+val_retrieval_itm_epoch_end: true
+
+#### 학습 중 caption 지표 검증 (BLEU/METEOR/ROUGE/CIDEr/SPICE) — ttm_queue = 잡B(CPU 32-63) ####
+val_caption_enabled: true
+val_caption_ann_root: '/home/minwoo/Distillation_Project/datasets/vision/coco/annotations/'
+val_caption_image_root: '/home/minwoo/Distillation_Project/datasets/vision/coco/images/'
+val_caption_gt_root: '/home/minwoo/Distillation_Project/datasets/vision/coco/annotation/coco_gt'
+val_caption_split: 'val'
+val_caption_batch_size: 32
+val_caption_num_workers: 4
+val_caption_mid_interval_steps: 18675   # ITM mid와 동일
+val_caption_epoch_end: true
+val_caption_use_spice: true             # epoch-end에서만 SPICE
+caption_score_cpu_list: '32-63'         # 잡B
+
+image_size: 224
+batch_size: 40
+
+queue_size: 57600
+alpha: 0.4
+
+weight_decay: 0.05
+init_lr: 1.0e-5
+
+min_lr: 0.0667e-6
+warmup_lr: 0.0667e-6
+lr_decay_rate: 0.9
+max_epoch: 20
+warmup_steps: 37000
+
+# ====== knowledge distillation: 3-메커니즘 전부 ON ======
+# distill.itc / distill.itm_target_mix — 제거됨(미지원, 이 refactor 브랜치에서 strip/swap됨)
+distill:
+  itc_target_mix:
+    enabled: true
+    variant: queue
+    temp: 0.05
+    soft_weight: 0.4
+    hold_epochs: 2
+    decay_end_epochs: 10000000  # ★ 티처 상시 유지 (γ(ep20)=0.9999982, 20에폭 총 감쇠 1.8e-6)
+  lm:
+    enabled: true
+    weight: 1.0
+    temp: 2.0
+  itm:
+    enabled: true
+    weight: 1.0
+    temp: 2.0              # traditional Hinton: softmax(z/T)+KL×T². itm_bxb_matrix_kd에서 정정된 값(ITM 로짓 std~2에 맞춘 중온, itc의 0.05 저온 오적용 정정).
+    direction: bidir        # {forward, reverse, bidir}
+    topk: 4                 # fixed gathered top-k (k=4, 24GB에서 안전; k=8은 OOM)
+
+teacher:
+  arch: 'blip_large'
+  # 공식 Salesforce BLIP-large pretrain (ViT-L + BERT-base, 디코더 포함).
+  # BLIP 공식 README의 Pre-trained checkpoints 표에서 ViT-L(129M) 링크로 다운로드 후 경로 기입.
+  # 빈 값이면 pretrain.py가 FileNotFoundError로 즉시 실패함 (무작위 티처 증류 방지).
+  checkpoint: '/home/minwoo/Distillation_Project/output/official_pretrain_checkpoint/model_large.pth'
