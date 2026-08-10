@@ -65,7 +65,7 @@ distill:
     hold_epochs: 2
     decay_end_epochs: 12
   itm_target_mix:            # arm C: 가장 빡센 조합(teacher neg + soft label)
-    enabled: true
+    enabled: false
     neg_source: teacher
     soft_weight: 0.4
     temp: 1.0

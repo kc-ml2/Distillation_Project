@@ -1,0 +1,174 @@
+train_file: ['/home/minwoo/Distillation_Project/datasets/vision/coco/annotations/coco_karpathy_train.json',
+             '/home/minwoo/Distillation_Project/datasets/vision/vg/annotations/vg_train.json'
+             ]
+laion_path: ''
+image_root_coco: '/home/minwoo/Distillation_Project/datasets/vision/coco/images/'
+image_root_vg: '/home/minwoo/Distillation_Project/datasets/vision/vg/images/'
+
+cc12m_tar_path: ''
+cc12m_ratio: 5
+
+used_dataset: 'coco_vg'
+
+# ===== exp9.4: ITC target-mix(queue) + LM 증류, 티처 γ 상시 유지 =====
+# 설계: docs/superpowers/specs/2026-07-14-teacher-target-mix-design.md
+# 티처를 별도 KD 손실이 아니라 ITC soft-target에 녹여 gradient 충돌(cos<0) 제거.
+#   target = 0.6·one-hot + 0.4·[γ·teacher + (1−γ)·momentum]
+#   별도 KD(distill.itc)는 OFF, distill.itc_target_mix로 켠다. τ(itc_target_mix.temp)=0.05.
+#
+# exp9.3(pt_smallreg_minilm_ttm_queue_lm)과 다른 점은 **γ 스케줄 하나뿐**이다.
+#   exp9.3 : hold_epochs=2, decay_end_epochs=12       -> ep2~12 선형 1->0, ep12+ γ=0
+#   exp9.4 : hold_epochs=2, decay_end_epochs=10000000 -> 20에폭 전 구간 사실상 γ=1
+#            ttm_gamma() = 1 - (step-hold)/(decay_end-hold) 이므로
+#            γ(ep5)=0.9999997  γ(ep12)=0.9999990  γ(ep20)=0.9999982   (감쇠 총량 1.8e-6)
+#            hold_steps=74,692 / decay_end_steps=373,460,000,000, assert hold<=decay_end 충족.
+#            (정확히 γ≡1.0 을 원하면 hold_epochs 도 함께 크게 올려야 한다. 한쪽만 바꾸면
+#             pretrain.py의 hold_epochs <= decay_end_epochs assert 에 걸린다.)
+#
+# ===== 동기 (2026-07-30 exp9.3 TB 실측) =====
+# ★ 이 현상은 r_mean 으로는 보이지 않는다. 1차 판정 지표는 img_r1 / img_r_mean 이다.
+#   exp9.3 step 300k -> 최종(746,920):
+#     val_retrieval_itc/txt_r1     45.68 -> 50.24   (+4.56)   ← 계속 개선
+#     val_retrieval_itc/img_r1     33.72 -> 33.11   (-0.62)   ← 최종이 중반보다 낮다
+#     val_retrieval_itc/img_r_mean 57.17 -> 56.97   (-0.20)
+#     val_retrieval_itc/r_mean     62.60 -> 64.31   (+1.71)   ← txt 개선이 img 후퇴를 상쇄해 가려버린다
+#
+#   img_r1 을 세 런에서 ep11~12 평균 -> ep18~20 평균으로 비교하면
+#   (= 'γ가 사실상 사라진 뒤 8에폭 동안 개선되었는가'):
+#     exp9.4 비교대상 exp9.3 (γ→0) : 34.25 -> 33.48  (-0.76)  ← 개선 정지 + 후퇴
+#     exp8 lm_distill (γ 없음)     : 31.53 -> 33.44  (+1.91)
+#     exp7 baseline   (티처 없음)   : 31.24 -> 32.41  (+1.17)
+#
+#   img_r1 peak 시점도 exp9.3만 학습 중반이다:
+#     exp9.3 : 35.13 @ ep12.61  -> 최종 33.11 (-2.03)
+#     exp8   : 34.44 @ ep19.68  -> 최종 34.03 (-0.41)
+#     exp7   : 33.74 @ ep19.63  -> 최종 32.68 (-1.06)
+#
+#   단 step 함수형 '절벽'은 아니다. γ=0 도달(step 448,152 = ep12.0) 직후 450k~498k 구간은
+#   33.6~34.4 로 유지되고, 그 뒤 506k(31.99)·546~554k(32.2/31.2)에서 31~34.6 대역 진동으로 바뀐다.
+#   즉 **ep11~12에 천장을 치고 이후 8에폭을 회복 없이 진동만 한다.**
+#   -> exp9.3의 우위는 티처 타깃이 있는 동안만 유지되고, 사라진 뒤 평범한 목적함수가 그 수준을 못 지탱한다.
+#
+# ===== 이 런이 판정하는 것 =====
+#   (a) γ 감쇠가 원인이다  -> γ 유지 시 img_r1 이 ep12 이후에도 계속 오르고 peak가 학습 끝에 온다
+#   (b) 학생 용량/τ 평형이 천장이다 -> γ 유지해도 img_r1 이 34 근처에서 정체하고 peak가 여전히 중반
+#   통과 기준: ep18~20 평균 img_r1 > exp9.3의 ep11~12 평균 34.25, 그리고 peak 시점이 ep18 이후.
+#   (참고: 이전 판 주석은 r_mean 만 보고 "우위가 ep2~11에 점진 소멸, baseline이 자연 수렴해 따라잡음"
+#    이라고 적었는데 오독이었다. baseline이 따라잡은 게 아니라 exp9.3이 자기 peak에서 내려온 것이다.)
+# 나머지 하이퍼는 exp9.3 / student baseline(exp7)과 동일 = 통제.
+#
+# 주의: pretrain.py에 `assert alpha == itc_target_mix.soft_weight` 가 있다(γ=0 tail-skip 불변식).
+#       alpha=0.4 / soft_weight=0.4 로 충족. γ가 0에 도달하지 않으므로 tail-skip 경로는 타지 않는다.
+output_dir: '/home/minwoo/Distillation_Project/output/pt_ttm_queue_lm_holdteacher'
+
+# experiment 태그 (tensorboard run 이름에 사용)
+exp: '9.4.ttm_queue_lm_holdteacher'
+# 이미지 증강 토글: 온라인 티처 증류는 augmentation ON 필수 (no-aug는 NO-GO였음)
+pretrain_train_aug: true
+
+# new) tenserboard log interval
+tb_train_log_interval: 50
+tb_val_log_interval: 1000
+
+# ===== student architecture (pretrain_student.yaml과 동일 — baseline 대비 변인 통제) =====
+vit: 'small_reg'
+vit_grad_ckpt: False
+vit_ckpt_layer: 0
+
+my_bert_size: 'minilm'
+
+
+## 벨리데이션 과정
+#### COCO Karpathy validation loss ####
+val_loss_enabled: true
+
+val_loss_file: '/home/minwoo/Distillation_Project/datasets/vision/coco/annotations/coco_karpathy_val.json'
+val_loss_image_root: '/home/minwoo/Distillation_Project/datasets/vision/coco/images/'
+
+val_loss_batch_size: 32
+val_loss_num_workers: 4
+val_loss_caption_mode: first
+val_loss_drop_last: true
+val_loss_pin_memory: true
+
+val_loss_print_freq: 50
+
+val_loss_interval_steps: 500
+val_loss_max_batches: 30 # 전체가 39더라
+
+val_loss_epoch_end: true
+val_loss_epoch_max_batches: 30
+
+val_loss_alpha_mode: current
+val_loss_restore_rng: true
+val_loss_amp: true
+
+#### COCO Karpathy retrieval validation (momentum 없는 student-only R@1/5/10) ####
+val_retrieval_enabled: true
+val_retrieval_ann_root: '/home/minwoo/Distillation_Project/datasets/vision/coco/annotations/'
+val_retrieval_image_root: '/home/minwoo/Distillation_Project/datasets/vision/coco/images/'
+val_retrieval_split: 'val'
+val_retrieval_batch_size: 64
+val_retrieval_num_workers: 4
+val_retrieval_amp: true
+k_test: 128
+
+val_retrieval_itc_interval_steps: 1000
+val_retrieval_itc_epoch_end: true
+
+val_retrieval_itm_interval_steps: 18675
+val_retrieval_itm_epoch_end: true
+
+#### 학습 중 caption 지표 검증 (BLEU/METEOR/ROUGE/CIDEr/SPICE) — ttm_queue = 잡B(CPU 32-63) ####
+val_caption_enabled: true
+val_caption_ann_root: '/home/minwoo/Distillation_Project/datasets/vision/coco/annotations/'
+val_caption_image_root: '/home/minwoo/Distillation_Project/datasets/vision/coco/images/'
+val_caption_gt_root: '/home/minwoo/Distillation_Project/datasets/vision/coco/annotation/coco_gt'
+val_caption_split: 'val'
+val_caption_batch_size: 32
+val_caption_num_workers: 4
+val_caption_mid_interval_steps: 18675   # ITM mid와 동일
+val_caption_epoch_end: true
+val_caption_use_spice: true             # epoch-end에서만 SPICE
+caption_score_cpu_list: '32-63'         # 잡B
+
+image_size: 224
+batch_size: 40
+
+queue_size: 57600
+alpha: 0.4
+
+weight_decay: 0.05
+init_lr: 1.0e-5
+
+min_lr: 0.0667e-6
+warmup_lr: 0.0667e-6
+lr_decay_rate: 0.9
+max_epoch: 20
+warmup_steps: 37000
+
+# ====== knowledge distillation ======
+# exp9 teacher-target-mixing: 별도 KD ITC 블록은 target_mix와 상호배타이므로 OFF.
+distill:
+  itc:
+    enabled: false          # 별도 KD OFF (target_mix와 상호배타)
+    weight: 1.0
+    temp: 0.05
+  itc_target_mix:
+    enabled: true
+    variant: queue
+    temp: 0.05
+    soft_weight: 0.4
+    hold_epochs: 2
+    decay_end_epochs: 10000000  # ★ 티처 상시 유지 (γ(ep20)=0.9999982, 20에폭 총 감쇠 1.8e-6)
+  lm:
+    enabled: true           # ★ exp9.3(ttm_queue_lm)과 동일하게 LM 증류 ON
+    weight: 1.0
+    temp: 2.0
+
+teacher:
+  arch: 'blip_large'
+  # 공식 Salesforce BLIP-large pretrain (ViT-L + BERT-base, 디코더 포함).
+  # BLIP 공식 README의 Pre-trained checkpoints 표에서 ViT-L(129M) 링크로 다운로드 후 경로 기입.
+  # 빈 값이면 pretrain.py가 FileNotFoundError로 즉시 실패함 (무작위 티처 증류 방지).
+  checkpoint: '/home/minwoo/Distillation_Project/output/official_pretrain_checkpoint/model_large.pth'
