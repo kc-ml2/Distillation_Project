@@ -75,3 +75,51 @@ def itm_target_mix_loss(vl_output, itm_labels, teacher_soft, soft_weight):
     onehot = F.one_hot(itm_labels, num_classes=2).to(vl_output.dtype)
     target = (1.0 - soft_weight) * onehot + soft_weight * teacher_soft.to(vl_output.dtype)
     return -(target * F.log_softmax(vl_output, dim=1)).sum(dim=1).mean()
+
+
+def itm_matrix_kd_loss(student_logits, teacher_logits, direction, temp):
+    """Full B×B ITM 매치-로짓 매트릭스 관계 KD (ITC KD의 ITM 미러).
+
+    student_logits, teacher_logits: [B, B, 2]. index 0=z1(no-match/reverse),
+      1=z2(match/forward). row i = image i vs 전 텍스트, col j = text j vs 전 이미지.
+    direction: 'forward'(z2) | 'reverse'(z1) | 'bidir'(둘).
+    temp: 증류 온도 τ (traditional Hinton: softmax(z/τ) + KL ×τ²).
+    반환: forward KL(T‖S) 평균 × τ². 채널별(선택)×축(row,col) KL을 평균.
+    """
+    channels = {"forward": [1], "reverse": [0], "bidir": [0, 1]}.get(direction)
+    if channels is None:
+        raise ValueError(f"direction must be forward/reverse/bidir, got {direction!r}")
+
+    s = student_logits.float()
+    t = teacher_logits.float().detach()
+
+    total = 0.0
+    n = 0
+    for c in channels:
+        ms, mt = s[:, :, c] / temp, t[:, :, c] / temp      # [B, B]
+        # i2t: row 분포 (dim=1 = 텍스트 축)
+        total = total + F.kl_div(F.log_softmax(ms, dim=1),
+                                 F.softmax(mt, dim=1), reduction="batchmean")
+        # t2i: col 분포 (transpose 후 dim=1 = 이미지 축)
+        total = total + F.kl_div(F.log_softmax(ms.t(), dim=1),
+                                 F.softmax(mt.t(), dim=1), reduction="batchmean")
+        n += 2
+    return (total / n) * (temp ** 2)
+
+
+def itm_gathered_kd_loss(s_i2t, t_i2t, s_t2i, t_t2i, direction, temp):
+    """Phase 2 서브샘플 ITM KD. 각 [B,k+1,2] (0=z1, 1=z2; dim1=k+1 후보, col0=positive).
+    gather(i2t,t2i 둘 다)별 × channel(direction)별 dim=1 softmax forward KL(T‖S) 평균 × τ²
+    (traditional Hinton: softmax(z/τ) + KL ×τ²; τ~2 중온 regime)."""
+    channels = {"forward": [1], "reverse": [0], "bidir": [0, 1]}.get(direction)
+    if channels is None:
+        raise ValueError(f"direction must be forward/reverse/bidir, got {direction!r}")
+    total, n = 0.0, 0
+    for s, t in ((s_i2t, t_i2t), (s_t2i, t_t2i)):
+        s = s.float()
+        t = t.float().detach()
+        for c in channels:
+            total = total + F.kl_div(F.log_softmax(s[:, :, c] / temp, dim=1),
+                                     F.softmax(t[:, :, c] / temp, dim=1), reduction="batchmean")
+            n += 1
+    return (total / n) * (temp ** 2)
