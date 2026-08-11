@@ -1,29 +1,41 @@
 """Numerical-equivalence harness: pins BLIP_Pretrain.forward's 5 losses to golden
 values so a downstream pure refactor can prove it changed nothing.
 
-Runs on CPU in eval() (dropout off) with a deterministic seeded STUB teacher (no
-real BLIP-large, no checkpoint) and update_train_state=False (no momentum/queue
-mutation). The only student-side RNG is ITM neg-mining (torch.multinomial); it is
-pinned by reseeding the global generator IMMEDIATELY before each forward, so runs
-are bit-identical. A later refactor that reorders RNG-consuming ops in the student
-will therefore make this test FAIL -- that is intended (it catches real changes).
+Two goldens:
+  - TestForwardEquiv: update_train_state=False (eval path). No momentum update,
+    no queue enqueue, logit_scale clamped by-value only.
+  - TestForwardEquivTrainState: update_train_state=True (train path). Covers
+    _momentum_update, queue/teacher-queue enqueue, and the in-place logit_scale
+    clamp_ -- exactly what the refactor moves into _itc_step/_scale_housekeeping,
+    and none of which the eval golden above touches. Student params are
+    perturbed with seeded noise first so momentum actually lags the student
+    (otherwise momentum == student at construction and the update is a no-op).
+
+Both run on CPU in eval() (dropout off) with a deterministic seeded STUB teacher
+(no real BLIP-large, no checkpoint). The only student-side RNG is ITM neg-mining
+(torch.multinomial); it is pinned by reseeding the global generator IMMEDIATELY
+before each forward, so runs are bit-identical. A later refactor that reorders
+RNG-consuming ops in the student will therefore make these tests FAIL -- that is
+intended (it catches real changes).
 
 Requires conda env kd_r4 (transformers 4.33.3); the base env cannot import the
-model stack. Capture / re-capture goldens standalone (prints paste-ready dict):
-    conda run -n kd_r4 python distillation/test_forward_equiv.py
+model stack. Capture / re-capture goldens standalone (prints paste-ready dicts;
+must run as a module so `models` resolves against repo root, not script dir):
+    conda run -n kd_r4 python -m distillation.test_forward_equiv
 Run the test:
     conda run -n kd_r4 python -m pytest distillation/test_forward_equiv.py -q
 """
 import unittest
 
 import torch
+import torch.distributed as dist
 import torch.nn.functional as F
 
 from models.blip_pretrain import blip_pretrain
 
 # ---- fixed experiment knobs (changing ANY of these invalidates the golden) ----
 B = 4
-QUEUE_SIZE = 8            # multiple of B; queue never mutated (update_train_state=False)
+QUEUE_SIZE = 8            # multiple of B; mutated only by the train-state golden below
 ITM_TOPK = 4             # Phase-2 gathered ITM KD (k+1=5 candidates)
 GAMMA = 0.5              # TTM teacher/momentum slot split
 ALPHA = 0.4             # unused while TTM branch active; passed for signature
@@ -33,6 +45,7 @@ ITM_DIR = "bidir"
 IMAGE_SEED = 42
 STUB_SEED = 7
 FORWARD_SEED = 1234      # reseeded right before forward -> multinomial reproducible
+PERTURB_SEED = 99        # train-state golden only: nudges params so student != momentum
 CAPTIONS = ["a cat", "a dog", "two birds", "a red car"]
 LOSS_KEYS = ("loss_ita", "loss_itm", "loss_lm", "loss_lm_kd", "loss_itm_kd")
 
@@ -43,6 +56,18 @@ GOLDEN = {
     "loss_lm": 10.964111328125,
     "loss_lm_kd": 1.0696642398834229,
     "loss_itm_kd": 0.003918764181435108,
+}
+
+# Second golden: same fixed input + stub, update_train_state=True on a FRESH,
+# seed-perturbed model (build_and_perturb_model). Exercises _momentum_update,
+# queue enqueue, and the in-place logit_scale clamp_ -- none of which GOLDEN
+# above touches. Captured the same way (see __main__).
+GOLDEN_TRAIN = {
+    "loss_ita": 2.8063817024230957,
+    "loss_itm": 0.6480762958526611,
+    "loss_lm": 10.720789909362793,
+    "loss_lm_kd": 1.0469632148742676,
+    "loss_itm_kd": 0.0038292997051030397,
 }
 # Golden tolerance: run-to-run is bit-identical (test_run_to_run_stable, torch.equal).
 # This atol/rtol only absorbs cross-process last-bit BLAS reduction-order noise; it is
@@ -104,14 +129,40 @@ def fixed_image():
     return torch.randn(B, 3, 224, 224, generator=g)
 
 
-def run_forward(model, image, stub):
+def perturb_params(model, seed=PERTURB_SEED):
+    """Nudges every param (student + momentum) with seeded noise so student !=
+    momentum post-construction. Needed only for the train-state golden: momentum
+    is copied from student at construction (copy_params), so with student ==
+    momentum, _momentum_update's 0.995*m + 0.005*p == m would be a no-op."""
+    torch.manual_seed(seed)
+    with torch.no_grad():
+        for p in model.parameters():
+            p.add_(0.01 * torch.randn_like(p))
+    return model
+
+
+def build_and_perturb_model():
+    """Fresh model for the train-state golden -- never the eval test's shared
+    instance, since update_train_state=True mutates momentum/queue/logit_scale
+    in place. Same construction args as build_model(); see perturb_params."""
+    return perturb_params(build_model())
+
+
+def run_forward(model, image, stub, update_train_state=False):
     """One forward on the fixed batch with the stub teacher; returns {loss_name: tensor}.
-    Exercises all three mechanisms' base + KD: ITC(+TTM), LM(+KD), ITM(+gathered KD)."""
+    Exercises all three mechanisms' base + KD: ITC(+TTM), LM(+KD), ITM(+gathered KD).
+    update_train_state=True additionally runs _momentum_update, queue enqueue, and
+    the in-place logit_scale clamp_ (see TestForwardEquivTrainState)."""
+    if update_train_state and not dist.is_initialized():
+        # _dequeue_and_enqueue -> concat_all_gather calls dist.get_world_size(),
+        # which raises unless a process group exists -- even for world_size=1 on
+        # CPU. HashStore needs no networking/ports, so this is instant and inert.
+        dist.init_process_group(backend="gloo", store=dist.HashStore(), rank=0, world_size=1)
     t_img_feat, t_txt_feat = stub.itc_feats(image, CAPTIONS)
     t_lm_logits, t_lm_ids = stub.lm_logits(image, CAPTIONS)
     t_embeds = stub.encode_image(image)
     torch.manual_seed(FORWARD_SEED)          # pin ITM neg-mining multinomial draws
-    out = model(image, CAPTIONS, alpha=ALPHA, update_train_state=False,
+    out = model(image, CAPTIONS, alpha=ALPHA, update_train_state=update_train_state,
                 teacher_img_feat=t_img_feat, teacher_text_feat=t_txt_feat,
                 teacher_lm_logits=t_lm_logits, teacher_lm_input_ids=t_lm_ids,
                 lm_distill_temp=LM_TEMP, gamma=GAMMA,
@@ -152,8 +203,54 @@ class TestForwardEquiv(unittest.TestCase):
                                  f"{k}: {actual!r} != golden {gold!r}")
 
 
+class TestForwardEquivTrainState(unittest.TestCase):
+    """update_train_state=True golden: covers _momentum_update, queue enqueue, and
+    the in-place logit_scale clamp_, which TestForwardEquiv's update_train_state=False
+    golden never runs. The refactor moves exactly these into _itc_step /
+    _scale_housekeeping, so this is the coverage that catches it breaking.
+
+    Every test below builds its OWN fresh model (never shared, never forwarded
+    twice) -- update_train_state=True mutates momentum/queue/logit_scale in
+    place, so a second forward on the same model would see already-advanced
+    state rather than a repeat of the first."""
+
+    def test_matches_golden(self):
+        model = build_and_perturb_model()
+        image = fixed_image()
+        stub = StubTeacher(model.tokenizer)
+        out = run_forward(model, image, stub, update_train_state=True)
+        for k in LOSS_KEYS:
+            self.assertIsNotNone(out[k], f"{k} is None -- a mechanism path was skipped")
+            self.assertTrue(torch.isfinite(out[k]).all(), f"{k} not finite")
+        for k in LOSS_KEYS:
+            actual, gold = out[k].item(), GOLDEN_TRAIN[k]
+            self.assertLessEqual(abs(actual - gold), ATOL + RTOL * abs(gold),
+                                 f"{k}: {actual!r} != golden {gold!r}")
+        # Proves the perturbation actually engaged momentum drift: if this ever
+        # collapses onto the eval golden, _momentum_update silently became a
+        # no-op again (e.g. the perturbation stopped taking effect).
+        self.assertTrue(
+            any(abs(out[k].item() - GOLDEN[k]) > ATOL + RTOL * abs(GOLDEN[k]) for k in LOSS_KEYS),
+            "train-state losses match the eval golden -- momentum drift didn't engage")
+
+    def test_fresh_model_run_to_run_stable(self):
+        """Two INDEPENDENT fresh+perturbed models, each forwarded once, must match
+        bit-for-bit -- construction, perturbation, and the multinomial pin are all
+        seeded, so this is the train-state analogue of TestForwardEquiv's
+        test_run_to_run_stable (which reruns forward on one never-mutated model;
+        that trick doesn't apply here, see class docstring)."""
+        image = fixed_image()
+        a_model = build_and_perturb_model()
+        b_model = build_and_perturb_model()
+        a = run_forward(a_model, image, StubTeacher(a_model.tokenizer), update_train_state=True)
+        b = run_forward(b_model, image, StubTeacher(b_model.tokenizer), update_train_state=True)
+        for k in LOSS_KEYS:
+            self.assertTrue(torch.equal(a[k], b[k]),
+                            f"{k} not bit-identical across fresh models: {a[k].item()!r} vs {b[k].item()!r}")
+
+
 if __name__ == "__main__":
-    # Capture path: prints a paste-ready GOLDEN dict + run-to-run stability flags.
+    # Capture path: prints paste-ready GOLDEN / GOLDEN_TRAIN dicts + stability flags.
     _model = build_model()
     _image = fixed_image()
     _stub = StubTeacher(_model.tokenizer)
@@ -162,3 +259,11 @@ if __name__ == "__main__":
     print("=== forward 5-loss golden capture (paste into GOLDEN) ===")
     for _k in LOSS_KEYS:
         print(f'    "{_k}": {r1[_k].item()!r},   # stable_rerun={torch.equal(r1[_k], r2[_k])}')
+
+    _tm1 = build_and_perturb_model()
+    _tm2 = build_and_perturb_model()
+    t1 = run_forward(_tm1, _image, StubTeacher(_tm1.tokenizer), update_train_state=True)
+    t2 = run_forward(_tm2, _image, StubTeacher(_tm2.tokenizer), update_train_state=True)
+    print("=== forward 5-loss TRAIN-STATE golden capture (paste into GOLDEN_TRAIN) ===")
+    for _k in LOSS_KEYS:
+        print(f'    "{_k}": {t1[_k].item()!r},   # stable_fresh_model={torch.equal(t1[_k], t2[_k])}')
