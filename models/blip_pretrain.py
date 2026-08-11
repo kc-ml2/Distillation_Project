@@ -278,6 +278,34 @@ class BLIP_Pretrain(nn.Module):
         text_feat = F.normalize(self.text_proj(text_output.last_hidden_state[:,0,:]),dim=-1)                 # 노말라이즈는 국룰인가보네
         return image_embeds, image_atts, image_feat, text, text_feat
 
+    def _lm_step(self, image_embeds, image_atts, text, teacher_lm_logits, teacher_lm_input_ids, lm_distill_temp):
+        """forward의 LM 디코더 + lm-KD 블록 추출. 로직 변경 없음."""
+        decoder_input_ids = text.input_ids.clone()      # 얘는 어떻게 생겼길래? input_ids가? 입력 토큰처럼 생겼나?
+        decoder_input_ids[:,0] = self.tokenizer.bos_token_id # batch,0번을 bos_token_id로 바꾼다
+        decoder_targets = decoder_input_ids.masked_fill(decoder_input_ids == self.tokenizer.pad_token_id, -100) # 패딩은 -100으로 채우기
+
+        decoder_output = self.text_decoder(decoder_input_ids,
+                                           attention_mask = text.attention_mask,
+                                           encoder_hidden_states = image_embeds,
+                                           encoder_attention_mask = image_atts,
+                                           labels = decoder_targets,
+                                           return_dict = True,
+                                          )
+
+        loss_lm = decoder_output.loss
+
+        # external-teacher LM logit distillation (token-level, teacher-forced); None when disabled.
+        loss_lm_kd = None
+        if teacher_lm_logits is not None:
+            if teacher_lm_input_ids is not None:
+                assert torch.equal(teacher_lm_input_ids, decoder_input_ids), \
+                    "teacher/student decoder input mismatch (tokenizer drift?)"
+            loss_lm_kd = lm_distill_loss(decoder_output.logits,
+                                         teacher_lm_logits.to(image_embeds.device),
+                                         decoder_targets, lm_distill_temp)
+
+        return loss_lm, loss_lm_kd
+
     def forward(self, image, caption, alpha, update_train_state=None,
                 teacher_img_feat=None, teacher_text_feat=None,
                 teacher_lm_logits=None, teacher_lm_input_ids=None, lm_distill_temp=2.0,
@@ -411,30 +439,9 @@ class BLIP_Pretrain(nn.Module):
 
         loss_itm = F.cross_entropy(vl_output, itm_labels)
         
-        ##================= LM ========================##     
-        decoder_input_ids = text.input_ids.clone()      # 얘는 어떻게 생겼길래? input_ids가? 입력 토큰처럼 생겼나?
-        decoder_input_ids[:,0] = self.tokenizer.bos_token_id # batch,0번을 bos_token_id로 바꾼다
-        decoder_targets = decoder_input_ids.masked_fill(decoder_input_ids == self.tokenizer.pad_token_id, -100) # 패딩은 -100으로 채우기
-
-        decoder_output = self.text_decoder(decoder_input_ids, 
-                                           attention_mask = text.attention_mask, 
-                                           encoder_hidden_states = image_embeds,
-                                           encoder_attention_mask = image_atts,                  
-                                           labels = decoder_targets,
-                                           return_dict = True,   
-                                          )   
-          
-        loss_lm = decoder_output.loss
-
-        # external-teacher LM logit distillation (token-level, teacher-forced); None when disabled.
-        loss_lm_kd = None
-        if teacher_lm_logits is not None:
-            if teacher_lm_input_ids is not None:
-                assert torch.equal(teacher_lm_input_ids, decoder_input_ids), \
-                    "teacher/student decoder input mismatch (tokenizer drift?)"
-            loss_lm_kd = lm_distill_loss(decoder_output.logits,
-                                         teacher_lm_logits.to(image.device),
-                                         decoder_targets, lm_distill_temp)
+        ##================= LM ========================##
+        loss_lm, loss_lm_kd = self._lm_step(image_embeds, image_atts, text,
+                                            teacher_lm_logits, teacher_lm_input_ids, lm_distill_temp)
 
         # external-teacher ITM distillation (forward 안에서 티처 계산). None when disabled.
         # dedup: teacher visual_encoder(image)는 스텝당 1회(pretrain.py) 계산되어
