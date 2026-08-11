@@ -278,8 +278,10 @@ class BLIP_Pretrain(nn.Module):
         text_feat = F.normalize(self.text_proj(text_output.last_hidden_state[:,0,:]),dim=-1)                 # 노말라이즈는 국룰인가보네
         return image_embeds, image_atts, image_feat, text, text_feat
 
-    def _lm_step(self, image_embeds, image_atts, text, teacher_lm_logits, teacher_lm_input_ids, lm_distill_temp):
-        """forward의 LM 디코더 + lm-KD 블록 추출. 로직 변경 없음."""
+    def _lm_step(self, image_embeds, image_atts, text, image, caption,
+                 online_teacher, teacher_image_embeds, lm_kd_enabled, lm_distill_temp):
+        """forward의 LM 디코더 + lm-KD 블록 추출. 티처 lm_logits를 내부에서 호출
+        (teacher_image_embeds 재사용)하도록만 이동, 수학은 동일."""
         decoder_input_ids = text.input_ids.clone()      # 얘는 어떻게 생겼길래? input_ids가? 입력 토큰처럼 생겼나?
         decoder_input_ids[:,0] = self.tokenizer.bos_token_id # batch,0번을 bos_token_id로 바꾼다
         decoder_targets = decoder_input_ids.masked_fill(decoder_input_ids == self.tokenizer.pad_token_id, -100) # 패딩은 -100으로 채우기
@@ -295,11 +297,13 @@ class BLIP_Pretrain(nn.Module):
         loss_lm = decoder_output.loss
 
         # external-teacher LM logit distillation (token-level, teacher-forced); None when disabled.
+        # 티처 호출을 여기로 이동: 같은 배치 → lm_logits(teacher-forced), teacher_image_embeds 재사용.
         loss_lm_kd = None
-        if teacher_lm_logits is not None:
-            if teacher_lm_input_ids is not None:
-                assert torch.equal(teacher_lm_input_ids, decoder_input_ids), \
-                    "teacher/student decoder input mismatch (tokenizer drift?)"
+        if lm_kd_enabled and online_teacher is not None:
+            teacher_lm_logits, teacher_lm_input_ids = online_teacher.lm_logits(
+                image, caption, image_embeds=teacher_image_embeds)
+            assert torch.equal(teacher_lm_input_ids, decoder_input_ids), \
+                "teacher/student decoder input mismatch (tokenizer drift?)"
             loss_lm_kd = lm_distill_loss(decoder_output.logits,
                                          teacher_lm_logits.to(image_embeds.device),
                                          decoder_targets, lm_distill_temp)
@@ -381,8 +385,16 @@ class BLIP_Pretrain(nn.Module):
         return loss_itm, loss_itm_kd
 
     def _itc_step(self, image, image_feat, text, text_feat, safe_scale, alpha, gamma,
-                  teacher_img_feat, teacher_text_feat, update_train_state):
-        """forward의 ITC 코어(momentum encoder + queue + ttm 타깃 + itc loss + dequeue) 추출. 로직 변경 없음."""
+                  caption, online_teacher, teacher_image_embeds, update_train_state):
+        """forward의 ITC 코어(momentum encoder + queue + ttm 타깃 + itc loss + dequeue) 추출.
+        ttm 활성 시 티처 itc feat를 내부에서 1회 계산(teacher_image_embeds 재사용)해
+        ttm 타깃과 teacher 큐 enqueue 양쪽에 공급. 수학은 동일."""
+        # ttm 활성일 때만 티처 itc feat 계산(아니면 alpha 폴백 + teacher 큐 미갱신).
+        if self.ttm_enabled and gamma is not None and online_teacher is not None:
+            teacher_img_feat, teacher_text_feat = online_teacher.itc_feats(
+                image, caption, image_embeds=teacher_image_embeds)
+        else:
+            teacher_img_feat = teacher_text_feat = None
         # get momentum features
         with torch.no_grad():
             #### 수정부분 시작: validation에서는 momentum encoder 갱신 금지 ####
@@ -444,9 +456,8 @@ class BLIP_Pretrain(nn.Module):
         return loss_ita, sim_i2t, sim_t2i
 
     def forward(self, image, caption, alpha, update_train_state=None,
-                teacher_img_feat=None, teacher_text_feat=None,
-                teacher_lm_logits=None, teacher_lm_input_ids=None, lm_distill_temp=2.0,
-                gamma=None, online_teacher=None, teacher_image_embeds=None,
+                gamma=None, online_teacher=None,
+                lm_kd_enabled=False, itm_kd_enabled=False, lm_distill_temp=2.0,
                 itm_topk=-1, itm_distill_temp=0.05, itm_distill_direction='bidir'):
     #### 수정부분 시작: validation-safe forward option 추가 ####
         """
@@ -483,18 +494,28 @@ class BLIP_Pretrain(nn.Module):
         image_embeds, image_atts, image_feat, text, text_feat = self._encode_student(image, caption)
         # 이건 ITC 로스를 구하는 코드구나.
 
+        # 티처 visual_encoder는 스텝당 1회만 계산 → 각 티처 경로가 image_embeds=로 재사용(dedup).
+        teacher_image_embeds = (
+            online_teacher.encode_image(image)
+            if (online_teacher is not None and (self.ttm_enabled or lm_kd_enabled or itm_kd_enabled))
+            else None
+        )
+
         loss_ita, sim_i2t, sim_t2i = self._itc_step(image, image_feat, text, text_feat, safe_scale,
-                                                     alpha, gamma, teacher_img_feat, teacher_text_feat,
-                                                     update_train_state)
+                                                     alpha, gamma, caption, online_teacher,
+                                                     teacher_image_embeds, update_train_state)
 
         ###============== Image-text Matching ===================###
         loss_itm, loss_itm_kd = self._itm_step(image, caption, image_embeds, image_atts, text,
-                                               sim_i2t, sim_t2i, online_teacher, teacher_image_embeds,
+                                               sim_i2t, sim_t2i,
+                                               online_teacher if itm_kd_enabled else None,
+                                               teacher_image_embeds,
                                                itm_topk, itm_distill_temp, itm_distill_direction)
 
         ##================= LM ========================##
-        loss_lm, loss_lm_kd = self._lm_step(image_embeds, image_atts, text,
-                                            teacher_lm_logits, teacher_lm_input_ids, lm_distill_temp)
+        loss_lm, loss_lm_kd = self._lm_step(image_embeds, image_atts, text, image, caption,
+                                            online_teacher, teacher_image_embeds, lm_kd_enabled,
+                                            lm_distill_temp)
 
         return loss_ita, loss_itm, loss_lm, loss_lm_kd, loss_itm_kd
  

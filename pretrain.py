@@ -30,7 +30,6 @@ import webdataset as wds # 웹데이터셋용으로 추가
 
 
 from models.blip_pretrain import blip_pretrain
-from distillation.distill_config import need_teacher_image_embeds
 import utils
 from utils import warmup_lr_schedule, step_lr_schedule
 from data import create_dataset, create_sampler, create_loader # init에 있는 놈들임
@@ -140,29 +139,9 @@ def train(model, data_loader, optimizer, epoch, device, config, writer=None, val
         from distillation.target_mix import ttm_gamma
         gamma = ttm_gamma(global_step, ttm_hold_steps, ttm_decay_end_steps) if ttm_enabled else None
 
-        # online teacher: same augmented batch -> ITC features (bf16, no_grad). None when not needed.
-        # target-mix: teacher only while γ>0 (γ=0 tail is target-identical to baseline → skip teacher forward)
-        need_teacher_itc = (ttm_enabled and gamma is not None and gamma > 0)
-        # perf: compute the teacher's image_embeds at most ONCE per step and reuse it
-        # across itc_feats/lm_logits/itm_matrix (each would otherwise re-run visual_encoder).
-        need_embeds = need_teacher_image_embeds(need_teacher_itc, lm_kd_enabled, itm_kd_enabled)
-        teacher_image_embeds = (
-            online_teacher.encode_image(image)
-            if (need_embeds and online_teacher is not None) else None
-        )
-
-        if need_teacher_itc and online_teacher is not None:
-            teacher_img_feat, teacher_text_feat = online_teacher.itc_feats(
-                image, caption, image_embeds=teacher_image_embeds)
-        else:
-            teacher_img_feat = teacher_text_feat = None
-
-        # online teacher: same augmented batch -> LM decoder logits (bf16, no_grad). None when distill off.
-        if lm_kd_enabled and online_teacher is not None:
-            teacher_lm_logits, teacher_lm_ids = online_teacher.lm_logits(
-                image, caption, image_embeds=teacher_image_embeds)
-        else:
-            teacher_lm_logits = teacher_lm_ids = None
+        # 티처 호출은 이제 forward 내부(각 step)에서 수행 — 여기서는 online_teacher만 넘긴다.
+        # teacher 경로(itc target-mix / lm-KD / itm-KD)가 하나라도 켜지면 넘김.
+        pass_teacher = online_teacher if (ttm_enabled or lm_kd_enabled or itm_kd_enabled) else None
 
         # ramp up alpha in the first 2 epochs
         alpha = config['alpha']*min(1,(epoch*len(data_loader)+i)/(2*len(data_loader)))
@@ -175,11 +154,9 @@ def train(model, data_loader, optimizer, epoch, device, config, writer=None, val
             with torch.amp.autocast(device_type='cuda', dtype=torch.bfloat16):
                 loss_ita, loss_itm, loss_lm, loss_lm_kd, loss_itm_kd = model(
                     image, caption, alpha=alpha,
-                    teacher_img_feat=teacher_img_feat, teacher_text_feat=teacher_text_feat,
-                    teacher_lm_logits=teacher_lm_logits, teacher_lm_input_ids=teacher_lm_ids,
+                    gamma=gamma, online_teacher=pass_teacher,
+                    lm_kd_enabled=lm_kd_enabled, itm_kd_enabled=itm_kd_enabled,
                     lm_distill_temp=lm_kd_temp,
-                    gamma=gamma, online_teacher=(online_teacher if itm_kd_enabled else None),
-                    teacher_image_embeds=teacher_image_embeds,
                     itm_topk=itm_kd_topk, itm_distill_temp=itm_kd_temp,
                     itm_distill_direction=itm_kd_direction)
                 loss = loss_ita + loss_itm + loss_lm
@@ -190,11 +167,9 @@ def train(model, data_loader, optimizer, epoch, device, config, writer=None, val
         else:
             loss_ita, loss_itm, loss_lm, loss_lm_kd, loss_itm_kd = model(
                 image, caption, alpha=alpha,
-                teacher_img_feat=teacher_img_feat, teacher_text_feat=teacher_text_feat,
-                teacher_lm_logits=teacher_lm_logits, teacher_lm_input_ids=teacher_lm_ids,
+                gamma=gamma, online_teacher=pass_teacher,
+                lm_kd_enabled=lm_kd_enabled, itm_kd_enabled=itm_kd_enabled,
                 lm_distill_temp=lm_kd_temp,
-                gamma=gamma, online_teacher=(online_teacher if itm_kd_enabled else None),
-                teacher_image_embeds=teacher_image_embeds,
                 itm_topk=itm_kd_topk, itm_distill_temp=itm_kd_temp,
                 itm_distill_direction=itm_kd_direction)
             loss = loss_ita + loss_itm + loss_lm

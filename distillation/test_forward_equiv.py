@@ -158,15 +158,14 @@ def run_forward(model, image, stub, update_train_state=False):
         # which raises unless a process group exists -- even for world_size=1 on
         # CPU. HashStore needs no networking/ports, so this is instant and inert.
         dist.init_process_group(backend="gloo", store=dist.HashStore(), rank=0, world_size=1)
-    t_img_feat, t_txt_feat = stub.itc_feats(image, CAPTIONS)
-    t_lm_logits, t_lm_ids = stub.lm_logits(image, CAPTIONS)
-    t_embeds = stub.encode_image(image)
+    # Phase 2: forward calls the teacher itself (encode_image/itc_feats/lm_logits/
+    # itm_matrix_gathered) via online_teacher=stub; the stub's per-method seeds make
+    # those calls order-independent, so the goldens are UNCHANGED from the Phase-1
+    # pre-computed-tensor harness. The only student RNG (multinomial) is still pinned.
     torch.manual_seed(FORWARD_SEED)          # pin ITM neg-mining multinomial draws
     out = model(image, CAPTIONS, alpha=ALPHA, update_train_state=update_train_state,
-                teacher_img_feat=t_img_feat, teacher_text_feat=t_txt_feat,
-                teacher_lm_logits=t_lm_logits, teacher_lm_input_ids=t_lm_ids,
-                lm_distill_temp=LM_TEMP, gamma=GAMMA,
-                online_teacher=stub, teacher_image_embeds=t_embeds,
+                gamma=GAMMA, online_teacher=stub,
+                lm_kd_enabled=True, itm_kd_enabled=True, lm_distill_temp=LM_TEMP,
                 itm_topk=ITM_TOPK, itm_distill_temp=ITM_TEMP,
                 itm_distill_direction=ITM_DIR)
     return dict(zip(LOSS_KEYS, out))
