@@ -198,6 +198,22 @@ git add -A && git commit -m "strip(itc): remove separate itc_distill_loss KD (tt
 - Consumes: Task2의 `online_teacher.itm_matrix_gathered`
 - Produces: forward return `loss_ita, loss_itm, loss_lm, loss_lm_kd, loss_itm_kd` (5-tuple, 최종형)
 
+**⚠️ Task 4 갱신 (2026-08-10 사용자 결정 — 아래 addendum이 원 스텝의 'verbatim' 지침 일부를 대체, 충돌 시 addendum 우선):**
+
+(A) **DEDUP 복원** — itm 티처 경로가 `visual_encoder`를 중복 계산하지 않게:
+- `online_teacher.itm_matrix`/`itm_matrix_gathered`에 `image_embeds=None` optional 파라미터 추가 (itc_feats/lm_logits/itm_soft 3형제와 **동일 패턴**: None이면 내부에서 `self.model.visual_encoder(image)`, 주어지면 그걸 재사용). **gather/로짓 계산 로직 자체는 verbatim 유지** — 이미지 인코딩 재사용만 추가.
+- forward가 티처 image_embeds를 받아 `itm_matrix_gathered(..., image_embeds=<teacher embeds>)`로 전달. dev는 이미 `itm_mix['teacher_image_embeds']`로 이 값을 forward에 넘겼음 → itm_mix dict은 제거하되 **teacher_image_embeds를 forward로 넘기는 경로는 보존**(forward 파라미터 `teacher_image_embeds=None`로).
+- pretrain.py는 이미 `teacher_image_embeds = online_teacher.encode_image(image)`를 스텝당 1회 계산(:153) → 이걸 forward의 `teacher_image_embeds=`로 전달.
+
+(B) **derive_teacher_keep**(`distillation/distill_config.py`) 갱신:
+- `itm_target_mix` 블록(16~21) 제거 → `if distill_cfg.get('itm', {}).get('enabled', False): keep.add('itm')` (itm k=4는 티처 itm_matrix만 필요; neg 선택은 학생 sim이라 'itc' 불필요).
+- 죽은 `distill.itc` 줄(10~11) 제거(Task3 defer 정리). `itc_target_mix`→'itc'(14~15)·`lm`→'lm'(12~13)은 **유지**(ttm 티처 itc_feats가 여기 의존 — 건드리면 correctness 깨짐).
+- `validate_itm_mix_config`(25~37)는 itm_target_mix 전용 → 제거하고 pretrain.py의 import·호출도 제거(itm_bxb에 itm 검증 있으면 이식, 없으면 생략).
+
+(C) **need_teacher_image_embeds**(`distill_config.py:40`): itm k=4에 맞게 — `itm_kd_enabled`면 티처 image_embeds 필요하도록 시그니처/로직 갱신, docstring itm_soft→itm_matrix. pretrain.py:145 `need_teacher_itc`에서 itm_mix-teacher 분리(itm-k4는 학생 neg 선택이라 티처 itc 불필요).
+
+(D) **test_online_teacher.py**: `test_visual_encoder_called_exactly_once_across_all_three`(itc+lm+itm_soft)를 itm_soft→itm_matrix로 갱신(dedup 복원됐으니 '정확히 1회' 불변식 유지). 그 외 itm_soft 참조 정리. 모델 import라 로컬 실행 불가 → py_compile + 구조 정합만.
+
 - [ ] **Step 1: forward 시그니처 swap**
 
 `itm_mix=None` 파라미터 제거, `itm_topk=-1, itm_distill_temp=0.05, itm_distill_direction='bidir'` 추가 (itm_bxb forward 시그니처 참조: `git show itm_bxb_matrix_kd:models/blip_pretrain.py` 라인 348~351).
