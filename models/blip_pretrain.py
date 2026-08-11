@@ -265,6 +265,19 @@ class BLIP_Pretrain(nn.Module):
             captions.append(caption[len(prompt):])
         return captions
 
+    def _encode_student(self, image, caption):
+        """forward의 student 인코딩 블록(ITC용 image/text feat) 추출. 로직 변경 없음."""
+        image_embeds = self.visual_encoder(image) # 임베딩 벡터 따와
+        image_atts = torch.ones(image_embeds.size()[:-1],dtype=torch.long).to(image.device) # 어텐션 마스크 준비물
+        image_feat = F.normalize(self.vision_proj(image_embeds[:,0,:]),dim=-1)          # 흠 이놈은 뭐지? vision_proj에 0번 토큰 = cls를 준다
+        
+        text = self.tokenizer(caption, padding='max_length', truncation=True, max_length=30, # 토크나이저가 쪼개서 줌
+                              return_tensors="pt").to(image.device)  
+        text_output = self.text_encoder(text.input_ids, attention_mask = text.attention_mask, # return dict?이건 뭐지?
+                                        return_dict = True, mode = 'text')            # 아웃풋도 텍스트로만 나가게 하고
+        text_feat = F.normalize(self.text_proj(text_output.last_hidden_state[:,0,:]),dim=-1)                 # 노말라이즈는 국룰인가보네
+        return image_embeds, image_atts, image_feat, text, text_feat
+
     def forward(self, image, caption, alpha, update_train_state=None,
                 teacher_img_feat=None, teacher_text_feat=None,
                 teacher_lm_logits=None, teacher_lm_input_ids=None, lm_distill_temp=2.0,
@@ -302,15 +315,7 @@ class BLIP_Pretrain(nn.Module):
         #### 수정부분 끝 ####
     #### 수정부분 끝 ####
         
-        image_embeds = self.visual_encoder(image) # 임베딩 벡터 따와
-        image_atts = torch.ones(image_embeds.size()[:-1],dtype=torch.long).to(image.device) # 어텐션 마스크 준비물
-        image_feat = F.normalize(self.vision_proj(image_embeds[:,0,:]),dim=-1)          # 흠 이놈은 뭐지? vision_proj에 0번 토큰 = cls를 준다
-        
-        text = self.tokenizer(caption, padding='max_length', truncation=True, max_length=30, # 토크나이저가 쪼개서 줌
-                              return_tensors="pt").to(image.device)  
-        text_output = self.text_encoder(text.input_ids, attention_mask = text.attention_mask, # return dict?이건 뭐지?
-                                        return_dict = True, mode = 'text')            # 아웃풋도 텍스트로만 나가게 하고
-        text_feat = F.normalize(self.text_proj(text_output.last_hidden_state[:,0,:]),dim=-1)                 # 노말라이즈는 국룰인가보네
+        image_embeds, image_atts, image_feat, text, text_feat = self._encode_student(image, caption)
         # 이건 ITC 로스를 구하는 코드구나.
              
         # get momentum features
