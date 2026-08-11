@@ -21,6 +21,7 @@ from custom_functions.dinov3_encoder import DINOv3_Wrapper # custom function으�
 from models.blip import create_vit, init_tokenizer, load_checkpoint
 from distillation.losses import lm_distill_loss, itm_gathered_kd_loss, itm_matrix_kd_loss
 from distillation.itm_matrix import itm_bxb_logits, itm_pair_logits
+from distillation.distill_config import need_teacher_image_embeds
 
 #### 수정부분 시작: 실험 4 - temp 나누기 대신 logit_scale 곱하기로 reparam ####
 # 기존 temp clamp 범위 (0.001, 0.5) -> effective scale(1/temp) 범위는 (2, 1000).
@@ -389,8 +390,10 @@ class BLIP_Pretrain(nn.Module):
         """forward의 ITC 코어(momentum encoder + queue + ttm 타깃 + itc loss + dequeue) 추출.
         ttm 활성 시 티처 itc feat를 내부에서 1회 계산(teacher_image_embeds 재사용)해
         ttm 타깃과 teacher 큐 enqueue 양쪽에 공급. 수학은 동일."""
-        # ttm 활성일 때만 티처 itc feat 계산(아니면 alpha 폴백 + teacher 큐 미갱신).
-        if self.ttm_enabled and gamma is not None and online_teacher is not None:
+        # ttm 활성 + γ>0일 때만 티처 itc feat 계산. γ=0 tail은 alpha 폴백과 수치 동일
+        # (mix_target(γ=0) == alpha·mom+(1-alpha)·onehot, assert alpha==soft_weight)이라
+        # 티처 forward를 건너뛴다(구버전 perf 최적화 복원). γ=0이면 teacher 큐도 미갱신.
+        if self.ttm_enabled and gamma is not None and gamma > 0 and online_teacher is not None:
             teacher_img_feat, teacher_text_feat = online_teacher.itc_feats(
                 image, caption, image_embeds=teacher_image_embeds)
         else:
@@ -495,9 +498,12 @@ class BLIP_Pretrain(nn.Module):
         # 이건 ITC 로스를 구하는 코드구나.
 
         # 티처 visual_encoder는 스텝당 1회만 계산 → 각 티처 경로가 image_embeds=로 재사용(dedup).
+        # ttm은 γ>0일 때만 티처가 필요(γ=0 tail은 alpha 폴백과 동일 → encode_image도 skip).
+        need_teacher_itc = self.ttm_enabled and gamma is not None and gamma > 0
         teacher_image_embeds = (
             online_teacher.encode_image(image)
-            if (online_teacher is not None and (self.ttm_enabled or lm_kd_enabled or itm_kd_enabled))
+            if (online_teacher is not None
+                and need_teacher_image_embeds(need_teacher_itc, lm_kd_enabled, itm_kd_enabled))
             else None
         )
 
