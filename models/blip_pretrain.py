@@ -380,6 +380,69 @@ class BLIP_Pretrain(nn.Module):
 
         return loss_itm, loss_itm_kd
 
+    def _itc_step(self, image, image_feat, text, text_feat, safe_scale, alpha, gamma,
+                  teacher_img_feat, teacher_text_feat, update_train_state):
+        """forward의 ITC 코어(momentum encoder + queue + ttm 타깃 + itc loss + dequeue) 추출. 로직 변경 없음."""
+        # get momentum features
+        with torch.no_grad():
+            #### 수정부분 시작: validation에서는 momentum encoder 갱신 금지 ####
+            if update_train_state: # T / F 만 존재
+                self._momentum_update()
+            #### 수정부분 끝 ####
+
+            image_embeds_m = self.visual_encoder_m(image)
+            image_feat_m = F.normalize(self.vision_proj_m(image_embeds_m[:,0,:]),dim=-1)
+            image_feat_all = torch.cat([image_feat_m.t(),self.image_queue.clone().detach()],dim=1)
+
+            text_output_m = self.text_encoder_m(text.input_ids, attention_mask = text.attention_mask,
+                                                return_dict = True, mode = 'text')
+            text_feat_m = F.normalize(self.text_proj_m(text_output_m.last_hidden_state[:,0,:]),dim=-1)
+            text_feat_all = torch.cat([text_feat_m.t(),self.text_queue.clone().detach()],dim=1)
+
+            #### 수정부분 시작: 실험 4 - temp 나누기 대신 logit_scale 곱하기 ####
+            sim_i2t_m = image_feat_m @ text_feat_all * safe_scale
+            sim_t2i_m = text_feat_m @ image_feat_all * safe_scale
+            #### 수정부분 끝 ####
+
+            sim_targets = torch.zeros(sim_i2t_m.size()).to(image.device)
+            sim_targets.fill_diagonal_(1)
+
+            if self.ttm_enabled and gamma is not None and teacher_img_feat is not None:
+                from distillation.target_mix import teacher_soft_queue, mix_target
+                mom_i2t = F.softmax(sim_i2t_m, dim=1)
+                mom_t2i = F.softmax(sim_t2i_m, dim=1)
+                ti = teacher_img_feat.to(image.device).float()
+                tt = teacher_text_feat.to(image.device).float()
+                if self.ttm_variant == 'queue':
+                    t_img_all = torch.cat([ti.t(), self.teacher_image_queue.clone().detach()], dim=1)
+                    t_txt_all = torch.cat([tt.t(), self.teacher_text_queue.clone().detach()], dim=1)
+                    teacher_i2t = teacher_soft_queue(ti, t_txt_all, self.ttm_temp)
+                    teacher_t2i = teacher_soft_queue(tt, t_img_all, self.ttm_temp)
+                else:
+                    raise ValueError(f"itc_target_mix.variant must be 'queue' (in_batch removed), got {self.ttm_variant!r}")
+                sim_i2t_targets = mix_target(sim_targets, mom_i2t, teacher_i2t, gamma, self.ttm_soft_weight)
+                sim_t2i_targets = mix_target(sim_targets, mom_t2i, teacher_t2i, gamma, self.ttm_soft_weight)
+            else:
+                sim_i2t_targets = alpha * F.softmax(sim_i2t_m, dim=1) + (1 - alpha) * sim_targets
+                sim_t2i_targets = alpha * F.softmax(sim_t2i_m, dim=1) + (1 - alpha) * sim_targets
+
+        #### 수정부분 시작: 실험 4 - temp 나누기 대신 logit_scale 곱하기 ####
+        sim_i2t = image_feat @ text_feat_all * safe_scale
+        sim_t2i = text_feat @ image_feat_all * safe_scale
+        #### 수정부분 끝 ####
+
+        loss_i2t = -torch.sum(F.log_softmax(sim_i2t, dim=1)*sim_i2t_targets,dim=1).mean()
+        loss_t2i = -torch.sum(F.log_softmax(sim_t2i, dim=1)*sim_t2i_targets,dim=1).mean()
+
+        loss_ita = (loss_i2t+loss_t2i)/2 # itc는 평균내서 보는구나 그런데 이상하네 왜 왜 image - text text - image가 다른 거지?
+
+        #### 수정부분 시작: validation에서는 queue 업데이트 금지 ####
+        if update_train_state:
+            self._dequeue_and_enqueue(image_feat_m, text_feat_m, teacher_img_feat, teacher_text_feat)
+        #### 수정부분 끝 ####
+
+        return loss_ita, sim_i2t, sim_t2i
+
     def forward(self, image, caption, alpha, update_train_state=None,
                 teacher_img_feat=None, teacher_text_feat=None,
                 teacher_lm_logits=None, teacher_lm_input_ids=None, lm_distill_temp=2.0,
@@ -419,64 +482,10 @@ class BLIP_Pretrain(nn.Module):
         
         image_embeds, image_atts, image_feat, text, text_feat = self._encode_student(image, caption)
         # 이건 ITC 로스를 구하는 코드구나.
-             
-        # get momentum features
-        with torch.no_grad():
-            #### 수정부분 시작: validation에서는 momentum encoder 갱신 금지 ####
-            if update_train_state: # T / F 만 존재
-                self._momentum_update()
-            #### 수정부분 끝 ####
 
-            image_embeds_m = self.visual_encoder_m(image) 
-            image_feat_m = F.normalize(self.vision_proj_m(image_embeds_m[:,0,:]),dim=-1)  
-            image_feat_all = torch.cat([image_feat_m.t(),self.image_queue.clone().detach()],dim=1)                   
-            
-            text_output_m = self.text_encoder_m(text.input_ids, attention_mask = text.attention_mask,                      
-                                                return_dict = True, mode = 'text')    
-            text_feat_m = F.normalize(self.text_proj_m(text_output_m.last_hidden_state[:,0,:]),dim=-1) 
-            text_feat_all = torch.cat([text_feat_m.t(),self.text_queue.clone().detach()],dim=1)
-
-            #### 수정부분 시작: 실험 4 - temp 나누기 대신 logit_scale 곱하기 ####
-            sim_i2t_m = image_feat_m @ text_feat_all * safe_scale
-            sim_t2i_m = text_feat_m @ image_feat_all * safe_scale
-            #### 수정부분 끝 ####
-
-            sim_targets = torch.zeros(sim_i2t_m.size()).to(image.device)
-            sim_targets.fill_diagonal_(1)
-
-            if self.ttm_enabled and gamma is not None and teacher_img_feat is not None:
-                from distillation.target_mix import teacher_soft_queue, mix_target
-                mom_i2t = F.softmax(sim_i2t_m, dim=1)
-                mom_t2i = F.softmax(sim_t2i_m, dim=1)
-                ti = teacher_img_feat.to(image.device).float()
-                tt = teacher_text_feat.to(image.device).float()
-                if self.ttm_variant == 'queue':
-                    t_img_all = torch.cat([ti.t(), self.teacher_image_queue.clone().detach()], dim=1)
-                    t_txt_all = torch.cat([tt.t(), self.teacher_text_queue.clone().detach()], dim=1)
-                    teacher_i2t = teacher_soft_queue(ti, t_txt_all, self.ttm_temp)
-                    teacher_t2i = teacher_soft_queue(tt, t_img_all, self.ttm_temp)
-                else:
-                    raise ValueError(f"itc_target_mix.variant must be 'queue' (in_batch removed), got {self.ttm_variant!r}")
-                sim_i2t_targets = mix_target(sim_targets, mom_i2t, teacher_i2t, gamma, self.ttm_soft_weight)
-                sim_t2i_targets = mix_target(sim_targets, mom_t2i, teacher_t2i, gamma, self.ttm_soft_weight)
-            else:
-                sim_i2t_targets = alpha * F.softmax(sim_i2t_m, dim=1) + (1 - alpha) * sim_targets
-                sim_t2i_targets = alpha * F.softmax(sim_t2i_m, dim=1) + (1 - alpha) * sim_targets
-
-        #### 수정부분 시작: 실험 4 - temp 나누기 대신 logit_scale 곱하기 ####
-        sim_i2t = image_feat @ text_feat_all * safe_scale
-        sim_t2i = text_feat @ image_feat_all * safe_scale
-        #### 수정부분 끝 ####
-                             
-        loss_i2t = -torch.sum(F.log_softmax(sim_i2t, dim=1)*sim_i2t_targets,dim=1).mean()
-        loss_t2i = -torch.sum(F.log_softmax(sim_t2i, dim=1)*sim_t2i_targets,dim=1).mean() 
-
-        loss_ita = (loss_i2t+loss_t2i)/2 # itc는 평균내서 보는구나 그런데 이상하네 왜 왜 image - text text - image가 다른 거지?
-    
-        #### 수정부분 시작: validation에서는 queue 업데이트 금지 ####
-        if update_train_state:
-            self._dequeue_and_enqueue(image_feat_m, text_feat_m, teacher_img_feat, teacher_text_feat)
-        #### 수정부분 끝 ####  
+        loss_ita, sim_i2t, sim_t2i = self._itc_step(image, image_feat, text, text_feat, safe_scale,
+                                                     alpha, gamma, teacher_img_feat, teacher_text_feat,
+                                                     update_train_state)
 
         ###============== Image-text Matching ===================###
         loss_itm, loss_itm_kd = self._itm_step(image, caption, image_embeds, image_atts, text,
