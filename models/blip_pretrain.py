@@ -306,6 +306,80 @@ class BLIP_Pretrain(nn.Module):
 
         return loss_lm, loss_lm_kd
 
+    def _itm_step(self, image, caption, image_embeds, image_atts, text, sim_i2t, sim_t2i,
+                  online_teacher, teacher_image_embeds, itm_topk, itm_distill_temp, itm_distill_direction):
+        """forward의 ITM base + ITM-KD 블록 추출. 로직 변경 없음.
+        itm-KD는 itm base의 산출(weights_*, encoder_input_ids, image_embeds, bs)에만 의존하고
+        lm 블록에는 의존하지 않으므로, 원래 lm 블록을 사이에 두고 떨어져 있던 두 블록을
+        재정렬해 하나로 모아도 동작 동일(student RNG는 multinomial뿐이고 lm은 eval에서 RNG를 쓰지 않음).
+        """
+        ###============== Image-text Matching ===================###
+        encoder_input_ids = text.input_ids.clone()
+        encoder_input_ids[:, 0] = self.tokenizer.enc_token_id
+        bs = image.size(0)
+
+        # negative-mining sampling weights from student in-batch sim.
+        with torch.no_grad():
+            weights_t2i = F.softmax(sim_t2i[:, :bs], dim=1) + 1e-4
+            weights_i2t = F.softmax(sim_i2t[:, :bs], dim=1) + 1e-4
+            weights_t2i.fill_diagonal_(0)
+            weights_i2t.fill_diagonal_(0)
+
+        # draw one negative index per sample (neg image for each text, neg text for each image)
+        neg_idx_img = [torch.multinomial(weights_t2i[b], 1).item() for b in range(bs)]
+        neg_idx_txt = [torch.multinomial(weights_i2t[b], 1).item() for b in range(bs)]
+        image_embeds_neg = torch.stack([image_embeds[neg_idx_img[b]] for b in range(bs)])
+        text_ids_neg = torch.stack([encoder_input_ids[neg_idx_txt[b]] for b in range(bs)])
+        text_atts_neg = torch.stack([text.attention_mask[neg_idx_txt[b]] for b in range(bs)])
+
+        # one merged 3B forward: rows [pos B | neg-image B | neg-text B]
+        text_ids_all = torch.cat([encoder_input_ids, encoder_input_ids, text_ids_neg], dim=0)
+        text_atts_all = torch.cat([text.attention_mask, text.attention_mask, text_atts_neg], dim=0)
+        image_embeds_all = torch.cat([image_embeds, image_embeds_neg, image_embeds], dim=0)
+        image_atts_all = torch.cat([image_atts, image_atts, image_atts], dim=0)
+        output_all = self.text_encoder(text_ids_all,
+                                       attention_mask=text_atts_all,
+                                       encoder_hidden_states=image_embeds_all,
+                                       encoder_attention_mask=image_atts_all,
+                                       return_dict=True)
+        vl_output = self.itm_head(output_all.last_hidden_state[:, 0, :])   # [3B, 2]
+        itm_labels = torch.cat([torch.ones(bs, dtype=torch.long),
+                                torch.zeros(2 * bs, dtype=torch.long)], dim=0).to(image.device)
+
+        loss_itm = F.cross_entropy(vl_output, itm_labels)
+
+        # external-teacher ITM distillation (forward 안에서 티처 계산). None when disabled.
+        # dedup: teacher visual_encoder(image)는 스텝당 1회(pretrain.py) 계산되어
+        # teacher_image_embeds로 넘어오고, 티처 itm_matrix 경로가 이를 재사용한다.
+        loss_itm_kd = None
+        if online_teacher is not None:
+            if itm_topk is not None and itm_topk > 0:
+                k = int(itm_topk)
+                ar = torch.arange(bs, device=image.device)[:, None]
+                idx_i2t_full = torch.cat([ar, weights_i2t.topk(k, dim=1).indices], dim=1)  # [B,k+1]
+                idx_t2i_full = torch.cat([ar, weights_t2i.topk(k, dim=1).indices], dim=1)
+                arM = ar.expand(bs, k + 1)
+                s_i2t = itm_pair_logits(self.text_encoder, self.itm_head, image_embeds, image_atts,
+                                        encoder_input_ids, text.attention_mask, arM, idx_i2t_full)
+                s_t2i = itm_pair_logits(self.text_encoder, self.itm_head, image_embeds, image_atts,
+                                        encoder_input_ids, text.attention_mask, idx_t2i_full, arM)
+                t_i2t, t_t2i = online_teacher.itm_matrix_gathered(
+                    image, caption, idx_i2t_full, idx_t2i_full, image_embeds=teacher_image_embeds)
+                loss_itm_kd = itm_gathered_kd_loss(s_i2t, t_i2t.to(image.device),
+                                                   s_t2i, t_t2i.to(image.device),
+                                                   itm_distill_direction, itm_distill_temp)
+            else:
+                teacher_itm = online_teacher.itm_matrix(image, caption, image_embeds=teacher_image_embeds)
+                student_itm_matrix = itm_bxb_logits(
+                    self.text_encoder, self.itm_head,
+                    image_embeds, image_atts, encoder_input_ids, text.attention_mask,
+                    use_checkpoint=True)
+                loss_itm_kd = itm_matrix_kd_loss(
+                    student_itm_matrix, teacher_itm.to(image.device),
+                    itm_distill_direction, itm_distill_temp)
+
+        return loss_itm, loss_itm_kd
+
     def forward(self, image, caption, alpha, update_train_state=None,
                 teacher_img_feat=None, teacher_text_feat=None,
                 teacher_lm_logits=None, teacher_lm_input_ids=None, lm_distill_temp=2.0,
@@ -405,73 +479,13 @@ class BLIP_Pretrain(nn.Module):
         #### 수정부분 끝 ####  
 
         ###============== Image-text Matching ===================###
-        encoder_input_ids = text.input_ids.clone()
-        encoder_input_ids[:, 0] = self.tokenizer.enc_token_id
-        bs = image.size(0)
+        loss_itm, loss_itm_kd = self._itm_step(image, caption, image_embeds, image_atts, text,
+                                               sim_i2t, sim_t2i, online_teacher, teacher_image_embeds,
+                                               itm_topk, itm_distill_temp, itm_distill_direction)
 
-        # negative-mining sampling weights from student in-batch sim.
-        with torch.no_grad():
-            weights_t2i = F.softmax(sim_t2i[:, :bs], dim=1) + 1e-4
-            weights_i2t = F.softmax(sim_i2t[:, :bs], dim=1) + 1e-4
-            weights_t2i.fill_diagonal_(0)
-            weights_i2t.fill_diagonal_(0)
-
-        # draw one negative index per sample (neg image for each text, neg text for each image)
-        neg_idx_img = [torch.multinomial(weights_t2i[b], 1).item() for b in range(bs)]
-        neg_idx_txt = [torch.multinomial(weights_i2t[b], 1).item() for b in range(bs)]
-        image_embeds_neg = torch.stack([image_embeds[neg_idx_img[b]] for b in range(bs)])
-        text_ids_neg = torch.stack([encoder_input_ids[neg_idx_txt[b]] for b in range(bs)])
-        text_atts_neg = torch.stack([text.attention_mask[neg_idx_txt[b]] for b in range(bs)])
-
-        # one merged 3B forward: rows [pos B | neg-image B | neg-text B]
-        text_ids_all = torch.cat([encoder_input_ids, encoder_input_ids, text_ids_neg], dim=0)
-        text_atts_all = torch.cat([text.attention_mask, text.attention_mask, text_atts_neg], dim=0)
-        image_embeds_all = torch.cat([image_embeds, image_embeds_neg, image_embeds], dim=0)
-        image_atts_all = torch.cat([image_atts, image_atts, image_atts], dim=0)
-        output_all = self.text_encoder(text_ids_all,
-                                       attention_mask=text_atts_all,
-                                       encoder_hidden_states=image_embeds_all,
-                                       encoder_attention_mask=image_atts_all,
-                                       return_dict=True)
-        vl_output = self.itm_head(output_all.last_hidden_state[:, 0, :])   # [3B, 2]
-        itm_labels = torch.cat([torch.ones(bs, dtype=torch.long),
-                                torch.zeros(2 * bs, dtype=torch.long)], dim=0).to(image.device)
-
-        loss_itm = F.cross_entropy(vl_output, itm_labels)
-        
         ##================= LM ========================##
         loss_lm, loss_lm_kd = self._lm_step(image_embeds, image_atts, text,
                                             teacher_lm_logits, teacher_lm_input_ids, lm_distill_temp)
-
-        # external-teacher ITM distillation (forward 안에서 티처 계산). None when disabled.
-        # dedup: teacher visual_encoder(image)는 스텝당 1회(pretrain.py) 계산되어
-        # teacher_image_embeds로 넘어오고, 티처 itm_matrix 경로가 이를 재사용한다.
-        loss_itm_kd = None
-        if online_teacher is not None:
-            if itm_topk is not None and itm_topk > 0:
-                k = int(itm_topk)
-                ar = torch.arange(bs, device=image.device)[:, None]
-                idx_i2t_full = torch.cat([ar, weights_i2t.topk(k, dim=1).indices], dim=1)  # [B,k+1]
-                idx_t2i_full = torch.cat([ar, weights_t2i.topk(k, dim=1).indices], dim=1)
-                arM = ar.expand(bs, k + 1)
-                s_i2t = itm_pair_logits(self.text_encoder, self.itm_head, image_embeds, image_atts,
-                                        encoder_input_ids, text.attention_mask, arM, idx_i2t_full)
-                s_t2i = itm_pair_logits(self.text_encoder, self.itm_head, image_embeds, image_atts,
-                                        encoder_input_ids, text.attention_mask, idx_t2i_full, arM)
-                t_i2t, t_t2i = online_teacher.itm_matrix_gathered(
-                    image, caption, idx_i2t_full, idx_t2i_full, image_embeds=teacher_image_embeds)
-                loss_itm_kd = itm_gathered_kd_loss(s_i2t, t_i2t.to(image.device),
-                                                   s_t2i, t_t2i.to(image.device),
-                                                   itm_distill_direction, itm_distill_temp)
-            else:
-                teacher_itm = online_teacher.itm_matrix(image, caption, image_embeds=teacher_image_embeds)
-                student_itm_matrix = itm_bxb_logits(
-                    self.text_encoder, self.itm_head,
-                    image_embeds, image_atts, encoder_input_ids, text.attention_mask,
-                    use_checkpoint=True)
-                loss_itm_kd = itm_matrix_kd_loss(
-                    student_itm_matrix, teacher_itm.to(image.device),
-                    itm_distill_direction, itm_distill_temp)
 
         return loss_ita, loss_itm, loss_lm, loss_lm_kd, loss_itm_kd
  
