@@ -511,7 +511,6 @@ class BLIP_Pretrain(nn.Module):
                                                      alpha, gamma, caption, online_teacher,
                                                      teacher_image_embeds, update_train_state)
 
-        ###============== Image-text Matching ===================###
         loss_itm, loss_itm_kd = self._itm_step(image, caption, image_embeds, image_atts, text,
                                                sim_i2t, sim_t2i,
                                                online_teacher if itm_kd_enabled else None,
