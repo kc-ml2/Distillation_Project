@@ -9,12 +9,12 @@ The following table reports final-checkpoint COCO Karpathy validation metrics; a
 | Model | Online unique params | ITC r_mean | ITM r_mean | CIDEr | SPICE |
 |---|---:|---:|---:|---:|---:|
 | Small student baseline | 69.4M | 63.41 | 70.93 | 1.063 | 0.201 |
-| **Unified distillation** | **69.4M** | **`{{FINAL_ITC}}`** | **`{{FINAL_ITM}}`** | **`{{FINAL_CIDER}}`** | **`{{FINAL_SPICE}}`** |
+| **Unified distillation** | 69.4M | 🔴 **66.52** | 73.16 | 🔴 **1.104** | 0.207 |
 | Base-capacity model | 252.4M | 66.20 | 73.22 | 1.095 | 0.208 |
 
 Parameter counts use unique parameters in the online pre-training graph, with tied weights deduplicated and momentum copies and queue buffers excluded.
 
-- Candidate-structure mismatch broke naive ITC KD.
+- Competing ITC objectives over different candidate spaces broke naive KD.
 - Binary ITM soft targets weakened hard-negative discrimination.
 - The loss-specific redesign improved retrieval and all eight caption metrics.
 
@@ -22,19 +22,20 @@ Parameter counts use unique parameters in the online pre-training graph, with ti
 
 | Loss | Observation | Diagnosis or hypothesis | Final formulation | Outcome |
 |---|---|---|---|---|
-| ITC | In-batch teacher targets failed in the queue-based student objective | Shape alignment does not align candidate set, queue state, or probability structure | Aligned teacher queue + probability-level mixing into the native target | Retrieval improved |
+| ITC | Adding separate in-batch KD to native queue-based ITC degraded retrieval | The two losses normalized over different candidate spaces and targets, producing competing gradients for the same features | Mix the teacher's batch-and-queue probabilities into the native target, leaving one queue-based objective | Retrieval improved |
 | ITM | Per-pair soft targets severely damaged retrieval | A binary head carries limited relational dark knowledge; soft targets weaken discrimination | Hard-label CE + contrastive KD over each positive and its top-k hard negatives | Retrieval improved |
 | LM | Token KD improved captioning | **Hypothesis:** a large vocabulary distribution carries richer dark knowledge than a binary head | Shift-aligned, padding-masked Hinton KD with `T^2` scaling | All eight caption metrics improved |
 
-### ITC: matching shape is not enough
+### ITC: one candidate geometry, one objective
 
-| Teacher target | Candidate structure | ITC r_mean |
+| Setup | Optimization path | ITC r_mean |
 |---|---|---:|
-| Student baseline | Native momentum queue | 63.41 |
-| In-batch teacher + zero padding | Shape only aligned | 57.64 |
-| Teacher queue | Candidate space fully aligned | 64.49 |
+| Small student baseline | One native batch-and-queue objective | 63.41 |
+| Separate in-batch KD (zero-padded) | Native batch-and-queue ITC + separate in-batch KD gradient | 57.64 |
+| Queue-aligned target mixing | Teacher probabilities absorbed into the native batch-and-queue target | 64.49 |
+| Base-capacity model | Native batch-and-queue objective | 66.20 |
 
-Zero padding matched the target width but not the meaning of its candidates. Matching the tensor shape was insufficient. Effective distillation required the teacher and student to share the same candidate set, queue state, and probability structure.
+Native ITC learns a distribution over the current batch and momentum queue. Naive KD imposed a second distribution over a different in-batch candidate set, so the same features received gradients optimized against different probability spaces and targets. Zero padding merely matched tensor width and reduced ITC r_mean further. The final design evaluates the teacher over the same batch-and-queue candidates and mixes its probabilities into the native target, replacing two competing gradients with one queue-based contrastive objective.
 
 ### ITM: distill contrastive structure, not binary targets
 
@@ -43,6 +44,7 @@ Zero padding matched the target width but not the meaning of its candidates. Mat
 | Hard-label baseline | 63.41 | 70.93 |
 | Per-pair soft target | 64.37 | 63.51 |
 | Hard CE + top-k contrastive KD | 64.87 | 71.60 |
+| Base-capacity model | 66.20 | 73.22 |
 
 Within-query diagnostics showed that per-pair soft targets compressed the ranking margin and damaged retrieval. We retained hard-label ITM classification and added a contrastive distillation loss over each positive and its top-k hard negatives.
 
@@ -50,22 +52,22 @@ Within-query diagnostics showed that per-pair soft targets compressed the rankin
 
 The following ablation uses final-checkpoint COCO Karpathy test generations scored with the same COCOEvalCap protocol, including SPICE.
 
-| Metric | Student baseline | LM distillation | Absolute delta |
-|---|---:|---:|---:|
-| BLEU-1 | 0.7350 | 0.7444 | +0.0094 |
-| BLEU-2 | 0.5705 | 0.5811 | +0.0105 |
-| BLEU-3 | 0.4334 | 0.4425 | +0.0090 |
-| BLEU-4 | 0.3267 | 0.3343 | +0.0076 |
-| METEOR | 0.2719 | 0.2738 | +0.0019 |
-| ROUGE-L | 0.5538 | 0.5577 | +0.0039 |
-| CIDEr | 1.0764 | 1.1028 | +0.0263 |
-| SPICE | 0.2029 | 0.2067 | +0.0038 |
+| Metric | Student baseline | LM distillation | Base-capacity model | Delta vs. student |
+|---|---:|---:|---:|---:|
+| BLEU-1 | 0.7350 | 0.7444 | 0.7326 | +0.0094 |
+| BLEU-2 | 0.5705 | 0.5811 | 0.5690 | +0.0105 |
+| BLEU-3 | 0.4334 | 0.4425 | 0.4360 | +0.0090 |
+| BLEU-4 | 0.3267 | 0.3343 | 0.3342 | +0.0076 |
+| METEOR | 0.2719 | 0.2738 | 0.2801 | +0.0019 |
+| ROUGE-L | 0.5538 | 0.5577 | 0.5564 | +0.0039 |
+| CIDEr | 1.0764 | 1.1028 | 1.1131 | +0.0263 |
+| SPICE | 0.2029 | 0.2067 | 0.2105 | +0.0038 |
 
 The LM objective distills approximately 30K vocabulary logits with shifted prediction alignment, a padding mask, and standard `T^2` scaling. **Hypothesis:** this large vocabulary distribution carries richer dark knowledge than a binary head, explaining why token KD improved all eight caption metrics.
 
 ## Unified objective
 
-$$
+```math
 \mathcal{L}_{\mathrm{total}}
 =
 \mathcal{L}_{\mathrm{ITC}}^{\mathrm{mixed\ target}}
@@ -77,7 +79,7 @@ $$
 \mathcal{L}_{\mathrm{LM}}^{\mathrm{CE}}
 +
 \lambda_{\mathrm{LM}}\mathcal{L}_{\mathrm{LM}}^{\mathrm{token\ KD}}.
-$$
+```
 
 - ITC mixes aligned teacher probabilities into the student's native queue-based target.
 - ITM preserves hard-label CE and adds contrastive KD over each positive and its top-k hard negatives.
@@ -95,12 +97,12 @@ The following final-checkpoint comparison reports COCO Karpathy validation metri
 | Model | Online unique params | ITC r_mean | ITM r_mean | BLEU-1 | BLEU-2 | BLEU-3 | BLEU-4 | METEOR | ROUGE-L | CIDEr | SPICE |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
 | Small student baseline | 69.4M | 63.41 | 70.93 | 0.7354 | 0.5720 | 0.4334 | 0.3263 | 0.2707 | 0.5515 | 1.0630 | 0.2012 |
-| **Unified distillation** | **69.4M** | **`{{FINAL_ITC}}`** | **`{{FINAL_ITM}}`** | **`{{FINAL_BLEU_1}}`** | **`{{FINAL_BLEU_2}}`** | **`{{FINAL_BLEU_3}}`** | **`{{FINAL_BLEU_4}}`** | **`{{FINAL_METEOR}}`** | **`{{FINAL_ROUGE_L}}`** | **`{{FINAL_CIDER}}`** | **`{{FINAL_SPICE}}`** |
+| **Unified distillation** | 69.4M | 🔴 **66.52** | 73.16 | 🔴 **0.7481** | 🔴 **0.5866** | 🔴 **0.4480** | 🔴 **0.3402** | 0.2749 | 🔴 **0.5578** | 🔴 **1.1044** | 0.2072 |
 | Base-capacity model | 252.4M | 66.20 | 73.22 | 0.7314 | 0.5675 | 0.4328 | 0.3302 | 0.2783 | 0.5534 | 1.0945 | 0.2082 |
 
 ## Conclusions
 
-1. Match the teacher signal to the student's native objective structure, not merely its output shape.
+1. Distill ITC inside the student's native candidate probability space; separate objectives over different candidate sets produce competing gradients.
 2. Large output spaces such as vocabularies appear to provide richer dark knowledge than binary heads.
 3. Preserve strong hard supervision when soft targets weaken discrimination.
 4. The unified model improves the compact student and approaches the base-capacity model across retrieval and captioning.
