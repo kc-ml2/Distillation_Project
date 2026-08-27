@@ -4,6 +4,21 @@
 
 A compact BLIP student with 69.4M unique online parameters reaches strong retrieval and captioning performance after loss-specific analysis and redesign of ITC, ITM, and LM distillation.
 
+## Quick start
+
+Use Python 3.10, install the dependencies, and place COCO, Visual Genome, and the
+[BLIP-large checkpoint](https://storage.googleapis.com/sfr-vision-language-research/BLIP/models/model_large.pth)
+at the relative paths declared in `configs/pretrain_mainline.yaml`.
+
+```bash
+pip install -r requirements.txt
+python -m torch.distributed.run --nproc_per_node=4 pretrain.py \
+  --config configs/pretrain_mainline.yaml
+```
+
+The default configuration writes checkpoints and logs under `output/pt_refactor_mainline`.
+Change the process count and per-GPU batch size to match the available GPUs.
+
 The following table reports final-checkpoint COCO Karpathy validation metrics; all caption rows use the same saved-generation and COCOEvalCap scoring protocol.
 
 | Model | Online unique params | ITC r_mean | ITM r_mean | CIDEr | SPICE |

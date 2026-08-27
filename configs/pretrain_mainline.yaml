@@ -1,9 +1,9 @@
-train_file: ['/home/minwoo/Distillation_Project/datasets/vision/coco/annotations/coco_karpathy_train.json',
-             '/home/minwoo/Distillation_Project/datasets/vision/vg/annotations/vg_train.json'
+train_file: ['datasets/vision/coco/annotations/coco_karpathy_train.json',
+             'datasets/vision/vg/annotations/vg_train.json'
              ]
 laion_path: ''
-image_root_coco: '/home/minwoo/Distillation_Project/datasets/vision/coco/images/'
-image_root_vg: '/home/minwoo/Distillation_Project/datasets/vision/vg/images/'
+image_root_coco: 'datasets/vision/coco/images/'
+image_root_vg: 'datasets/vision/vg/images/'
 
 cc12m_tar_path: ''
 cc12m_ratio: 5
@@ -27,7 +27,7 @@ used_dataset: 'coco_vg'
 #
 # 주의: pretrain.py에 `assert alpha == itc_target_mix.soft_weight`(γ=0 tail-skip 불변식) 있음.
 #       alpha=0.4 / soft_weight=0.4 로 충족.
-output_dir: '/home/minwoo/Distillation_Project/output/pt_refactor_mainline'
+output_dir: 'output/pt_refactor_mainline'
 
 # experiment 태그 (tensorboard run 이름에 사용)
 exp: 'refactor.mainline'
@@ -50,8 +50,8 @@ my_bert_size: 'minilm'
 #### COCO Karpathy validation loss ####
 val_loss_enabled: true
 
-val_loss_file: '/home/minwoo/Distillation_Project/datasets/vision/coco/annotations/coco_karpathy_val.json'
-val_loss_image_root: '/home/minwoo/Distillation_Project/datasets/vision/coco/images/'
+val_loss_file: 'datasets/vision/coco/annotations/coco_karpathy_val.json'
+val_loss_image_root: 'datasets/vision/coco/images/'
 
 val_loss_batch_size: 32
 val_loss_num_workers: 4
@@ -73,8 +73,8 @@ val_loss_amp: true
 
 #### COCO Karpathy retrieval validation (momentum 없는 student-only R@1/5/10) ####
 val_retrieval_enabled: true
-val_retrieval_ann_root: '/home/minwoo/Distillation_Project/datasets/vision/coco/annotations/'
-val_retrieval_image_root: '/home/minwoo/Distillation_Project/datasets/vision/coco/images/'
+val_retrieval_ann_root: 'datasets/vision/coco/annotations/'
+val_retrieval_image_root: 'datasets/vision/coco/images/'
 val_retrieval_split: 'val'
 val_retrieval_batch_size: 64
 val_retrieval_num_workers: 4
@@ -89,9 +89,9 @@ val_retrieval_itm_epoch_end: true
 
 #### 학습 중 caption 지표 검증 (BLEU/METEOR/ROUGE/CIDEr/SPICE) — ttm_queue = 잡B(CPU 32-63) ####
 val_caption_enabled: true
-val_caption_ann_root: '/home/minwoo/Distillation_Project/datasets/vision/coco/annotations/'
-val_caption_image_root: '/home/minwoo/Distillation_Project/datasets/vision/coco/images/'
-val_caption_gt_root: '/home/minwoo/Distillation_Project/datasets/vision/coco/annotation/coco_gt'
+val_caption_ann_root: 'datasets/vision/coco/annotations/'
+val_caption_image_root: 'datasets/vision/coco/images/'
+val_caption_gt_root: 'datasets/vision/coco/annotation/coco_gt'
 val_caption_split: 'val'
 val_caption_batch_size: 32
 val_caption_num_workers: 4
@@ -141,4 +141,4 @@ teacher:
   # 공식 Salesforce BLIP-large pretrain (ViT-L + BERT-base, 디코더 포함).
   # BLIP 공식 README의 Pre-trained checkpoints 표에서 ViT-L(129M) 링크로 다운로드 후 경로 기입.
   # 빈 값이면 pretrain.py가 FileNotFoundError로 즉시 실패함 (무작위 티처 증류 방지).
-  checkpoint: '/home/minwoo/Distillation_Project/output/official_pretrain_checkpoint/model_large.pth'
+  checkpoint: 'output/official_pretrain_checkpoint/model_large.pth'

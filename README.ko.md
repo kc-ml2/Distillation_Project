@@ -4,6 +4,21 @@
 
 손실별 분석과 ITC, ITM, LM 증류 재설계를 거친 온라인 고유 파라미터 69.4M의 경량 BLIP 학생 모델은 검색과 캡셔닝에서 우수한 성능을 달성합니다.
 
+## 빠른 시작
+
+Python 3.10 환경에서 의존성을 설치한 뒤 COCO, Visual Genome과
+[BLIP-large 체크포인트](https://storage.googleapis.com/sfr-vision-language-research/BLIP/models/model_large.pth)를
+`configs/pretrain_mainline.yaml`에 적힌 상대경로에 배치합니다.
+
+```bash
+pip install -r requirements.txt
+python -m torch.distributed.run --nproc_per_node=4 pretrain.py \
+  --config configs/pretrain_mainline.yaml
+```
+
+기본 설정은 체크포인트와 로그를 `output/pt_refactor_mainline`에 저장합니다.
+사용 가능한 GPU에 맞춰 프로세스 수와 GPU당 배치 크기를 조정하면 됩니다.
+
 다음 표는 최종 체크포인트의 COCO Karpathy 검증 지표이며, 모든 캡션 행에 동일한 저장 생성 결과와 COCOEvalCap 채점 프로토콜을 적용했습니다.
 
 | 모델 | 온라인 고유 파라미터 | ITC r_mean | ITM r_mean | CIDEr | SPICE |

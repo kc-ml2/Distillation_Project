@@ -63,3 +63,18 @@ loss_curve_epoch.png
 # Claude Code / superpowers artifacts
 # =========================
 claude_skills/
+.claude/
+
+# Generated reports (keep README and regeneration scripts)
+docs/experiments/**/*.png
+docs/experiments/**/*.xlsx
+
+# Disposable scratch outputs
+scratchpad/*.log
+scratchpad/pptx_unzip/
+
+# Test caches
+.pytest_cache/
+
+# 발표자료 (PPT 소스, 대용량 pdf/pptx)
+발표자료/
