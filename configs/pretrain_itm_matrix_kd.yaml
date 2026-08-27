@@ -11,10 +11,10 @@ cc12m_ratio: 5
 used_dataset: 'coco_vg'
 
 # ===== ITM matrix KD 런 (student + frozen BLIP-large teacher) =====
-output_dir: '/home/minwoo/Distillation_Project/output/pt_smallreg_minilm_itm_matrix_kd'
+output_dir: '/home/minwoo/Distillation_Project/output/pt_smallreg_minilm_itm_matrix_kd_configfix'
 
 # experiment 태그 (tensorboard run 이름에 사용)
-exp: '10.itm_matrix_kd'
+exp: '10.1itm_matrix_kd_configfix'
 # 이미지 증강 토글: distilled 런과 동일 조건 유지를 위해 ON
 pretrain_train_aug: true
 
