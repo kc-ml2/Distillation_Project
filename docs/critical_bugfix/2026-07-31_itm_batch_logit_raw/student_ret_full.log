@@ -1,0 +1,744 @@
+/home/minwoo/miniconda3/envs/kd_r4/lib/python3.10/site-packages/transformers/utils/generic.py:311: FutureWarning: `torch.utils._pytree._register_pytree_node` is deprecated. Please use `torch.utils._pytree.register_pytree_node` instead.
+  torch.utils._pytree._register_pytree_node(
+[setup] arch=student  n_images=5000  n_texts=25010  k_test=128  device=cuda
+[setup] ckpt=checkpoint_19.pth
+Some weights of the model checkpoint at microsoft/MiniLM-L12-H384-uncased were not used when initializing BertModel: ['pooler.dense.bias', 'pooler.dense.weight', 'embeddings.token_type_embeddings.weight']
+- This IS expected if you are initializing BertModel from the checkpoint of a model trained on another task or with another architecture (e.g. initializing a BertForSequenceClassification model from a BertForPreTraining model).
+- This IS NOT expected if you are initializing BertModel from the checkpoint of a model that you expect to be exactly identical (initializing a BertForSequenceClassification model from a BertForSequenceClassification model).
+Some weights of BertModel were not initialized from the model checkpoint at microsoft/MiniLM-L12-H384-uncased and are newly initialized: ['encoder.layer.5.crossattention.output.dense.weight', 'encoder.layer.6.crossattention.self.value.bias', 'encoder.layer.8.crossattention.output.LayerNorm.bias', 'encoder.layer.4.crossattention.self.key.bias', 'encoder.layer.1.crossattention.self.query.weight', 'encoder.layer.10.crossattention.output.dense.weight', 'encoder.layer.8.crossattention.output.dense.bias', 'encoder.layer.8.crossattention.self.value.weight', 'encoder.layer.11.crossattention.self.query.weight', 'encoder.layer.9.crossattention.self.value.bias', 'encoder.layer.0.crossattention.output.LayerNorm.bias', 'encoder.layer.0.crossattention.self.value.bias', 'encoder.layer.2.crossattention.self.query.bias', 'encoder.layer.1.crossattention.output.LayerNorm.bias', 'encoder.layer.7.crossattention.output.LayerNorm.bias', 'encoder.layer.8.crossattention.self.value.bias', 'encoder.layer.1.crossattention.self.value.bias', 'encoder.layer.10.crossattention.self.query.weight', 'encoder.layer.8.crossattention.output.LayerNorm.weight', 'encoder.layer.5.crossattention.self.query.bias', 'encoder.layer.3.crossattention.output.dense.weight', 'encoder.layer.10.crossattention.output.LayerNorm.bias', 'encoder.layer.9.crossattention.self.query.bias', 'encoder.layer.6.crossattention.self.value.weight', 'encoder.layer.11.crossattention.output.dense.weight', 'encoder.layer.9.crossattention.self.key.weight', 'encoder.layer.1.crossattention.output.LayerNorm.weight', 'encoder.layer.4.crossattention.self.query.weight', 'encoder.layer.7.crossattention.self.value.weight', 'encoder.layer.0.crossattention.self.value.weight', 'encoder.layer.1.crossattention.self.key.bias', 'encoder.layer.0.crossattention.self.query.weight', 'encoder.layer.0.crossattention.output.dense.weight', 'encoder.layer.1.crossattention.self.key.weight', 'encoder.layer.4.crossattention.self.key.weight', 'encoder.layer.6.crossattention.self.query.weight', 'encoder.layer.3.crossattention.self.value.weight', 'encoder.layer.5.crossattention.self.key.weight', 'encoder.layer.11.crossattention.self.key.bias', 'encoder.layer.5.crossattention.self.query.weight', 'encoder.layer.7.crossattention.output.dense.bias', 'encoder.layer.11.crossattention.self.value.bias', 'encoder.layer.9.crossattention.output.LayerNorm.bias', 'encoder.layer.1.crossattention.output.dense.weight', 'encoder.layer.7.crossattention.output.dense.weight', 'encoder.layer.11.crossattention.output.LayerNorm.weight', 'encoder.layer.4.crossattention.output.LayerNorm.bias', 'encoder.layer.9.crossattention.output.LayerNorm.weight', 'encoder.layer.8.crossattention.self.query.bias', 'encoder.layer.10.crossattention.self.key.weight', 'encoder.layer.7.crossattention.self.key.weight', 'encoder.layer.2.crossattention.output.dense.weight', 'encoder.layer.8.crossattention.output.dense.weight', 'encoder.layer.4.crossattention.self.value.weight', 'encoder.layer.2.crossattention.self.key.weight', 'encoder.layer.0.crossattention.self.key.weight', 'encoder.layer.10.crossattention.self.key.bias', 'encoder.layer.3.crossattention.self.key.weight', 'encoder.layer.2.crossattention.self.value.weight', 'encoder.layer.2.crossattention.output.dense.bias', 'encoder.layer.7.crossattention.self.query.bias', 'encoder.layer.0.crossattention.output.LayerNorm.weight', 'encoder.layer.1.crossattention.self.value.weight', 'encoder.layer.8.crossattention.self.query.weight', 'encoder.layer.5.crossattention.self.value.weight', 'encoder.layer.1.crossattention.self.query.bias', 'encoder.layer.7.crossattention.self.key.bias', 'encoder.layer.10.crossattention.output.dense.bias', 'encoder.layer.2.crossattention.self.value.bias', 'encoder.layer.0.crossattention.self.query.bias', 'encoder.layer.4.crossattention.output.LayerNorm.weight', 'encoder.layer.4.crossattention.self.value.bias', 'encoder.layer.4.crossattention.output.dense.weight', 'encoder.layer.3.crossattention.output.LayerNorm.bias', 'encoder.layer.5.crossattention.self.value.bias', 'encoder.layer.6.crossattention.output.LayerNorm.bias', 'encoder.layer.4.crossattention.output.dense.bias', 'encoder.layer.10.crossattention.self.value.bias', 'encoder.layer.1.crossattention.output.dense.bias', 'encoder.layer.9.crossattention.output.dense.bias', 'encoder.layer.7.crossattention.self.value.bias', 'encoder.layer.2.crossattention.self.key.bias', 'encoder.layer.10.crossattention.self.query.bias', 'encoder.layer.10.crossattention.output.LayerNorm.weight', 'encoder.layer.3.crossattention.self.query.weight', 'encoder.layer.3.crossattention.output.LayerNorm.weight', 'encoder.layer.7.crossattention.output.LayerNorm.weight', 'encoder.layer.5.crossattention.self.key.bias', 'encoder.layer.9.crossattention.self.query.weight', 'encoder.layer.3.crossattention.self.query.bias', 'encoder.layer.6.crossattention.output.dense.bias', 'encoder.layer.10.crossattention.self.value.weight', 'encoder.layer.0.crossattention.self.key.bias', 'encoder.layer.6.crossattention.output.dense.weight', 'encoder.layer.3.crossattention.self.value.bias', 'encoder.layer.9.crossattention.output.dense.weight', 'encoder.layer.9.crossattention.self.key.bias', 'encoder.layer.5.crossattention.output.dense.bias', 'encoder.layer.11.crossattention.output.LayerNorm.bias', 'encoder.layer.5.crossattention.output.LayerNorm.bias', 'encoder.layer.6.crossattention.self.key.weight', 'encoder.layer.2.crossattention.self.query.weight', 'encoder.layer.7.crossattention.self.query.weight', 'encoder.layer.2.crossattention.output.LayerNorm.bias', 'encoder.layer.0.crossattention.output.dense.bias', 'encoder.layer.11.crossattention.output.dense.bias', 'encoder.layer.4.crossattention.self.query.bias', 'encoder.layer.3.crossattention.self.key.bias', 'encoder.layer.6.crossattention.self.query.bias', 'encoder.layer.9.crossattention.self.value.weight', 'encoder.layer.5.crossattention.output.LayerNorm.weight', 'encoder.layer.6.crossattention.output.LayerNorm.weight', 'encoder.layer.2.crossattention.output.LayerNorm.weight', 'encoder.layer.6.crossattention.self.key.bias', 'encoder.layer.3.crossattention.output.dense.bias', 'encoder.layer.11.crossattention.self.value.weight', 'encoder.layer.11.crossattention.self.query.bias', 'encoder.layer.8.crossattention.self.key.weight', 'encoder.layer.11.crossattention.self.key.weight', 'encoder.layer.8.crossattention.self.key.bias']
+You should probably TRAIN this model on a down-stream task to be able to use it for predictions and inference.
+You are resizing the embedding layer without providing a `pad_to_multiple_of` parameter. This means that the new embedding dimension will be 30524. This might induce some performance reduction as *Tensor Cores* will not be available. For more details about this, or help on choosing the correct value for resizing, refer to this guide: https://docs.nvidia.com/deeplearning/performance/dl-performance-matrix-multiplication/index.html#requirements-tc
+Some weights of BertLMHeadModel were not initialized from the model checkpoint at microsoft/MiniLM-L12-H384-uncased and are newly initialized: ['encoder.layer.5.crossattention.output.dense.weight', 'encoder.layer.6.crossattention.self.value.bias', 'encoder.layer.8.crossattention.output.LayerNorm.bias', 'encoder.layer.4.crossattention.self.key.bias', 'encoder.layer.1.crossattention.self.query.weight', 'encoder.layer.10.crossattention.output.dense.weight', 'encoder.layer.8.crossattention.output.dense.bias', 'encoder.layer.8.crossattention.self.value.weight', 'encoder.layer.11.crossattention.self.query.weight', 'encoder.layer.9.crossattention.self.value.bias', 'encoder.layer.0.crossattention.output.LayerNorm.bias', 'encoder.layer.0.crossattention.self.value.bias', 'encoder.layer.2.crossattention.self.query.bias', 'encoder.layer.1.crossattention.output.LayerNorm.bias', 'encoder.layer.7.crossattention.output.LayerNorm.bias', 'encoder.layer.8.crossattention.self.value.bias', 'encoder.layer.1.crossattention.self.value.bias', 'encoder.layer.10.crossattention.self.query.weight', 'cls.predictions.bias', 'encoder.layer.8.crossattention.output.LayerNorm.weight', 'encoder.layer.5.crossattention.self.query.bias', 'encoder.layer.3.crossattention.output.dense.weight', 'encoder.layer.10.crossattention.output.LayerNorm.bias', 'encoder.layer.9.crossattention.self.query.bias', 'encoder.layer.6.crossattention.self.value.weight', 'encoder.layer.11.crossattention.output.dense.weight', 'encoder.layer.9.crossattention.self.key.weight', 'encoder.layer.1.crossattention.output.LayerNorm.weight', 'encoder.layer.4.crossattention.self.query.weight', 'encoder.layer.7.crossattention.self.value.weight', 'encoder.layer.0.crossattention.self.value.weight', 'encoder.layer.1.crossattention.self.key.bias', 'encoder.layer.0.crossattention.self.query.weight', 'encoder.layer.0.crossattention.output.dense.weight', 'encoder.layer.1.crossattention.self.key.weight', 'encoder.layer.4.crossattention.self.key.weight', 'encoder.layer.6.crossattention.self.query.weight', 'encoder.layer.3.crossattention.self.value.weight', 'cls.predictions.transform.LayerNorm.bias', 'encoder.layer.5.crossattention.self.key.weight', 'encoder.layer.11.crossattention.self.key.bias', 'encoder.layer.5.crossattention.self.query.weight', 'encoder.layer.7.crossattention.output.dense.bias', 'encoder.layer.11.crossattention.self.value.bias', 'encoder.layer.9.crossattention.output.LayerNorm.bias', 'encoder.layer.1.crossattention.output.dense.weight', 'encoder.layer.7.crossattention.output.dense.weight', 'encoder.layer.11.crossattention.output.LayerNorm.weight', 'encoder.layer.4.crossattention.output.LayerNorm.bias', 'encoder.layer.9.crossattention.output.LayerNorm.weight', 'encoder.layer.8.crossattention.self.query.bias', 'encoder.layer.10.crossattention.self.key.weight', 'cls.predictions.transform.LayerNorm.weight', 'encoder.layer.7.crossattention.self.key.weight', 'encoder.layer.2.crossattention.output.dense.weight', 'encoder.layer.8.crossattention.output.dense.weight', 'encoder.layer.4.crossattention.self.value.weight', 'encoder.layer.2.crossattention.self.key.weight', 'encoder.layer.0.crossattention.self.key.weight', 'encoder.layer.10.crossattention.self.key.bias', 'encoder.layer.3.crossattention.self.key.weight', 'encoder.layer.2.crossattention.self.value.weight', 'encoder.layer.2.crossattention.output.dense.bias', 'encoder.layer.7.crossattention.self.query.bias', 'encoder.layer.0.crossattention.output.LayerNorm.weight', 'encoder.layer.1.crossattention.self.value.weight', 'encoder.layer.8.crossattention.self.query.weight', 'encoder.layer.5.crossattention.self.value.weight', 'encoder.layer.1.crossattention.self.query.bias', 'encoder.layer.7.crossattention.self.key.bias', 'encoder.layer.10.crossattention.output.dense.bias', 'cls.predictions.transform.dense.bias', 'encoder.layer.2.crossattention.self.value.bias', 'encoder.layer.0.crossattention.self.query.bias', 'encoder.layer.4.crossattention.output.LayerNorm.weight', 'encoder.layer.4.crossattention.self.value.bias', 'encoder.layer.4.crossattention.output.dense.weight', 'encoder.layer.3.crossattention.output.LayerNorm.bias', 'encoder.layer.5.crossattention.self.value.bias', 'encoder.layer.6.crossattention.output.LayerNorm.bias', 'encoder.layer.4.crossattention.output.dense.bias', 'encoder.layer.10.crossattention.self.value.bias', 'encoder.layer.1.crossattention.output.dense.bias', 'encoder.layer.9.crossattention.output.dense.bias', 'encoder.layer.7.crossattention.self.value.bias', 'encoder.layer.2.crossattention.self.key.bias', 'encoder.layer.10.crossattention.self.query.bias', 'encoder.layer.10.crossattention.output.LayerNorm.weight', 'encoder.layer.3.crossattention.self.query.weight', 'encoder.layer.3.crossattention.output.LayerNorm.weight', 'encoder.layer.7.crossattention.output.LayerNorm.weight', 'encoder.layer.5.crossattention.self.key.bias', 'encoder.layer.9.crossattention.self.query.weight', 'encoder.layer.3.crossattention.self.query.bias', 'encoder.layer.6.crossattention.output.dense.bias', 'encoder.layer.10.crossattention.self.value.weight', 'encoder.layer.0.crossattention.self.key.bias', 'encoder.layer.6.crossattention.output.dense.weight', 'encoder.layer.3.crossattention.self.value.bias', 'encoder.layer.9.crossattention.output.dense.weight', 'encoder.layer.9.crossattention.self.key.bias', 'encoder.layer.5.crossattention.output.dense.bias', 'encoder.layer.11.crossattention.output.LayerNorm.bias', 'encoder.layer.6.crossattention.self.key.weight', 'encoder.layer.5.crossattention.output.LayerNorm.bias', 'encoder.layer.2.crossattention.self.query.weight', 'encoder.layer.7.crossattention.self.query.weight', 'encoder.layer.2.crossattention.output.LayerNorm.bias', 'encoder.layer.0.crossattention.output.dense.bias', 'encoder.layer.11.crossattention.output.dense.bias', 'encoder.layer.4.crossattention.self.query.bias', 'encoder.layer.3.crossattention.self.key.bias', 'encoder.layer.6.crossattention.self.query.bias', 'encoder.layer.9.crossattention.self.value.weight', 'encoder.layer.5.crossattention.output.LayerNorm.weight', 'encoder.layer.6.crossattention.output.LayerNorm.weight', 'encoder.layer.2.crossattention.output.LayerNorm.weight', 'encoder.layer.6.crossattention.self.key.bias', 'encoder.layer.3.crossattention.output.dense.bias', 'encoder.layer.11.crossattention.self.value.weight', 'encoder.layer.11.crossattention.self.query.bias', 'encoder.layer.8.crossattention.self.key.weight', 'encoder.layer.11.crossattention.self.key.weight', 'encoder.layer.8.crossattention.self.key.bias', 'cls.predictions.transform.dense.weight']
+You should probably TRAIN this model on a down-stream task to be able to use it for predictions and inference.
+You are resizing the embedding layer without providing a `pad_to_multiple_of` parameter. This means that the new embedding dimension will be 30524. This might induce some performance reduction as *Tensor Cores* will not be available. For more details about this, or help on choosing the correct value for resizing, refer to this guide: https://docs.nvidia.com/deeplearning/performance/dl-performance-matrix-multiplication/index.html#requirements-tc
+모델 비전 width 변수: 384
+encoder loading step finish
+bert size: minilm
+/embeddings/word_embeddings is tied
+/embeddings/position_embeddings is tied
+/embeddings/LayerNorm is tied
+/encoder/layer/0/crossattention/self/query is tied
+/encoder/layer/0/crossattention/self/key is tied
+/encoder/layer/0/crossattention/self/value is tied
+/encoder/layer/0/crossattention/output/dense is tied
+/encoder/layer/0/crossattention/output/LayerNorm is tied
+/encoder/layer/0/intermediate/dense is tied
+/encoder/layer/0/output/dense is tied
+/encoder/layer/0/output/LayerNorm is tied
+/encoder/layer/1/crossattention/self/query is tied
+/encoder/layer/1/crossattention/self/key is tied
+/encoder/layer/1/crossattention/self/value is tied
+/encoder/layer/1/crossattention/output/dense is tied
+/encoder/layer/1/crossattention/output/LayerNorm is tied
+/encoder/layer/1/intermediate/dense is tied
+/encoder/layer/1/output/dense is tied
+/encoder/layer/1/output/LayerNorm is tied
+/encoder/layer/2/crossattention/self/query is tied
+/encoder/layer/2/crossattention/self/key is tied
+/encoder/layer/2/crossattention/self/value is tied
+/encoder/layer/2/crossattention/output/dense is tied
+/encoder/layer/2/crossattention/output/LayerNorm is tied
+/encoder/layer/2/intermediate/dense is tied
+/encoder/layer/2/output/dense is tied
+/encoder/layer/2/output/LayerNorm is tied
+/encoder/layer/3/crossattention/self/query is tied
+/encoder/layer/3/crossattention/self/key is tied
+/encoder/layer/3/crossattention/self/value is tied
+/encoder/layer/3/crossattention/output/dense is tied
+/encoder/layer/3/crossattention/output/LayerNorm is tied
+/encoder/layer/3/intermediate/dense is tied
+/encoder/layer/3/output/dense is tied
+/encoder/layer/3/output/LayerNorm is tied
+/encoder/layer/4/crossattention/self/query is tied
+/encoder/layer/4/crossattention/self/key is tied
+/encoder/layer/4/crossattention/self/value is tied
+/encoder/layer/4/crossattention/output/dense is tied
+/encoder/layer/4/crossattention/output/LayerNorm is tied
+/encoder/layer/4/intermediate/dense is tied
+/encoder/layer/4/output/dense is tied
+/encoder/layer/4/output/LayerNorm is tied
+/encoder/layer/5/crossattention/self/query is tied
+/encoder/layer/5/crossattention/self/key is tied
+/encoder/layer/5/crossattention/self/value is tied
+/encoder/layer/5/crossattention/output/dense is tied
+/encoder/layer/5/crossattention/output/LayerNorm is tied
+/encoder/layer/5/intermediate/dense is tied
+/encoder/layer/5/output/dense is tied
+/encoder/layer/5/output/LayerNorm is tied
+/encoder/layer/6/crossattention/self/query is tied
+/encoder/layer/6/crossattention/self/key is tied
+/encoder/layer/6/crossattention/self/value is tied
+/encoder/layer/6/crossattention/output/dense is tied
+/encoder/layer/6/crossattention/output/LayerNorm is tied
+/encoder/layer/6/intermediate/dense is tied
+/encoder/layer/6/output/dense is tied
+/encoder/layer/6/output/LayerNorm is tied
+/encoder/layer/7/crossattention/self/query is tied
+/encoder/layer/7/crossattention/self/key is tied
+/encoder/layer/7/crossattention/self/value is tied
+/encoder/layer/7/crossattention/output/dense is tied
+/encoder/layer/7/crossattention/output/LayerNorm is tied
+/encoder/layer/7/intermediate/dense is tied
+/encoder/layer/7/output/dense is tied
+/encoder/layer/7/output/LayerNorm is tied
+/encoder/layer/8/crossattention/self/query is tied
+/encoder/layer/8/crossattention/self/key is tied
+/encoder/layer/8/crossattention/self/value is tied
+/encoder/layer/8/crossattention/output/dense is tied
+/encoder/layer/8/crossattention/output/LayerNorm is tied
+/encoder/layer/8/intermediate/dense is tied
+/encoder/layer/8/output/dense is tied
+/encoder/layer/8/output/LayerNorm is tied
+/encoder/layer/9/crossattention/self/query is tied
+/encoder/layer/9/crossattention/self/key is tied
+/encoder/layer/9/crossattention/self/value is tied
+/encoder/layer/9/crossattention/output/dense is tied
+/encoder/layer/9/crossattention/output/LayerNorm is tied
+/encoder/layer/9/intermediate/dense is tied
+/encoder/layer/9/output/dense is tied
+/encoder/layer/9/output/LayerNorm is tied
+/encoder/layer/10/crossattention/self/query is tied
+/encoder/layer/10/crossattention/self/key is tied
+/encoder/layer/10/crossattention/self/value is tied
+/encoder/layer/10/crossattention/output/dense is tied
+/encoder/layer/10/crossattention/output/LayerNorm is tied
+/encoder/layer/10/intermediate/dense is tied
+/encoder/layer/10/output/dense is tied
+/encoder/layer/10/output/LayerNorm is tied
+/encoder/layer/11/crossattention/self/query is tied
+/encoder/layer/11/crossattention/self/key is tied
+/encoder/layer/11/crossattention/self/value is tied
+/encoder/layer/11/crossattention/output/dense is tied
+/encoder/layer/11/crossattention/output/LayerNorm is tied
+/encoder/layer/11/intermediate/dense is tied
+/encoder/layer/11/output/dense is tied
+/encoder/layer/11/output/LayerNorm is tied
+Loaded model weights from: /home/minwoo/Distillation_Project/output/pt_smallreg_minilm_baseline/checkpoint_19.pth
+<All keys matched successfully>
+
+Computing features for ITC-only Retrieval evaluation...
+ITC-only Retrieval Evaluation time 0:00:12
+
+----- ITC-only (cosine) -----
+  i2t (txt retrieval)  R@1=49.06  R@5=76.98  R@10=85.74  mean=70.59
+  t2i (img retrieval)  R@1=32.62  R@5=61.80  R@10=73.74  mean=56.05
+  r_mean = 63.32
+  [17.1s]
+
+Computing features for Retrieval evaluation...
+Retrieval Evaluation:  [   0/5000]  eta: 0:04:55  elapsed: 0:00:00    time: 0.0592  data: 0.0062  max mem: 1649
+Retrieval Evaluation:  [  50/5000]  eta: 0:01:40  elapsed: 0:00:01    time: 0.0199  data: 0.0000  max mem: 1659
+Retrieval Evaluation:  [ 100/5000]  eta: 0:01:29  elapsed: 0:00:01    time: 0.0165  data: 0.0000  max mem: 1659
+Retrieval Evaluation:  [ 150/5000]  eta: 0:01:26  elapsed: 0:00:02    time: 0.0168  data: 0.0000  max mem: 1659
+Retrieval Evaluation:  [ 200/5000]  eta: 0:01:24  elapsed: 0:00:03    time: 0.0168  data: 0.0000  max mem: 1659
+Retrieval Evaluation:  [ 250/5000]  eta: 0:01:22  elapsed: 0:00:04    time: 0.0170  data: 0.0000  max mem: 1659
+Retrieval Evaluation:  [ 300/5000]  eta: 0:01:21  elapsed: 0:00:05    time: 0.0169  data: 0.0000  max mem: 1659
+Retrieval Evaluation:  [ 350/5000]  eta: 0:01:20  elapsed: 0:00:06    time: 0.0168  data: 0.0000  max mem: 1659
+Retrieval Evaluation:  [ 400/5000]  eta: 0:01:18  elapsed: 0:00:06    time: 0.0151  data: 0.0000  max mem: 1659
+Retrieval Evaluation:  [ 450/5000]  eta: 0:01:17  elapsed: 0:00:07    time: 0.0160  data: 0.0000  max mem: 1659
+Retrieval Evaluation:  [ 500/5000]  eta: 0:01:16  elapsed: 0:00:08    time: 0.0180  data: 0.0000  max mem: 1659
+Retrieval Evaluation:  [ 550/5000]  eta: 0:01:15  elapsed: 0:00:09    time: 0.0175  data: 0.0000  max mem: 1659
+Retrieval Evaluation:  [ 600/5000]  eta: 0:01:15  elapsed: 0:00:10    time: 0.0182  data: 0.0000  max mem: 1659
+Retrieval Evaluation:  [ 650/5000]  eta: 0:01:14  elapsed: 0:00:11    time: 0.0180  data: 0.0000  max mem: 1659
+Retrieval Evaluation:  [ 700/5000]  eta: 0:01:14  elapsed: 0:00:12    time: 0.0202  data: 0.0000  max mem: 1659
+Retrieval Evaluation:  [ 750/5000]  eta: 0:01:14  elapsed: 0:00:13    time: 0.0195  data: 0.0000  max mem: 1659
+Retrieval Evaluation:  [ 800/5000]  eta: 0:01:13  elapsed: 0:00:14    time: 0.0197  data: 0.0000  max mem: 1659
+Retrieval Evaluation:  [ 850/5000]  eta: 0:01:13  elapsed: 0:00:15    time: 0.0181  data: 0.0000  max mem: 1659
+Retrieval Evaluation:  [ 900/5000]  eta: 0:01:12  elapsed: 0:00:15    time: 0.0191  data: 0.0000  max mem: 1659
+Retrieval Evaluation:  [ 950/5000]  eta: 0:01:11  elapsed: 0:00:16    time: 0.0187  data: 0.0000  max mem: 1659
+Retrieval Evaluation:  [1000/5000]  eta: 0:01:11  elapsed: 0:00:17    time: 0.0182  data: 0.0000  max mem: 1659
+Retrieval Evaluation:  [1050/5000]  eta: 0:01:10  elapsed: 0:00:18    time: 0.0182  data: 0.0000  max mem: 1659
+Retrieval Evaluation:  [1100/5000]  eta: 0:01:09  elapsed: 0:00:19    time: 0.0181  data: 0.0000  max mem: 1659
+Retrieval Evaluation:  [1150/5000]  eta: 0:01:08  elapsed: 0:00:20    time: 0.0156  data: 0.0000  max mem: 1659
+Retrieval Evaluation:  [1200/5000]  eta: 0:01:06  elapsed: 0:00:21    time: 0.0156  data: 0.0000  max mem: 1659
+Retrieval Evaluation:  [1250/5000]  eta: 0:01:06  elapsed: 0:00:22    time: 0.0282  data: 0.0000  max mem: 1659
+Retrieval Evaluation:  [1300/5000]  eta: 0:01:07  elapsed: 0:00:23    time: 0.0245  data: 0.0000  max mem: 1659
+Retrieval Evaluation:  [1350/5000]  eta: 0:01:07  elapsed: 0:00:24    time: 0.0249  data: 0.0000  max mem: 1659
+Retrieval Evaluation:  [1400/5000]  eta: 0:01:07  elapsed: 0:00:26    time: 0.0281  data: 0.0000  max mem: 1659
+Retrieval Evaluation:  [1450/5000]  eta: 0:01:07  elapsed: 0:00:27    time: 0.0240  data: 0.0000  max mem: 1659
+Retrieval Evaluation:  [1500/5000]  eta: 0:01:07  elapsed: 0:00:28    time: 0.0278  data: 0.0000  max mem: 1659
+Retrieval Evaluation:  [1550/5000]  eta: 0:01:06  elapsed: 0:00:30    time: 0.0242  data: 0.0000  max mem: 1659
+Retrieval Evaluation:  [1600/5000]  eta: 0:01:06  elapsed: 0:00:31    time: 0.0264  data: 0.0000  max mem: 1659
+Retrieval Evaluation:  [1650/5000]  eta: 0:01:06  elapsed: 0:00:32    time: 0.0246  data: 0.0000  max mem: 1659
+Retrieval Evaluation:  [1700/5000]  eta: 0:01:05  elapsed: 0:00:33    time: 0.0251  data: 0.0000  max mem: 1659
+Retrieval Evaluation:  [1750/5000]  eta: 0:01:05  elapsed: 0:00:35    time: 0.0278  data: 0.0000  max mem: 1659
+Retrieval Evaluation:  [1800/5000]  eta: 0:01:04  elapsed: 0:00:36    time: 0.0244  data: 0.0000  max mem: 1659
+Retrieval Evaluation:  [1850/5000]  eta: 0:01:04  elapsed: 0:00:37    time: 0.0252  data: 0.0000  max mem: 1659
+Retrieval Evaluation:  [1900/5000]  eta: 0:01:03  elapsed: 0:00:39    time: 0.0279  data: 0.0000  max mem: 1659
+Retrieval Evaluation:  [1950/5000]  eta: 0:01:03  elapsed: 0:00:40    time: 0.0244  data: 0.0000  max mem: 1659
+Retrieval Evaluation:  [2000/5000]  eta: 0:01:02  elapsed: 0:00:41    time: 0.0255  data: 0.0000  max mem: 1659
+Retrieval Evaluation:  [2050/5000]  eta: 0:01:01  elapsed: 0:00:42    time: 0.0275  data: 0.0000  max mem: 1659
+Retrieval Evaluation:  [2100/5000]  eta: 0:01:01  elapsed: 0:00:44    time: 0.0243  data: 0.0000  max mem: 1659
+Retrieval Evaluation:  [2150/5000]  eta: 0:01:00  elapsed: 0:00:45    time: 0.0256  data: 0.0000  max mem: 1659
+Retrieval Evaluation:  [2200/5000]  eta: 0:00:59  elapsed: 0:00:46    time: 0.0274  data: 0.0000  max mem: 1659
+Retrieval Evaluation:  [2250/5000]  eta: 0:00:58  elapsed: 0:00:48    time: 0.0245  data: 0.0000  max mem: 1659
+Retrieval Evaluation:  [2300/5000]  eta: 0:00:58  elapsed: 0:00:49    time: 0.0280  data: 0.0000  max mem: 1659
+Retrieval Evaluation:  [2350/5000]  eta: 0:00:57  elapsed: 0:00:50    time: 0.0244  data: 0.0000  max mem: 1659
+Retrieval Evaluation:  [2400/5000]  eta: 0:00:56  elapsed: 0:00:52    time: 0.0256  data: 0.0000  max mem: 1659
+Retrieval Evaluation:  [2450/5000]  eta: 0:00:55  elapsed: 0:00:53    time: 0.0260  data: 0.0000  max mem: 1659
+Retrieval Evaluation:  [2500/5000]  eta: 0:00:54  elapsed: 0:00:54    time: 0.0253  data: 0.0000  max mem: 1659
+Retrieval Evaluation:  [2550/5000]  eta: 0:00:53  elapsed: 0:00:55    time: 0.0284  data: 0.0000  max mem: 1659
+Retrieval Evaluation:  [2600/5000]  eta: 0:00:52  elapsed: 0:00:57    time: 0.0244  data: 0.0000  max mem: 1659
+Retrieval Evaluation:  [2650/5000]  eta: 0:00:51  elapsed: 0:00:58    time: 0.0286  data: 0.0000  max mem: 1659
+Retrieval Evaluation:  [2700/5000]  eta: 0:00:50  elapsed: 0:00:59    time: 0.0245  data: 0.0000  max mem: 1659
+Retrieval Evaluation:  [2750/5000]  eta: 0:00:50  elapsed: 0:01:01    time: 0.0287  data: 0.0000  max mem: 1659
+Retrieval Evaluation:  [2800/5000]  eta: 0:00:49  elapsed: 0:01:02    time: 0.0248  data: 0.0000  max mem: 1659
+Retrieval Evaluation:  [2850/5000]  eta: 0:00:48  elapsed: 0:01:03    time: 0.0255  data: 0.0000  max mem: 1659
+Retrieval Evaluation:  [2900/5000]  eta: 0:00:47  elapsed: 0:01:05    time: 0.0242  data: 0.0000  max mem: 1659
+Retrieval Evaluation:  [2950/5000]  eta: 0:00:46  elapsed: 0:01:06    time: 0.0251  data: 0.0000  max mem: 1659
+Retrieval Evaluation:  [3000/5000]  eta: 0:00:45  elapsed: 0:01:07    time: 0.0275  data: 0.0000  max mem: 1659
+Retrieval Evaluation:  [3050/5000]  eta: 0:00:44  elapsed: 0:01:08    time: 0.0240  data: 0.0000  max mem: 1659
+Retrieval Evaluation:  [3100/5000]  eta: 0:00:43  elapsed: 0:01:10    time: 0.0280  data: 0.0000  max mem: 1659
+Retrieval Evaluation:  [3150/5000]  eta: 0:00:41  elapsed: 0:01:11    time: 0.0244  data: 0.0000  max mem: 1659
+Retrieval Evaluation:  [3200/5000]  eta: 0:00:40  elapsed: 0:01:12    time: 0.0255  data: 0.0000  max mem: 1659
+Retrieval Evaluation:  [3250/5000]  eta: 0:00:39  elapsed: 0:01:14    time: 0.0246  data: 0.0000  max mem: 1659
+Retrieval Evaluation:  [3300/5000]  eta: 0:00:38  elapsed: 0:01:15    time: 0.0256  data: 0.0000  max mem: 1659
+Retrieval Evaluation:  [3350/5000]  eta: 0:00:37  elapsed: 0:01:16    time: 0.0243  data: 0.0000  max mem: 1659
+Retrieval Evaluation:  [3400/5000]  eta: 0:00:36  elapsed: 0:01:18    time: 0.0258  data: 0.0000  max mem: 1659
+Retrieval Evaluation:  [3450/5000]  eta: 0:00:35  elapsed: 0:01:19    time: 0.0263  data: 0.0000  max mem: 1659
+Retrieval Evaluation:  [3500/5000]  eta: 0:00:34  elapsed: 0:01:20    time: 0.0255  data: 0.0000  max mem: 1659
+Retrieval Evaluation:  [3550/5000]  eta: 0:00:33  elapsed: 0:01:22    time: 0.0250  data: 0.0000  max mem: 1659
+Retrieval Evaluation:  [3600/5000]  eta: 0:00:32  elapsed: 0:01:23    time: 0.0287  data: 0.0000  max mem: 1659
+Retrieval Evaluation:  [3650/5000]  eta: 0:00:31  elapsed: 0:01:24    time: 0.0246  data: 0.0000  max mem: 1659
+Retrieval Evaluation:  [3700/5000]  eta: 0:00:30  elapsed: 0:01:25    time: 0.0268  data: 0.0000  max mem: 1659
+Retrieval Evaluation:  [3750/5000]  eta: 0:00:29  elapsed: 0:01:27    time: 0.0263  data: 0.0000  max mem: 1659
+Retrieval Evaluation:  [3800/5000]  eta: 0:00:27  elapsed: 0:01:28    time: 0.0246  data: 0.0000  max mem: 1659
+Retrieval Evaluation:  [3850/5000]  eta: 0:00:26  elapsed: 0:01:29    time: 0.0271  data: 0.0000  max mem: 1659
+Retrieval Evaluation:  [3900/5000]  eta: 0:00:25  elapsed: 0:01:31    time: 0.0248  data: 0.0000  max mem: 1659
+Retrieval Evaluation:  [3950/5000]  eta: 0:00:24  elapsed: 0:01:32    time: 0.0189  data: 0.0000  max mem: 1659
+Retrieval Evaluation:  [4000/5000]  eta: 0:00:23  elapsed: 0:01:33    time: 0.0283  data: 0.0000  max mem: 1659
+Retrieval Evaluation:  [4050/5000]  eta: 0:00:22  elapsed: 0:01:34    time: 0.0244  data: 0.0000  max mem: 1659
+Retrieval Evaluation:  [4100/5000]  eta: 0:00:21  elapsed: 0:01:36    time: 0.0249  data: 0.0000  max mem: 1659
+Retrieval Evaluation:  [4150/5000]  eta: 0:00:19  elapsed: 0:01:37    time: 0.0253  data: 0.0000  max mem: 1659
+Retrieval Evaluation:  [4200/5000]  eta: 0:00:18  elapsed: 0:01:38    time: 0.0244  data: 0.0000  max mem: 1659
+Retrieval Evaluation:  [4250/5000]  eta: 0:00:17  elapsed: 0:01:39    time: 0.0276  data: 0.0000  max mem: 1659
+Retrieval Evaluation:  [4300/5000]  eta: 0:00:16  elapsed: 0:01:41    time: 0.0270  data: 0.0000  max mem: 1659
+Retrieval Evaluation:  [4350/5000]  eta: 0:00:15  elapsed: 0:01:42    time: 0.0241  data: 0.0000  max mem: 1659
+Retrieval Evaluation:  [4400/5000]  eta: 0:00:14  elapsed: 0:01:43    time: 0.0287  data: 0.0000  max mem: 1659
+Retrieval Evaluation:  [4450/5000]  eta: 0:00:12  elapsed: 0:01:45    time: 0.0246  data: 0.0000  max mem: 1659
+Retrieval Evaluation:  [4500/5000]  eta: 0:00:11  elapsed: 0:01:46    time: 0.0263  data: 0.0000  max mem: 1659
+Retrieval Evaluation:  [4550/5000]  eta: 0:00:10  elapsed: 0:01:47    time: 0.0257  data: 0.0000  max mem: 1659
+Retrieval Evaluation:  [4600/5000]  eta: 0:00:09  elapsed: 0:01:48    time: 0.0253  data: 0.0000  max mem: 1659
+Retrieval Evaluation:  [4650/5000]  eta: 0:00:08  elapsed: 0:01:50    time: 0.0277  data: 0.0000  max mem: 1659
+Retrieval Evaluation:  [4700/5000]  eta: 0:00:07  elapsed: 0:01:51    time: 0.0244  data: 0.0000  max mem: 1659
+Retrieval Evaluation:  [4750/5000]  eta: 0:00:05  elapsed: 0:01:52    time: 0.0281  data: 0.0000  max mem: 1659
+Retrieval Evaluation:  [4800/5000]  eta: 0:00:04  elapsed: 0:01:54    time: 0.0247  data: 0.0000  max mem: 1659
+Retrieval Evaluation:  [4850/5000]  eta: 0:00:03  elapsed: 0:01:55    time: 0.0279  data: 0.0000  max mem: 1659
+Retrieval Evaluation:  [4900/5000]  eta: 0:00:02  elapsed: 0:01:56    time: 0.0243  data: 0.0000  max mem: 1659
+Retrieval Evaluation:  [4950/5000]  eta: 0:00:01  elapsed: 0:01:57    time: 0.0264  data: 0.0000  max mem: 1659
+Retrieval Evaluation:  [4999/5000]  eta: 0:00:00  elapsed: 0:01:59    time: 0.0260  data: 0.0000  max mem: 1659
+Retrieval Evaluation: Total time: 0:01:59 (0.0239 s / it)
+Retrieval Evaluation:  [    0/25010]  eta: 0:17:45  elapsed: 0:00:00    time: 0.0426  data: 0.0215  max mem: 2133
+Retrieval Evaluation:  [   50/25010]  eta: 0:12:53  elapsed: 0:00:01    time: 0.0312  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [  100/25010]  eta: 0:12:33  elapsed: 0:00:03    time: 0.0311  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [  150/25010]  eta: 0:12:14  elapsed: 0:00:04    time: 0.0284  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [  200/25010]  eta: 0:12:08  elapsed: 0:00:05    time: 0.0279  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [  250/25010]  eta: 0:12:02  elapsed: 0:00:07    time: 0.0267  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [  300/25010]  eta: 0:11:58  elapsed: 0:00:08    time: 0.0270  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [  350/25010]  eta: 0:11:57  elapsed: 0:00:10    time: 0.0291  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [  400/25010]  eta: 0:11:53  elapsed: 0:00:11    time: 0.0296  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [  450/25010]  eta: 0:11:52  elapsed: 0:00:13    time: 0.0297  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [  500/25010]  eta: 0:11:49  elapsed: 0:00:14    time: 0.0300  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [  550/25010]  eta: 0:11:45  elapsed: 0:00:15    time: 0.0274  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [  600/25010]  eta: 0:11:42  elapsed: 0:00:17    time: 0.0269  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [  650/25010]  eta: 0:11:40  elapsed: 0:00:18    time: 0.0267  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [  700/25010]  eta: 0:11:39  elapsed: 0:00:20    time: 0.0290  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [  750/25010]  eta: 0:11:37  elapsed: 0:00:21    time: 0.0293  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [  800/25010]  eta: 0:11:35  elapsed: 0:00:23    time: 0.0300  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [  850/25010]  eta: 0:11:33  elapsed: 0:00:24    time: 0.0298  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [  900/25010]  eta: 0:11:30  elapsed: 0:00:25    time: 0.0274  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [  950/25010]  eta: 0:11:29  elapsed: 0:00:27    time: 0.0267  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 1000/25010]  eta: 0:11:27  elapsed: 0:00:28    time: 0.0267  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 1050/25010]  eta: 0:11:26  elapsed: 0:00:30    time: 0.0291  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 1100/25010]  eta: 0:11:24  elapsed: 0:00:31    time: 0.0299  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 1150/25010]  eta: 0:11:23  elapsed: 0:00:32    time: 0.0296  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 1200/25010]  eta: 0:11:20  elapsed: 0:00:34    time: 0.0269  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 1250/25010]  eta: 0:11:19  elapsed: 0:00:35    time: 0.0297  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 1300/25010]  eta: 0:11:16  elapsed: 0:00:37    time: 0.0265  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 1350/25010]  eta: 0:11:15  elapsed: 0:00:38    time: 0.0271  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 1400/25010]  eta: 0:11:14  elapsed: 0:00:40    time: 0.0292  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 1450/25010]  eta: 0:11:12  elapsed: 0:00:41    time: 0.0297  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 1500/25010]  eta: 0:11:11  elapsed: 0:00:42    time: 0.0298  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 1550/25010]  eta: 0:11:09  elapsed: 0:00:44    time: 0.0295  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 1600/25010]  eta: 0:11:07  elapsed: 0:00:45    time: 0.0275  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 1650/25010]  eta: 0:11:06  elapsed: 0:00:47    time: 0.0267  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 1700/25010]  eta: 0:11:04  elapsed: 0:00:48    time: 0.0270  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 1750/25010]  eta: 0:11:03  elapsed: 0:00:49    time: 0.0290  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 1800/25010]  eta: 0:11:02  elapsed: 0:00:51    time: 0.0299  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 1850/25010]  eta: 0:11:00  elapsed: 0:00:52    time: 0.0299  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 1900/25010]  eta: 0:10:58  elapsed: 0:00:54    time: 0.0278  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 1950/25010]  eta: 0:10:57  elapsed: 0:00:55    time: 0.0269  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 2000/25010]  eta: 0:10:55  elapsed: 0:00:57    time: 0.0266  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 2050/25010]  eta: 0:10:54  elapsed: 0:00:58    time: 0.0290  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 2100/25010]  eta: 0:10:52  elapsed: 0:00:59    time: 0.0292  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 2150/25010]  eta: 0:10:51  elapsed: 0:01:01    time: 0.0306  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 2200/25010]  eta: 0:10:50  elapsed: 0:01:02    time: 0.0309  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 2250/25010]  eta: 0:10:49  elapsed: 0:01:04    time: 0.0298  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 2300/25010]  eta: 0:10:47  elapsed: 0:01:05    time: 0.0274  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 2350/25010]  eta: 0:10:45  elapsed: 0:01:07    time: 0.0266  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 2400/25010]  eta: 0:10:44  elapsed: 0:01:08    time: 0.0263  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 2450/25010]  eta: 0:10:42  elapsed: 0:01:09    time: 0.0291  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 2500/25010]  eta: 0:10:41  elapsed: 0:01:11    time: 0.0297  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 2550/25010]  eta: 0:10:40  elapsed: 0:01:12    time: 0.0298  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 2600/25010]  eta: 0:10:38  elapsed: 0:01:14    time: 0.0274  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 2650/25010]  eta: 0:10:36  elapsed: 0:01:15    time: 0.0268  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 2700/25010]  eta: 0:10:35  elapsed: 0:01:16    time: 0.0266  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 2750/25010]  eta: 0:10:33  elapsed: 0:01:18    time: 0.0292  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 2800/25010]  eta: 0:10:32  elapsed: 0:01:19    time: 0.0295  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 2850/25010]  eta: 0:10:31  elapsed: 0:01:21    time: 0.0301  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 2900/25010]  eta: 0:10:29  elapsed: 0:01:22    time: 0.0299  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 2950/25010]  eta: 0:10:27  elapsed: 0:01:24    time: 0.0275  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 3000/25010]  eta: 0:10:26  elapsed: 0:01:25    time: 0.0268  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 3050/25010]  eta: 0:10:25  elapsed: 0:01:26    time: 0.0272  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 3100/25010]  eta: 0:10:23  elapsed: 0:01:28    time: 0.0292  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 3150/25010]  eta: 0:10:22  elapsed: 0:01:29    time: 0.0299  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 3200/25010]  eta: 0:10:18  elapsed: 0:01:30    time: 0.0184  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 3250/25010]  eta: 0:10:14  elapsed: 0:01:31    time: 0.0222  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 3300/25010]  eta: 0:10:10  elapsed: 0:01:32    time: 0.0221  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 3350/25010]  eta: 0:10:07  elapsed: 0:01:34    time: 0.0222  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 3400/25010]  eta: 0:10:04  elapsed: 0:01:35    time: 0.0264  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 3450/25010]  eta: 0:10:03  elapsed: 0:01:36    time: 0.0304  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 3500/25010]  eta: 0:10:02  elapsed: 0:01:38    time: 0.0272  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 3550/25010]  eta: 0:10:00  elapsed: 0:01:39    time: 0.0297  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 3600/25010]  eta: 0:09:59  elapsed: 0:01:40    time: 0.0293  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 3650/25010]  eta: 0:09:58  elapsed: 0:01:42    time: 0.0299  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 3700/25010]  eta: 0:09:57  elapsed: 0:01:43    time: 0.0305  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 3750/25010]  eta: 0:09:56  elapsed: 0:01:45    time: 0.0296  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 3800/25010]  eta: 0:09:54  elapsed: 0:01:46    time: 0.0267  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 3850/25010]  eta: 0:09:53  elapsed: 0:01:48    time: 0.0304  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 3900/25010]  eta: 0:09:52  elapsed: 0:01:49    time: 0.0277  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 3950/25010]  eta: 0:09:51  elapsed: 0:01:50    time: 0.0276  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 4000/25010]  eta: 0:09:50  elapsed: 0:01:52    time: 0.0282  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 4050/25010]  eta: 0:09:48  elapsed: 0:01:53    time: 0.0291  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 4100/25010]  eta: 0:09:47  elapsed: 0:01:55    time: 0.0297  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 4150/25010]  eta: 0:09:46  elapsed: 0:01:56    time: 0.0299  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 4200/25010]  eta: 0:09:45  elapsed: 0:01:58    time: 0.0300  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 4250/25010]  eta: 0:09:43  elapsed: 0:01:59    time: 0.0275  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 4300/25010]  eta: 0:09:42  elapsed: 0:02:01    time: 0.0282  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 4350/25010]  eta: 0:09:41  elapsed: 0:02:02    time: 0.0273  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 4400/25010]  eta: 0:09:40  elapsed: 0:02:03    time: 0.0279  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 4450/25010]  eta: 0:09:38  elapsed: 0:02:05    time: 0.0268  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 4500/25010]  eta: 0:09:37  elapsed: 0:02:06    time: 0.0292  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 4550/25010]  eta: 0:09:36  elapsed: 0:02:08    time: 0.0296  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 4600/25010]  eta: 0:09:34  elapsed: 0:02:09    time: 0.0222  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 4650/25010]  eta: 0:09:32  elapsed: 0:02:10    time: 0.0268  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 4700/25010]  eta: 0:09:31  elapsed: 0:02:12    time: 0.0295  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 4750/25010]  eta: 0:09:30  elapsed: 0:02:13    time: 0.0308  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 4800/25010]  eta: 0:09:29  elapsed: 0:02:15    time: 0.0298  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 4850/25010]  eta: 0:09:27  elapsed: 0:02:16    time: 0.0301  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 4900/25010]  eta: 0:09:26  elapsed: 0:02:18    time: 0.0275  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 4950/25010]  eta: 0:09:25  elapsed: 0:02:19    time: 0.0268  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 5000/25010]  eta: 0:09:23  elapsed: 0:02:20    time: 0.0268  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 5050/25010]  eta: 0:09:22  elapsed: 0:02:22    time: 0.0291  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 5100/25010]  eta: 0:09:21  elapsed: 0:02:23    time: 0.0294  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 5150/25010]  eta: 0:09:19  elapsed: 0:02:25    time: 0.0307  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 5200/25010]  eta: 0:09:18  elapsed: 0:02:26    time: 0.0309  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 5250/25010]  eta: 0:09:17  elapsed: 0:02:28    time: 0.0301  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 5300/25010]  eta: 0:09:15  elapsed: 0:02:29    time: 0.0275  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 5350/25010]  eta: 0:09:14  elapsed: 0:02:30    time: 0.0269  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 5400/25010]  eta: 0:09:13  elapsed: 0:02:32    time: 0.0270  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 5450/25010]  eta: 0:09:11  elapsed: 0:02:33    time: 0.0267  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 5500/25010]  eta: 0:09:10  elapsed: 0:02:35    time: 0.0296  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 5550/25010]  eta: 0:09:09  elapsed: 0:02:36    time: 0.0303  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 5600/25010]  eta: 0:09:07  elapsed: 0:02:38    time: 0.0268  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 5650/25010]  eta: 0:09:06  elapsed: 0:02:39    time: 0.0297  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 5700/25010]  eta: 0:09:04  elapsed: 0:02:40    time: 0.0277  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 5750/25010]  eta: 0:09:03  elapsed: 0:02:42    time: 0.0271  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 5800/25010]  eta: 0:09:02  elapsed: 0:02:43    time: 0.0297  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 5850/25010]  eta: 0:09:00  elapsed: 0:02:45    time: 0.0271  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 5900/25010]  eta: 0:08:59  elapsed: 0:02:46    time: 0.0270  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 5950/25010]  eta: 0:08:58  elapsed: 0:02:48    time: 0.0269  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 6000/25010]  eta: 0:08:56  elapsed: 0:02:49    time: 0.0295  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 6050/25010]  eta: 0:08:55  elapsed: 0:02:51    time: 0.0304  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 6100/25010]  eta: 0:08:54  elapsed: 0:02:52    time: 0.0299  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 6150/25010]  eta: 0:08:52  elapsed: 0:02:53    time: 0.0277  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 6200/25010]  eta: 0:08:51  elapsed: 0:02:55    time: 0.0273  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 6250/25010]  eta: 0:08:50  elapsed: 0:02:56    time: 0.0266  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 6300/25010]  eta: 0:08:48  elapsed: 0:02:58    time: 0.0272  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 6350/25010]  eta: 0:08:47  elapsed: 0:02:59    time: 0.0297  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 6400/25010]  eta: 0:08:46  elapsed: 0:03:01    time: 0.0304  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 6450/25010]  eta: 0:08:44  elapsed: 0:03:02    time: 0.0305  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 6500/25010]  eta: 0:08:43  elapsed: 0:03:03    time: 0.0269  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 6550/25010]  eta: 0:08:41  elapsed: 0:03:05    time: 0.0302  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 6600/25010]  eta: 0:08:40  elapsed: 0:03:06    time: 0.0267  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 6650/25010]  eta: 0:08:39  elapsed: 0:03:08    time: 0.0299  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 6700/25010]  eta: 0:08:37  elapsed: 0:03:09    time: 0.0258  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 6750/25010]  eta: 0:08:36  elapsed: 0:03:10    time: 0.0298  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 6800/25010]  eta: 0:08:34  elapsed: 0:03:12    time: 0.0267  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 6850/25010]  eta: 0:08:33  elapsed: 0:03:13    time: 0.0302  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 6900/25010]  eta: 0:08:31  elapsed: 0:03:15    time: 0.0267  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 6950/25010]  eta: 0:08:30  elapsed: 0:03:16    time: 0.0292  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 7000/25010]  eta: 0:08:28  elapsed: 0:03:17    time: 0.0299  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 7050/25010]  eta: 0:08:27  elapsed: 0:03:19    time: 0.0269  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 7100/25010]  eta: 0:08:25  elapsed: 0:03:20    time: 0.0270  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 7150/25010]  eta: 0:08:24  elapsed: 0:03:22    time: 0.0299  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 7200/25010]  eta: 0:08:23  elapsed: 0:03:23    time: 0.0299  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 7250/25010]  eta: 0:08:21  elapsed: 0:03:24    time: 0.0267  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 7300/25010]  eta: 0:08:20  elapsed: 0:03:26    time: 0.0267  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 7350/25010]  eta: 0:08:18  elapsed: 0:03:27    time: 0.0233  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 7400/25010]  eta: 0:08:16  elapsed: 0:03:28    time: 0.0292  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 7450/25010]  eta: 0:08:15  elapsed: 0:03:30    time: 0.0297  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 7500/25010]  eta: 0:08:14  elapsed: 0:03:31    time: 0.0301  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 7550/25010]  eta: 0:08:12  elapsed: 0:03:33    time: 0.0265  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 7600/25010]  eta: 0:08:11  elapsed: 0:03:34    time: 0.0308  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 7650/25010]  eta: 0:08:09  elapsed: 0:03:35    time: 0.0274  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 7700/25010]  eta: 0:08:08  elapsed: 0:03:37    time: 0.0265  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 7750/25010]  eta: 0:08:07  elapsed: 0:03:38    time: 0.0300  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 7800/25010]  eta: 0:08:05  elapsed: 0:03:40    time: 0.0304  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 7850/25010]  eta: 0:08:04  elapsed: 0:03:41    time: 0.0269  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 7900/25010]  eta: 0:08:03  elapsed: 0:03:43    time: 0.0269  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 7950/25010]  eta: 0:08:01  elapsed: 0:03:44    time: 0.0307  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 8000/25010]  eta: 0:08:00  elapsed: 0:03:46    time: 0.0289  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 8050/25010]  eta: 0:07:58  elapsed: 0:03:47    time: 0.0265  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 8100/25010]  eta: 0:07:57  elapsed: 0:03:48    time: 0.0303  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 8150/25010]  eta: 0:07:56  elapsed: 0:03:50    time: 0.0271  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 8200/25010]  eta: 0:07:54  elapsed: 0:03:51    time: 0.0293  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 8250/25010]  eta: 0:07:53  elapsed: 0:03:53    time: 0.0296  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 8300/25010]  eta: 0:07:51  elapsed: 0:03:54    time: 0.0284  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 8350/25010]  eta: 0:07:50  elapsed: 0:03:55    time: 0.0266  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 8400/25010]  eta: 0:07:49  elapsed: 0:03:57    time: 0.0271  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 8450/25010]  eta: 0:07:47  elapsed: 0:03:58    time: 0.0295  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 8500/25010]  eta: 0:07:46  elapsed: 0:04:00    time: 0.0300  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 8550/25010]  eta: 0:07:45  elapsed: 0:04:01    time: 0.0299  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 8600/25010]  eta: 0:07:43  elapsed: 0:04:03    time: 0.0262  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 8650/25010]  eta: 0:07:42  elapsed: 0:04:04    time: 0.0307  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 8700/25010]  eta: 0:07:40  elapsed: 0:04:05    time: 0.0274  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 8750/25010]  eta: 0:07:39  elapsed: 0:04:07    time: 0.0300  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 8800/25010]  eta: 0:07:37  elapsed: 0:04:08    time: 0.0265  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 8850/25010]  eta: 0:07:36  elapsed: 0:04:10    time: 0.0297  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 8900/25010]  eta: 0:07:35  elapsed: 0:04:11    time: 0.0272  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 8950/25010]  eta: 0:07:33  elapsed: 0:04:13    time: 0.0268  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 9000/25010]  eta: 0:07:32  elapsed: 0:04:14    time: 0.0265  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 9050/25010]  eta: 0:07:30  elapsed: 0:04:15    time: 0.0293  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 9100/25010]  eta: 0:07:29  elapsed: 0:04:17    time: 0.0300  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 9150/25010]  eta: 0:07:28  elapsed: 0:04:18    time: 0.0282  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 9200/25010]  eta: 0:07:26  elapsed: 0:04:20    time: 0.0276  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 9250/25010]  eta: 0:07:25  elapsed: 0:04:21    time: 0.0305  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 9300/25010]  eta: 0:07:24  elapsed: 0:04:23    time: 0.0274  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 9350/25010]  eta: 0:07:22  elapsed: 0:04:24    time: 0.0273  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 9400/25010]  eta: 0:07:21  elapsed: 0:04:25    time: 0.0304  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 9450/25010]  eta: 0:07:19  elapsed: 0:04:27    time: 0.0268  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 9500/25010]  eta: 0:07:18  elapsed: 0:04:28    time: 0.0294  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 9550/25010]  eta: 0:07:17  elapsed: 0:04:30    time: 0.0295  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 9600/25010]  eta: 0:07:15  elapsed: 0:04:31    time: 0.0300  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 9650/25010]  eta: 0:07:14  elapsed: 0:04:33    time: 0.0298  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 9700/25010]  eta: 0:07:12  elapsed: 0:04:34    time: 0.0274  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 9750/25010]  eta: 0:07:11  elapsed: 0:04:35    time: 0.0300  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 9800/25010]  eta: 0:07:10  elapsed: 0:04:37    time: 0.0297  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 9850/25010]  eta: 0:07:08  elapsed: 0:04:38    time: 0.0264  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 9900/25010]  eta: 0:07:07  elapsed: 0:04:40    time: 0.0305  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [ 9950/25010]  eta: 0:07:05  elapsed: 0:04:41    time: 0.0296  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [10000/25010]  eta: 0:07:04  elapsed: 0:04:42    time: 0.0275  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [10050/25010]  eta: 0:07:03  elapsed: 0:04:44    time: 0.0266  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [10100/25010]  eta: 0:07:01  elapsed: 0:04:45    time: 0.0270  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [10150/25010]  eta: 0:06:59  elapsed: 0:04:46    time: 0.0181  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [10200/25010]  eta: 0:06:57  elapsed: 0:04:47    time: 0.0224  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [10250/25010]  eta: 0:06:55  elapsed: 0:04:49    time: 0.0226  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [10300/25010]  eta: 0:06:53  elapsed: 0:04:50    time: 0.0189  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [10350/25010]  eta: 0:06:51  elapsed: 0:04:51    time: 0.0196  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [10400/25010]  eta: 0:06:49  elapsed: 0:04:52    time: 0.0197  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [10450/25010]  eta: 0:06:47  elapsed: 0:04:52    time: 0.0198  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [10500/25010]  eta: 0:06:45  elapsed: 0:04:53    time: 0.0198  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [10550/25010]  eta: 0:06:43  elapsed: 0:04:54    time: 0.0197  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [10600/25010]  eta: 0:06:41  elapsed: 0:04:55    time: 0.0182  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [10650/25010]  eta: 0:06:39  elapsed: 0:04:56    time: 0.0200  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [10700/25010]  eta: 0:06:37  elapsed: 0:04:57    time: 0.0202  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [10750/25010]  eta: 0:06:36  elapsed: 0:04:58    time: 0.0189  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [10800/25010]  eta: 0:06:34  elapsed: 0:04:59    time: 0.0202  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [10850/25010]  eta: 0:06:32  elapsed: 0:05:00    time: 0.0183  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [10900/25010]  eta: 0:06:30  elapsed: 0:05:01    time: 0.0200  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [10950/25010]  eta: 0:06:28  elapsed: 0:05:02    time: 0.0197  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [11000/25010]  eta: 0:06:26  elapsed: 0:05:03    time: 0.0197  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [11050/25010]  eta: 0:06:24  elapsed: 0:05:04    time: 0.0214  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [11100/25010]  eta: 0:06:22  elapsed: 0:05:05    time: 0.0208  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [11150/25010]  eta: 0:06:21  elapsed: 0:05:06    time: 0.0182  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [11200/25010]  eta: 0:06:19  elapsed: 0:05:07    time: 0.0182  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [11250/25010]  eta: 0:06:17  elapsed: 0:05:08    time: 0.0182  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [11300/25010]  eta: 0:06:15  elapsed: 0:05:09    time: 0.0183  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [11350/25010]  eta: 0:06:13  elapsed: 0:05:10    time: 0.0182  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [11400/25010]  eta: 0:06:11  elapsed: 0:05:11    time: 0.0181  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [11450/25010]  eta: 0:06:09  elapsed: 0:05:12    time: 0.0268  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [11500/25010]  eta: 0:06:08  elapsed: 0:05:13    time: 0.0302  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [11550/25010]  eta: 0:06:07  elapsed: 0:05:15    time: 0.0269  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [11600/25010]  eta: 0:06:05  elapsed: 0:05:16    time: 0.0296  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [11650/25010]  eta: 0:06:04  elapsed: 0:05:18    time: 0.0271  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [11700/25010]  eta: 0:06:03  elapsed: 0:05:19    time: 0.0264  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [11750/25010]  eta: 0:06:01  elapsed: 0:05:20    time: 0.0293  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [11800/25010]  eta: 0:06:00  elapsed: 0:05:22    time: 0.0295  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [11850/25010]  eta: 0:05:59  elapsed: 0:05:23    time: 0.0302  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [11900/25010]  eta: 0:05:58  elapsed: 0:05:25    time: 0.0298  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [11950/25010]  eta: 0:05:56  elapsed: 0:05:26    time: 0.0265  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [12000/25010]  eta: 0:05:55  elapsed: 0:05:28    time: 0.0294  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [12050/25010]  eta: 0:05:54  elapsed: 0:05:29    time: 0.0300  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [12100/25010]  eta: 0:05:52  elapsed: 0:05:30    time: 0.0267  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [12150/25010]  eta: 0:05:51  elapsed: 0:05:32    time: 0.0293  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [12200/25010]  eta: 0:05:50  elapsed: 0:05:33    time: 0.0276  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [12250/25010]  eta: 0:05:48  elapsed: 0:05:35    time: 0.0271  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [12300/25010]  eta: 0:05:47  elapsed: 0:05:36    time: 0.0264  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [12350/25010]  eta: 0:05:46  elapsed: 0:05:37    time: 0.0288  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [12400/25010]  eta: 0:05:44  elapsed: 0:05:39    time: 0.0294  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [12450/25010]  eta: 0:05:43  elapsed: 0:05:40    time: 0.0297  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [12500/25010]  eta: 0:05:42  elapsed: 0:05:42    time: 0.0292  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [12550/25010]  eta: 0:05:40  elapsed: 0:05:43    time: 0.0274  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [12600/25010]  eta: 0:05:39  elapsed: 0:05:44    time: 0.0265  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [12650/25010]  eta: 0:05:38  elapsed: 0:05:46    time: 0.0277  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [12700/25010]  eta: 0:05:36  elapsed: 0:05:47    time: 0.0303  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [12750/25010]  eta: 0:05:35  elapsed: 0:05:49    time: 0.0273  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [12800/25010]  eta: 0:05:34  elapsed: 0:05:50    time: 0.0271  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [12850/25010]  eta: 0:05:32  elapsed: 0:05:52    time: 0.0269  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [12900/25010]  eta: 0:05:31  elapsed: 0:05:53    time: 0.0291  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [12950/25010]  eta: 0:05:30  elapsed: 0:05:54    time: 0.0300  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [13000/25010]  eta: 0:05:29  elapsed: 0:05:56    time: 0.0304  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [13050/25010]  eta: 0:05:27  elapsed: 0:05:57    time: 0.0296  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [13100/25010]  eta: 0:05:26  elapsed: 0:05:59    time: 0.0275  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [13150/25010]  eta: 0:05:25  elapsed: 0:06:00    time: 0.0269  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [13200/25010]  eta: 0:05:23  elapsed: 0:06:02    time: 0.0273  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [13250/25010]  eta: 0:05:22  elapsed: 0:06:03    time: 0.0296  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [13300/25010]  eta: 0:05:21  elapsed: 0:06:05    time: 0.0303  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [13350/25010]  eta: 0:05:19  elapsed: 0:06:06    time: 0.0304  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [13400/25010]  eta: 0:05:18  elapsed: 0:06:07    time: 0.0260  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [13450/25010]  eta: 0:05:17  elapsed: 0:06:09    time: 0.0299  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [13500/25010]  eta: 0:05:15  elapsed: 0:06:10    time: 0.0275  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [13550/25010]  eta: 0:05:14  elapsed: 0:06:12    time: 0.0297  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [13600/25010]  eta: 0:05:13  elapsed: 0:06:13    time: 0.0307  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [13650/25010]  eta: 0:05:11  elapsed: 0:06:14    time: 0.0279  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [13700/25010]  eta: 0:05:10  elapsed: 0:06:16    time: 0.0271  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [13750/25010]  eta: 0:05:09  elapsed: 0:06:17    time: 0.0269  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [13800/25010]  eta: 0:05:07  elapsed: 0:06:19    time: 0.0293  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [13850/25010]  eta: 0:05:06  elapsed: 0:06:20    time: 0.0298  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [13900/25010]  eta: 0:05:05  elapsed: 0:06:22    time: 0.0303  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [13950/25010]  eta: 0:05:03  elapsed: 0:06:23    time: 0.0274  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [14000/25010]  eta: 0:05:02  elapsed: 0:06:24    time: 0.0274  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [14050/25010]  eta: 0:05:01  elapsed: 0:06:26    time: 0.0303  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [14100/25010]  eta: 0:04:59  elapsed: 0:06:27    time: 0.0265  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [14150/25010]  eta: 0:04:58  elapsed: 0:06:29    time: 0.0299  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [14200/25010]  eta: 0:04:57  elapsed: 0:06:30    time: 0.0305  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [14250/25010]  eta: 0:04:55  elapsed: 0:06:32    time: 0.0303  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [14300/25010]  eta: 0:04:54  elapsed: 0:06:33    time: 0.0273  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [14350/25010]  eta: 0:04:53  elapsed: 0:06:35    time: 0.0267  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [14400/25010]  eta: 0:04:51  elapsed: 0:06:36    time: 0.0299  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [14450/25010]  eta: 0:04:50  elapsed: 0:06:37    time: 0.0302  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [14500/25010]  eta: 0:04:49  elapsed: 0:06:39    time: 0.0296  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [14550/25010]  eta: 0:04:47  elapsed: 0:06:40    time: 0.0277  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [14600/25010]  eta: 0:04:46  elapsed: 0:06:42    time: 0.0272  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [14650/25010]  eta: 0:04:45  elapsed: 0:06:43    time: 0.0301  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [14700/25010]  eta: 0:04:43  elapsed: 0:06:45    time: 0.0269  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [14750/25010]  eta: 0:04:42  elapsed: 0:06:46    time: 0.0266  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [14800/25010]  eta: 0:04:41  elapsed: 0:06:47    time: 0.0277  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [14850/25010]  eta: 0:04:39  elapsed: 0:06:49    time: 0.0301  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [14900/25010]  eta: 0:04:38  elapsed: 0:06:50    time: 0.0303  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [14950/25010]  eta: 0:04:37  elapsed: 0:06:52    time: 0.0279  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [15000/25010]  eta: 0:04:35  elapsed: 0:06:53    time: 0.0269  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [15050/25010]  eta: 0:04:34  elapsed: 0:06:55    time: 0.0266  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [15100/25010]  eta: 0:04:33  elapsed: 0:06:56    time: 0.0290  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [15150/25010]  eta: 0:04:31  elapsed: 0:06:57    time: 0.0294  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [15200/25010]  eta: 0:04:30  elapsed: 0:06:59    time: 0.0303  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [15250/25010]  eta: 0:04:29  elapsed: 0:07:00    time: 0.0302  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [15300/25010]  eta: 0:04:27  elapsed: 0:07:02    time: 0.0274  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [15350/25010]  eta: 0:04:26  elapsed: 0:07:03    time: 0.0270  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [15400/25010]  eta: 0:04:25  elapsed: 0:07:05    time: 0.0298  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [15450/25010]  eta: 0:04:23  elapsed: 0:07:06    time: 0.0275  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [15500/25010]  eta: 0:04:22  elapsed: 0:07:07    time: 0.0268  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [15550/25010]  eta: 0:04:20  elapsed: 0:07:09    time: 0.0288  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [15600/25010]  eta: 0:04:19  elapsed: 0:07:10    time: 0.0300  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [15650/25010]  eta: 0:04:18  elapsed: 0:07:12    time: 0.0294  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [15700/25010]  eta: 0:04:16  elapsed: 0:07:13    time: 0.0263  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [15750/25010]  eta: 0:04:15  elapsed: 0:07:14    time: 0.0299  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [15800/25010]  eta: 0:04:14  elapsed: 0:07:16    time: 0.0270  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [15850/25010]  eta: 0:04:12  elapsed: 0:07:17    time: 0.0267  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [15900/25010]  eta: 0:04:11  elapsed: 0:07:19    time: 0.0271  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [15950/25010]  eta: 0:04:10  elapsed: 0:07:20    time: 0.0291  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [16000/25010]  eta: 0:04:08  elapsed: 0:07:22    time: 0.0295  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [16050/25010]  eta: 0:04:07  elapsed: 0:07:23    time: 0.0294  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [16100/25010]  eta: 0:04:06  elapsed: 0:07:24    time: 0.0272  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [16150/25010]  eta: 0:04:04  elapsed: 0:07:26    time: 0.0268  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [16200/25010]  eta: 0:04:03  elapsed: 0:07:27    time: 0.0267  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [16250/25010]  eta: 0:04:01  elapsed: 0:07:29    time: 0.0268  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [16300/25010]  eta: 0:04:00  elapsed: 0:07:30    time: 0.0287  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [16350/25010]  eta: 0:03:59  elapsed: 0:07:31    time: 0.0298  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [16400/25010]  eta: 0:03:57  elapsed: 0:07:33    time: 0.0304  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [16450/25010]  eta: 0:03:56  elapsed: 0:07:34    time: 0.0301  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [16500/25010]  eta: 0:03:55  elapsed: 0:07:36    time: 0.0272  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [16550/25010]  eta: 0:03:53  elapsed: 0:07:37    time: 0.0267  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [16600/25010]  eta: 0:03:52  elapsed: 0:07:39    time: 0.0268  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [16650/25010]  eta: 0:03:51  elapsed: 0:07:40    time: 0.0290  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [16700/25010]  eta: 0:03:49  elapsed: 0:07:41    time: 0.0297  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [16750/25010]  eta: 0:03:48  elapsed: 0:07:43    time: 0.0296  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [16800/25010]  eta: 0:03:46  elapsed: 0:07:44    time: 0.0199  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [16850/25010]  eta: 0:03:45  elapsed: 0:07:45    time: 0.0275  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [16900/25010]  eta: 0:03:44  elapsed: 0:07:47    time: 0.0265  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [16950/25010]  eta: 0:03:42  elapsed: 0:07:48    time: 0.0286  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [17000/25010]  eta: 0:03:41  elapsed: 0:07:50    time: 0.0299  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [17050/25010]  eta: 0:03:39  elapsed: 0:07:51    time: 0.0259  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [17100/25010]  eta: 0:03:38  elapsed: 0:07:52    time: 0.0304  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [17150/25010]  eta: 0:03:37  elapsed: 0:07:54    time: 0.0260  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [17200/25010]  eta: 0:03:35  elapsed: 0:07:55    time: 0.0294  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [17250/25010]  eta: 0:03:34  elapsed: 0:07:57    time: 0.0256  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [17300/25010]  eta: 0:03:33  elapsed: 0:07:58    time: 0.0297  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [17350/25010]  eta: 0:03:31  elapsed: 0:07:59    time: 0.0261  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [17400/25010]  eta: 0:03:30  elapsed: 0:08:01    time: 0.0298  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [17450/25010]  eta: 0:03:28  elapsed: 0:08:02    time: 0.0296  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [17500/25010]  eta: 0:03:27  elapsed: 0:08:03    time: 0.0260  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [17550/25010]  eta: 0:03:26  elapsed: 0:08:05    time: 0.0292  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [17600/25010]  eta: 0:03:24  elapsed: 0:08:06    time: 0.0264  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [17650/25010]  eta: 0:03:23  elapsed: 0:08:08    time: 0.0288  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [17700/25010]  eta: 0:03:22  elapsed: 0:08:09    time: 0.0297  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [17750/25010]  eta: 0:03:20  elapsed: 0:08:10    time: 0.0275  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [17800/25010]  eta: 0:03:19  elapsed: 0:08:12    time: 0.0262  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [17850/25010]  eta: 0:03:17  elapsed: 0:08:13    time: 0.0302  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [17900/25010]  eta: 0:03:16  elapsed: 0:08:15    time: 0.0265  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [17950/25010]  eta: 0:03:15  elapsed: 0:08:16    time: 0.0276  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [18000/25010]  eta: 0:03:13  elapsed: 0:08:18    time: 0.0291  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [18050/25010]  eta: 0:03:12  elapsed: 0:08:19    time: 0.0295  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [18100/25010]  eta: 0:03:11  elapsed: 0:08:20    time: 0.0298  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [18150/25010]  eta: 0:03:09  elapsed: 0:08:21    time: 0.0182  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [18200/25010]  eta: 0:03:08  elapsed: 0:08:22    time: 0.0223  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [18250/25010]  eta: 0:03:06  elapsed: 0:08:24    time: 0.0223  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [18300/25010]  eta: 0:03:05  elapsed: 0:08:25    time: 0.0195  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [18350/25010]  eta: 0:03:03  elapsed: 0:08:26    time: 0.0293  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [18400/25010]  eta: 0:03:02  elapsed: 0:08:27    time: 0.0269  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [18450/25010]  eta: 0:03:00  elapsed: 0:08:29    time: 0.0302  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [18500/25010]  eta: 0:02:59  elapsed: 0:08:30    time: 0.0261  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [18550/25010]  eta: 0:02:58  elapsed: 0:08:31    time: 0.0272  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [18600/25010]  eta: 0:02:56  elapsed: 0:08:33    time: 0.0297  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [18650/25010]  eta: 0:02:55  elapsed: 0:08:34    time: 0.0266  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [18700/25010]  eta: 0:02:54  elapsed: 0:08:36    time: 0.0301  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [18750/25010]  eta: 0:02:52  elapsed: 0:08:37    time: 0.0276  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [18800/25010]  eta: 0:02:51  elapsed: 0:08:38    time: 0.0280  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [18850/25010]  eta: 0:02:49  elapsed: 0:08:40    time: 0.0300  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [18900/25010]  eta: 0:02:48  elapsed: 0:08:41    time: 0.0275  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [18950/25010]  eta: 0:02:47  elapsed: 0:08:43    time: 0.0268  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [19000/25010]  eta: 0:02:45  elapsed: 0:08:44    time: 0.0267  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [19050/25010]  eta: 0:02:44  elapsed: 0:08:46    time: 0.0293  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [19100/25010]  eta: 0:02:43  elapsed: 0:08:47    time: 0.0264  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [19150/25010]  eta: 0:02:41  elapsed: 0:08:48    time: 0.0285  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [19200/25010]  eta: 0:02:40  elapsed: 0:08:50    time: 0.0298  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [19250/25010]  eta: 0:02:38  elapsed: 0:08:51    time: 0.0296  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [19300/25010]  eta: 0:02:37  elapsed: 0:08:53    time: 0.0274  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [19350/25010]  eta: 0:02:36  elapsed: 0:08:54    time: 0.0271  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [19400/25010]  eta: 0:02:34  elapsed: 0:08:55    time: 0.0289  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [19450/25010]  eta: 0:02:33  elapsed: 0:08:57    time: 0.0264  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [19500/25010]  eta: 0:02:32  elapsed: 0:08:58    time: 0.0264  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [19550/25010]  eta: 0:02:30  elapsed: 0:09:00    time: 0.0290  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [19600/25010]  eta: 0:02:29  elapsed: 0:09:01    time: 0.0293  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [19650/25010]  eta: 0:02:27  elapsed: 0:09:02    time: 0.0299  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [19700/25010]  eta: 0:02:26  elapsed: 0:09:04    time: 0.0295  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [19750/25010]  eta: 0:02:25  elapsed: 0:09:05    time: 0.0271  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [19800/25010]  eta: 0:02:23  elapsed: 0:09:07    time: 0.0263  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [19850/25010]  eta: 0:02:22  elapsed: 0:09:08    time: 0.0270  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [19900/25010]  eta: 0:02:21  elapsed: 0:09:09    time: 0.0289  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [19950/25010]  eta: 0:02:19  elapsed: 0:09:11    time: 0.0297  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [20000/25010]  eta: 0:02:18  elapsed: 0:09:12    time: 0.0263  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [20050/25010]  eta: 0:02:16  elapsed: 0:09:14    time: 0.0301  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [20100/25010]  eta: 0:02:15  elapsed: 0:09:15    time: 0.0266  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [20150/25010]  eta: 0:02:14  elapsed: 0:09:16    time: 0.0293  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [20200/25010]  eta: 0:02:12  elapsed: 0:09:18    time: 0.0261  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [20250/25010]  eta: 0:02:11  elapsed: 0:09:19    time: 0.0292  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [20300/25010]  eta: 0:02:10  elapsed: 0:09:21    time: 0.0262  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [20350/25010]  eta: 0:02:08  elapsed: 0:09:22    time: 0.0293  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [20400/25010]  eta: 0:02:07  elapsed: 0:09:23    time: 0.0274  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [20450/25010]  eta: 0:02:05  elapsed: 0:09:25    time: 0.0271  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [20500/25010]  eta: 0:02:04  elapsed: 0:09:26    time: 0.0271  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [20550/25010]  eta: 0:02:03  elapsed: 0:09:28    time: 0.0296  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [20600/25010]  eta: 0:02:01  elapsed: 0:09:29    time: 0.0300  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [20650/25010]  eta: 0:02:00  elapsed: 0:09:31    time: 0.0305  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [20700/25010]  eta: 0:01:59  elapsed: 0:09:32    time: 0.0300  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [20750/25010]  eta: 0:01:57  elapsed: 0:09:33    time: 0.0277  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [20800/25010]  eta: 0:01:56  elapsed: 0:09:35    time: 0.0268  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [20850/25010]  eta: 0:01:55  elapsed: 0:09:36    time: 0.0272  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [20900/25010]  eta: 0:01:53  elapsed: 0:09:38    time: 0.0296  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [20950/25010]  eta: 0:01:52  elapsed: 0:09:39    time: 0.0303  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [21000/25010]  eta: 0:01:50  elapsed: 0:09:41    time: 0.0303  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [21050/25010]  eta: 0:01:49  elapsed: 0:09:42    time: 0.0266  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [21100/25010]  eta: 0:01:48  elapsed: 0:09:43    time: 0.0270  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [21150/25010]  eta: 0:01:46  elapsed: 0:09:45    time: 0.0294  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [21200/25010]  eta: 0:01:45  elapsed: 0:09:46    time: 0.0260  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [21250/25010]  eta: 0:01:43  elapsed: 0:09:48    time: 0.0293  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [21300/25010]  eta: 0:01:42  elapsed: 0:09:49    time: 0.0305  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [21350/25010]  eta: 0:01:41  elapsed: 0:09:51    time: 0.0300  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [21400/25010]  eta: 0:01:39  elapsed: 0:09:52    time: 0.0258  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [21450/25010]  eta: 0:01:38  elapsed: 0:09:53    time: 0.0296  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [21500/25010]  eta: 0:01:37  elapsed: 0:09:55    time: 0.0261  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [21550/25010]  eta: 0:01:35  elapsed: 0:09:56    time: 0.0304  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [21600/25010]  eta: 0:01:34  elapsed: 0:09:57    time: 0.0270  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [21650/25010]  eta: 0:01:32  elapsed: 0:09:59    time: 0.0264  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [21700/25010]  eta: 0:01:31  elapsed: 0:10:00    time: 0.0290  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [21750/25010]  eta: 0:01:30  elapsed: 0:10:02    time: 0.0293  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [21800/25010]  eta: 0:01:28  elapsed: 0:10:03    time: 0.0300  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [21850/25010]  eta: 0:01:27  elapsed: 0:10:05    time: 0.0294  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [21900/25010]  eta: 0:01:26  elapsed: 0:10:06    time: 0.0271  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [21950/25010]  eta: 0:01:24  elapsed: 0:10:07    time: 0.0292  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [22000/25010]  eta: 0:01:23  elapsed: 0:10:09    time: 0.0262  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [22050/25010]  eta: 0:01:21  elapsed: 0:10:10    time: 0.0276  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [22100/25010]  eta: 0:01:20  elapsed: 0:10:11    time: 0.0293  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [22150/25010]  eta: 0:01:19  elapsed: 0:10:13    time: 0.0290  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [22200/25010]  eta: 0:01:17  elapsed: 0:10:14    time: 0.0277  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [22250/25010]  eta: 0:01:16  elapsed: 0:10:16    time: 0.0267  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [22300/25010]  eta: 0:01:15  elapsed: 0:10:17    time: 0.0281  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [22350/25010]  eta: 0:01:13  elapsed: 0:10:19    time: 0.0296  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [22400/25010]  eta: 0:01:12  elapsed: 0:10:20    time: 0.0265  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [22450/25010]  eta: 0:01:10  elapsed: 0:10:21    time: 0.0277  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [22500/25010]  eta: 0:01:09  elapsed: 0:10:23    time: 0.0309  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [22550/25010]  eta: 0:01:08  elapsed: 0:10:24    time: 0.0306  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [22600/25010]  eta: 0:01:06  elapsed: 0:10:26    time: 0.0275  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [22650/25010]  eta: 0:01:05  elapsed: 0:10:27    time: 0.0267  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [22700/25010]  eta: 0:01:03  elapsed: 0:10:29    time: 0.0263  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [22750/25010]  eta: 0:01:02  elapsed: 0:10:30    time: 0.0290  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [22800/25010]  eta: 0:01:01  elapsed: 0:10:31    time: 0.0297  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [22850/25010]  eta: 0:00:59  elapsed: 0:10:33    time: 0.0299  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [22900/25010]  eta: 0:00:58  elapsed: 0:10:34    time: 0.0294  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [22950/25010]  eta: 0:00:57  elapsed: 0:10:36    time: 0.0276  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [23000/25010]  eta: 0:00:55  elapsed: 0:10:37    time: 0.0266  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [23050/25010]  eta: 0:00:54  elapsed: 0:10:38    time: 0.0267  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [23100/25010]  eta: 0:00:52  elapsed: 0:10:40    time: 0.0290  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [23150/25010]  eta: 0:00:51  elapsed: 0:10:41    time: 0.0299  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [23200/25010]  eta: 0:00:50  elapsed: 0:10:43    time: 0.0294  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [23250/25010]  eta: 0:00:48  elapsed: 0:10:44    time: 0.0267  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [23300/25010]  eta: 0:00:47  elapsed: 0:10:45    time: 0.0263  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [23350/25010]  eta: 0:00:45  elapsed: 0:10:47    time: 0.0289  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [23400/25010]  eta: 0:00:44  elapsed: 0:10:48    time: 0.0293  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [23450/25010]  eta: 0:00:43  elapsed: 0:10:50    time: 0.0300  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [23500/25010]  eta: 0:00:41  elapsed: 0:10:51    time: 0.0295  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [23550/25010]  eta: 0:00:40  elapsed: 0:10:52    time: 0.0271  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [23600/25010]  eta: 0:00:39  elapsed: 0:10:54    time: 0.0265  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [23650/25010]  eta: 0:00:37  elapsed: 0:10:55    time: 0.0264  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [23700/25010]  eta: 0:00:36  elapsed: 0:10:57    time: 0.0289  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [23750/25010]  eta: 0:00:34  elapsed: 0:10:58    time: 0.0294  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [23800/25010]  eta: 0:00:33  elapsed: 0:10:59    time: 0.0271  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [23850/25010]  eta: 0:00:32  elapsed: 0:11:01    time: 0.0262  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [23900/25010]  eta: 0:00:30  elapsed: 0:11:02    time: 0.0293  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [23950/25010]  eta: 0:00:29  elapsed: 0:11:04    time: 0.0301  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [24000/25010]  eta: 0:00:27  elapsed: 0:11:05    time: 0.0297  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [24050/25010]  eta: 0:00:26  elapsed: 0:11:07    time: 0.0292  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [24100/25010]  eta: 0:00:25  elapsed: 0:11:08    time: 0.0271  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [24150/25010]  eta: 0:00:23  elapsed: 0:11:09    time: 0.0268  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [24200/25010]  eta: 0:00:22  elapsed: 0:11:11    time: 0.0260  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [24250/25010]  eta: 0:00:21  elapsed: 0:11:12    time: 0.0287  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [24300/25010]  eta: 0:00:19  elapsed: 0:11:14    time: 0.0302  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [24350/25010]  eta: 0:00:18  elapsed: 0:11:15    time: 0.0302  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [24400/25010]  eta: 0:00:16  elapsed: 0:11:16    time: 0.0271  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [24450/25010]  eta: 0:00:15  elapsed: 0:11:18    time: 0.0275  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [24500/25010]  eta: 0:00:14  elapsed: 0:11:19    time: 0.0306  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [24550/25010]  eta: 0:00:12  elapsed: 0:11:21    time: 0.0274  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [24600/25010]  eta: 0:00:11  elapsed: 0:11:22    time: 0.0199  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [24650/25010]  eta: 0:00:09  elapsed: 0:11:23    time: 0.0270  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [24700/25010]  eta: 0:00:08  elapsed: 0:11:25    time: 0.0271  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [24750/25010]  eta: 0:00:07  elapsed: 0:11:26    time: 0.0304  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [24800/25010]  eta: 0:00:05  elapsed: 0:11:28    time: 0.0276  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [24850/25010]  eta: 0:00:04  elapsed: 0:11:29    time: 0.0267  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [24900/25010]  eta: 0:00:03  elapsed: 0:11:30    time: 0.0296  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [24950/25010]  eta: 0:00:01  elapsed: 0:11:32    time: 0.0303  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [25000/25010]  eta: 0:00:00  elapsed: 0:11:33    time: 0.0270  data: 0.0000  max mem: 2136
+Retrieval Evaluation:  [25009/25010]  eta: 0:00:00  elapsed: 0:11:34    time: 0.0292  data: 0.0000  max mem: 2136
+Retrieval Evaluation: Total time: 0:11:34 (0.0278 s / it)
+Retrieval Evaluation time 0:13:45
+
+----- ITM-rerank (z2 + cosine) -----
+  i2t (txt retrieval)  R@1=57.36  R@5=82.92  R@10=89.92  mean=76.73
+  t2i (img retrieval)  R@1=42.77  R@5=71.45  R@10=81.32  mean=65.18
+  r_mean = 70.96
+  [832.1s]
+
+  ITM 재정렬 이득: r_mean 63.32 -> 70.96  (+7.63)
+
+saved: /home/minwoo/Distillation_Project/critical_bugfix/2026-07-31_itm_batch_logit_raw/coco_retrieval_check.json

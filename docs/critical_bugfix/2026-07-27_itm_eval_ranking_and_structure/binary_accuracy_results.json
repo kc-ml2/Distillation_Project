@@ -1,0 +1,46 @@
+{
+  "baseline@ep15": {
+    "n": {
+      "true": 2502,
+      "hard": 16000,
+      "easy": 8000
+    },
+    "mean_gap": {
+      "true": 4.117,
+      "hard": 2.972,
+      "easy": -6.923
+    },
+    "TPR": 98.1,
+    "TNR_hard": 5.9,
+    "TNR_easy": 99.4,
+    "bal_acc_hard_th0": 52.0,
+    "bal_acc_easy_th0": 98.7,
+    "raw_acc_hard_th0_imbalanced": 18.4,
+    "bal_acc_hard_OPT": 66.3,
+    "bal_acc_easy_OPT": 99.1,
+    "AUC_hard": 70.9,
+    "AUC_easy": 99.9
+  },
+  "schemeA@ep15": {
+    "n": {
+      "true": 2502,
+      "hard": 16000,
+      "easy": 8000
+    },
+    "mean_gap": {
+      "true": 3.276,
+      "hard": 2.932,
+      "easy": -3.727
+    },
+    "TPR": 99.5,
+    "TNR_hard": 0.7,
+    "TNR_easy": 97.0,
+    "bal_acc_hard_th0": 50.1,
+    "bal_acc_easy_th0": 98.2,
+    "raw_acc_hard_th0_imbalanced": 14.0,
+    "bal_acc_hard_OPT": 61.5,
+    "bal_acc_easy_OPT": 98.6,
+    "AUC_hard": 63.9,
+    "AUC_easy": 99.9
+  }
+}

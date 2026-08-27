@@ -1,0 +1,744 @@
+/home/minwoo/miniconda3/envs/kd_r4/lib/python3.10/site-packages/transformers/utils/generic.py:311: FutureWarning: `torch.utils._pytree._register_pytree_node` is deprecated. Please use `torch.utils._pytree.register_pytree_node` instead.
+  torch.utils._pytree._register_pytree_node(
+[setup] arch=teacher  n_images=5000  n_texts=25010  k_test=128  device=cpu
+[setup] ckpt=model_large.pth
+Some weights of the model checkpoint at bert-base-uncased were not used when initializing BertModel: ['bert.embeddings.token_type_embeddings.weight', 'bert.pooler.dense.weight', 'cls.seq_relationship.bias', 'bert.pooler.dense.bias', 'cls.predictions.transform.LayerNorm.bias', 'cls.predictions.transform.LayerNorm.weight', 'cls.predictions.transform.dense.weight', 'cls.predictions.transform.dense.bias', 'cls.seq_relationship.weight', 'cls.predictions.bias']
+- This IS expected if you are initializing BertModel from the checkpoint of a model trained on another task or with another architecture (e.g. initializing a BertForSequenceClassification model from a BertForPreTraining model).
+- This IS NOT expected if you are initializing BertModel from the checkpoint of a model that you expect to be exactly identical (initializing a BertForSequenceClassification model from a BertForSequenceClassification model).
+Some weights of BertModel were not initialized from the model checkpoint at bert-base-uncased and are newly initialized: ['bert.encoder.layer.4.crossattention.self.value.bias', 'bert.encoder.layer.11.crossattention.self.query.weight', 'bert.encoder.layer.7.crossattention.self.query.weight', 'bert.encoder.layer.11.crossattention.self.value.bias', 'bert.encoder.layer.9.crossattention.output.LayerNorm.bias', 'bert.encoder.layer.10.crossattention.self.value.bias', 'bert.encoder.layer.6.crossattention.self.value.bias', 'bert.encoder.layer.4.crossattention.self.query.weight', 'bert.encoder.layer.2.crossattention.self.key.bias', 'bert.encoder.layer.3.crossattention.self.query.bias', 'bert.encoder.layer.5.crossattention.self.value.bias', 'bert.encoder.layer.11.crossattention.self.query.bias', 'bert.encoder.layer.8.crossattention.self.query.weight', 'bert.encoder.layer.6.crossattention.self.key.weight', 'bert.encoder.layer.4.crossattention.self.query.bias', 'bert.encoder.layer.0.crossattention.output.dense.weight', 'bert.encoder.layer.10.crossattention.self.key.bias', 'bert.encoder.layer.5.crossattention.output.LayerNorm.bias', 'bert.encoder.layer.10.crossattention.output.LayerNorm.bias', 'bert.encoder.layer.5.crossattention.output.dense.bias', 'bert.encoder.layer.0.crossattention.output.LayerNorm.bias', 'bert.encoder.layer.2.crossattention.output.LayerNorm.weight', 'bert.encoder.layer.11.crossattention.output.LayerNorm.bias', 'bert.encoder.layer.6.crossattention.output.dense.bias', 'bert.encoder.layer.5.crossattention.self.value.weight', 'bert.encoder.layer.0.crossattention.output.LayerNorm.weight', 'bert.encoder.layer.8.crossattention.self.query.bias', 'bert.encoder.layer.6.crossattention.output.LayerNorm.bias', 'bert.encoder.layer.8.crossattention.self.key.bias', 'bert.encoder.layer.10.crossattention.output.LayerNorm.weight', 'bert.encoder.layer.0.crossattention.self.key.bias', 'bert.encoder.layer.2.crossattention.self.key.weight', 'bert.encoder.layer.3.crossattention.self.value.weight', 'bert.encoder.layer.0.crossattention.output.dense.bias', 'bert.encoder.layer.2.crossattention.output.LayerNorm.bias', 'bert.encoder.layer.8.crossattention.self.value.weight', 'bert.encoder.layer.9.crossattention.self.value.bias', 'bert.encoder.layer.4.crossattention.self.key.weight', 'bert.encoder.layer.3.crossattention.self.query.weight', 'bert.encoder.layer.0.crossattention.self.query.bias', 'bert.encoder.layer.4.crossattention.self.key.bias', 'bert.encoder.layer.11.crossattention.self.key.weight', 'bert.encoder.layer.5.crossattention.self.query.weight', 'bert.encoder.layer.1.crossattention.self.query.weight', 'bert.encoder.layer.9.crossattention.output.dense.weight', 'bert.encoder.layer.2.crossattention.self.query.bias', 'bert.encoder.layer.7.crossattention.self.query.bias', 'bert.encoder.layer.11.crossattention.output.dense.bias', 'bert.encoder.layer.10.crossattention.self.query.weight', 'bert.encoder.layer.3.crossattention.self.value.bias', 'bert.encoder.layer.5.crossattention.self.query.bias', 'bert.encoder.layer.9.crossattention.self.key.weight', 'bert.encoder.layer.1.crossattention.output.dense.weight', 'bert.encoder.layer.10.crossattention.self.query.bias', 'bert.encoder.layer.11.crossattention.output.LayerNorm.weight', 'bert.encoder.layer.1.crossattention.self.query.bias', 'bert.encoder.layer.10.crossattention.output.dense.weight', 'bert.encoder.layer.0.crossattention.self.query.weight', 'bert.encoder.layer.4.crossattention.self.value.weight', 'bert.encoder.layer.7.crossattention.output.LayerNorm.weight', 'bert.encoder.layer.9.crossattention.output.LayerNorm.weight', 'bert.encoder.layer.1.crossattention.self.value.bias', 'bert.encoder.layer.6.crossattention.self.value.weight', 'bert.encoder.layer.3.crossattention.output.LayerNorm.bias', 'bert.encoder.layer.3.crossattention.output.dense.bias', 'bert.encoder.layer.5.crossattention.output.LayerNorm.weight', 'bert.encoder.layer.7.crossattention.self.key.bias', 'bert.encoder.layer.3.crossattention.output.LayerNorm.weight', 'bert.encoder.layer.5.crossattention.self.key.bias', 'bert.encoder.layer.6.crossattention.output.LayerNorm.weight', 'bert.encoder.layer.1.crossattention.self.key.bias', 'bert.encoder.layer.1.crossattention.output.dense.bias', 'bert.encoder.layer.7.crossattention.output.LayerNorm.bias', 'bert.encoder.layer.10.crossattention.self.value.weight', 'bert.encoder.layer.0.crossattention.self.value.weight', 'bert.encoder.layer.6.crossattention.self.query.bias', 'bert.encoder.layer.10.crossattention.self.key.weight', 'bert.encoder.layer.11.crossattention.self.key.bias', 'bert.encoder.layer.2.crossattention.self.value.weight', 'bert.encoder.layer.10.crossattention.output.dense.bias', 'bert.encoder.layer.6.crossattention.output.dense.weight', 'bert.encoder.layer.3.crossattention.self.key.weight', 'bert.encoder.layer.8.crossattention.output.dense.weight', 'bert.encoder.layer.0.crossattention.self.key.weight', 'bert.encoder.layer.2.crossattention.self.query.weight', 'bert.encoder.layer.11.crossattention.output.dense.weight', 'bert.encoder.layer.9.crossattention.self.value.weight', 'bert.encoder.layer.8.crossattention.output.dense.bias', 'bert.encoder.layer.7.crossattention.self.value.weight', 'bert.encoder.layer.1.crossattention.self.value.weight', 'bert.encoder.layer.9.crossattention.self.key.bias', 'bert.encoder.layer.8.crossattention.output.LayerNorm.weight', 'bert.encoder.layer.7.crossattention.output.dense.weight', 'bert.encoder.layer.1.crossattention.output.LayerNorm.weight', 'bert.encoder.layer.4.crossattention.output.LayerNorm.bias', 'bert.encoder.layer.2.crossattention.self.value.bias', 'bert.encoder.layer.4.crossattention.output.dense.weight', 'bert.encoder.layer.8.crossattention.self.value.bias', 'bert.encoder.layer.5.crossattention.self.key.weight', 'bert.encoder.layer.3.crossattention.output.dense.weight', 'bert.encoder.layer.9.crossattention.self.query.bias', 'bert.encoder.layer.4.crossattention.output.LayerNorm.weight', 'bert.encoder.layer.7.crossattention.self.key.weight', 'bert.encoder.layer.9.crossattention.output.dense.bias', 'bert.encoder.layer.7.crossattention.self.value.bias', 'bert.encoder.layer.2.crossattention.output.dense.bias', 'bert.encoder.layer.6.crossattention.self.query.weight', 'bert.encoder.layer.8.crossattention.output.LayerNorm.bias', 'bert.encoder.layer.11.crossattention.self.value.weight', 'bert.encoder.layer.2.crossattention.output.dense.weight', 'bert.encoder.layer.7.crossattention.output.dense.bias', 'bert.encoder.layer.9.crossattention.self.query.weight', 'bert.encoder.layer.3.crossattention.self.key.bias', 'bert.encoder.layer.6.crossattention.self.key.bias', 'bert.encoder.layer.1.crossattention.self.key.weight', 'bert.encoder.layer.0.crossattention.self.value.bias', 'bert.encoder.layer.4.crossattention.output.dense.bias', 'bert.encoder.layer.1.crossattention.output.LayerNorm.bias', 'bert.encoder.layer.8.crossattention.self.key.weight', 'bert.encoder.layer.5.crossattention.output.dense.weight']
+You should probably TRAIN this model on a down-stream task to be able to use it for predictions and inference.
+You are resizing the embedding layer without providing a `pad_to_multiple_of` parameter. This means that the new embedding dimension will be 30524. This might induce some performance reduction as *Tensor Cores* will not be available. For more details about this, or help on choosing the correct value for resizing, refer to this guide: https://docs.nvidia.com/deeplearning/performance/dl-performance-matrix-multiplication/index.html#requirements-tc
+Some weights of BertLMHeadModel were not initialized from the model checkpoint at bert-base-uncased and are newly initialized: ['bert.encoder.layer.4.crossattention.self.value.bias', 'bert.encoder.layer.11.crossattention.self.query.weight', 'bert.encoder.layer.7.crossattention.self.query.weight', 'bert.encoder.layer.11.crossattention.self.value.bias', 'bert.encoder.layer.9.crossattention.output.LayerNorm.bias', 'bert.encoder.layer.10.crossattention.self.value.bias', 'bert.encoder.layer.6.crossattention.self.value.bias', 'bert.encoder.layer.4.crossattention.self.query.weight', 'bert.encoder.layer.2.crossattention.self.key.bias', 'bert.encoder.layer.3.crossattention.self.query.bias', 'bert.encoder.layer.5.crossattention.self.value.bias', 'bert.encoder.layer.11.crossattention.self.query.bias', 'bert.encoder.layer.8.crossattention.self.query.weight', 'bert.encoder.layer.6.crossattention.self.key.weight', 'bert.encoder.layer.4.crossattention.self.query.bias', 'bert.encoder.layer.0.crossattention.output.dense.weight', 'bert.encoder.layer.10.crossattention.self.key.bias', 'bert.encoder.layer.5.crossattention.output.LayerNorm.bias', 'bert.encoder.layer.10.crossattention.output.LayerNorm.bias', 'bert.encoder.layer.5.crossattention.output.dense.bias', 'bert.encoder.layer.0.crossattention.output.LayerNorm.bias', 'bert.encoder.layer.2.crossattention.output.LayerNorm.weight', 'bert.encoder.layer.11.crossattention.output.LayerNorm.bias', 'bert.encoder.layer.6.crossattention.output.dense.bias', 'bert.encoder.layer.5.crossattention.self.value.weight', 'bert.encoder.layer.0.crossattention.output.LayerNorm.weight', 'bert.encoder.layer.8.crossattention.self.query.bias', 'bert.encoder.layer.6.crossattention.output.LayerNorm.bias', 'bert.encoder.layer.8.crossattention.self.key.bias', 'bert.encoder.layer.10.crossattention.output.LayerNorm.weight', 'bert.encoder.layer.0.crossattention.self.key.bias', 'bert.encoder.layer.2.crossattention.self.key.weight', 'bert.encoder.layer.3.crossattention.self.value.weight', 'bert.encoder.layer.0.crossattention.output.dense.bias', 'bert.encoder.layer.2.crossattention.output.LayerNorm.bias', 'bert.encoder.layer.8.crossattention.self.value.weight', 'bert.encoder.layer.9.crossattention.self.value.bias', 'bert.encoder.layer.4.crossattention.self.key.weight', 'bert.encoder.layer.3.crossattention.self.query.weight', 'bert.encoder.layer.0.crossattention.self.query.bias', 'bert.encoder.layer.4.crossattention.self.key.bias', 'bert.encoder.layer.11.crossattention.self.key.weight', 'bert.encoder.layer.5.crossattention.self.query.weight', 'bert.encoder.layer.1.crossattention.self.query.weight', 'bert.encoder.layer.9.crossattention.output.dense.weight', 'bert.encoder.layer.2.crossattention.self.query.bias', 'bert.encoder.layer.7.crossattention.self.query.bias', 'bert.encoder.layer.11.crossattention.output.dense.bias', 'bert.encoder.layer.10.crossattention.self.query.weight', 'bert.encoder.layer.3.crossattention.self.value.bias', 'bert.encoder.layer.5.crossattention.self.query.bias', 'bert.encoder.layer.9.crossattention.self.key.weight', 'bert.encoder.layer.1.crossattention.output.dense.weight', 'bert.encoder.layer.10.crossattention.self.query.bias', 'bert.encoder.layer.11.crossattention.output.LayerNorm.weight', 'bert.encoder.layer.1.crossattention.self.query.bias', 'bert.encoder.layer.10.crossattention.output.dense.weight', 'bert.encoder.layer.0.crossattention.self.query.weight', 'bert.encoder.layer.4.crossattention.self.value.weight', 'bert.encoder.layer.7.crossattention.output.LayerNorm.weight', 'bert.encoder.layer.9.crossattention.output.LayerNorm.weight', 'bert.encoder.layer.1.crossattention.self.value.bias', 'bert.encoder.layer.6.crossattention.self.value.weight', 'bert.encoder.layer.3.crossattention.output.LayerNorm.bias', 'bert.encoder.layer.3.crossattention.output.dense.bias', 'bert.encoder.layer.5.crossattention.output.LayerNorm.weight', 'bert.encoder.layer.7.crossattention.self.key.bias', 'bert.encoder.layer.3.crossattention.output.LayerNorm.weight', 'bert.encoder.layer.5.crossattention.self.key.bias', 'bert.encoder.layer.6.crossattention.output.LayerNorm.weight', 'bert.encoder.layer.1.crossattention.self.key.bias', 'bert.encoder.layer.1.crossattention.output.dense.bias', 'bert.encoder.layer.7.crossattention.output.LayerNorm.bias', 'bert.encoder.layer.10.crossattention.self.value.weight', 'bert.encoder.layer.0.crossattention.self.value.weight', 'bert.encoder.layer.6.crossattention.self.query.bias', 'bert.encoder.layer.10.crossattention.self.key.weight', 'bert.encoder.layer.11.crossattention.self.key.bias', 'bert.encoder.layer.2.crossattention.self.value.weight', 'bert.encoder.layer.10.crossattention.output.dense.bias', 'bert.encoder.layer.6.crossattention.output.dense.weight', 'bert.encoder.layer.3.crossattention.self.key.weight', 'bert.encoder.layer.8.crossattention.output.dense.weight', 'bert.encoder.layer.0.crossattention.self.key.weight', 'bert.encoder.layer.2.crossattention.self.query.weight', 'bert.encoder.layer.11.crossattention.output.dense.weight', 'bert.encoder.layer.9.crossattention.self.value.weight', 'bert.encoder.layer.8.crossattention.output.dense.bias', 'bert.encoder.layer.7.crossattention.self.value.weight', 'bert.encoder.layer.1.crossattention.self.value.weight', 'bert.encoder.layer.9.crossattention.self.key.bias', 'bert.encoder.layer.8.crossattention.output.LayerNorm.weight', 'bert.encoder.layer.7.crossattention.output.dense.weight', 'bert.encoder.layer.1.crossattention.output.LayerNorm.weight', 'bert.encoder.layer.4.crossattention.output.LayerNorm.bias', 'bert.encoder.layer.2.crossattention.self.value.bias', 'bert.encoder.layer.4.crossattention.output.dense.weight', 'bert.encoder.layer.8.crossattention.self.value.bias', 'bert.encoder.layer.5.crossattention.self.key.weight', 'bert.encoder.layer.3.crossattention.output.dense.weight', 'bert.encoder.layer.9.crossattention.self.query.bias', 'bert.encoder.layer.4.crossattention.output.LayerNorm.weight', 'bert.encoder.layer.7.crossattention.self.key.weight', 'bert.encoder.layer.9.crossattention.output.dense.bias', 'bert.encoder.layer.7.crossattention.self.value.bias', 'bert.encoder.layer.2.crossattention.output.dense.bias', 'bert.encoder.layer.6.crossattention.self.query.weight', 'bert.encoder.layer.8.crossattention.output.LayerNorm.bias', 'bert.encoder.layer.11.crossattention.self.value.weight', 'bert.encoder.layer.2.crossattention.output.dense.weight', 'bert.encoder.layer.7.crossattention.output.dense.bias', 'bert.encoder.layer.9.crossattention.self.query.weight', 'bert.encoder.layer.3.crossattention.self.key.bias', 'bert.encoder.layer.6.crossattention.self.key.bias', 'bert.encoder.layer.1.crossattention.self.key.weight', 'bert.encoder.layer.0.crossattention.self.value.bias', 'bert.encoder.layer.4.crossattention.output.dense.bias', 'bert.encoder.layer.1.crossattention.output.LayerNorm.bias', 'bert.encoder.layer.8.crossattention.self.key.weight', 'bert.encoder.layer.5.crossattention.output.dense.weight']
+You should probably TRAIN this model on a down-stream task to be able to use it for predictions and inference.
+You are resizing the embedding layer without providing a `pad_to_multiple_of` parameter. This means that the new embedding dimension will be 30524. This might induce some performance reduction as *Tensor Cores* will not be available. For more details about this, or help on choosing the correct value for resizing, refer to this guide: https://docs.nvidia.com/deeplearning/performance/dl-performance-matrix-multiplication/index.html#requirements-tc
+모델 비전 width 변수: 1024
+encoder loading step finish
+bert size: base
+/embeddings/word_embeddings is tied
+/embeddings/position_embeddings is tied
+/embeddings/LayerNorm is tied
+/encoder/layer/0/crossattention/self/query is tied
+/encoder/layer/0/crossattention/self/key is tied
+/encoder/layer/0/crossattention/self/value is tied
+/encoder/layer/0/crossattention/output/dense is tied
+/encoder/layer/0/crossattention/output/LayerNorm is tied
+/encoder/layer/0/intermediate/dense is tied
+/encoder/layer/0/output/dense is tied
+/encoder/layer/0/output/LayerNorm is tied
+/encoder/layer/1/crossattention/self/query is tied
+/encoder/layer/1/crossattention/self/key is tied
+/encoder/layer/1/crossattention/self/value is tied
+/encoder/layer/1/crossattention/output/dense is tied
+/encoder/layer/1/crossattention/output/LayerNorm is tied
+/encoder/layer/1/intermediate/dense is tied
+/encoder/layer/1/output/dense is tied
+/encoder/layer/1/output/LayerNorm is tied
+/encoder/layer/2/crossattention/self/query is tied
+/encoder/layer/2/crossattention/self/key is tied
+/encoder/layer/2/crossattention/self/value is tied
+/encoder/layer/2/crossattention/output/dense is tied
+/encoder/layer/2/crossattention/output/LayerNorm is tied
+/encoder/layer/2/intermediate/dense is tied
+/encoder/layer/2/output/dense is tied
+/encoder/layer/2/output/LayerNorm is tied
+/encoder/layer/3/crossattention/self/query is tied
+/encoder/layer/3/crossattention/self/key is tied
+/encoder/layer/3/crossattention/self/value is tied
+/encoder/layer/3/crossattention/output/dense is tied
+/encoder/layer/3/crossattention/output/LayerNorm is tied
+/encoder/layer/3/intermediate/dense is tied
+/encoder/layer/3/output/dense is tied
+/encoder/layer/3/output/LayerNorm is tied
+/encoder/layer/4/crossattention/self/query is tied
+/encoder/layer/4/crossattention/self/key is tied
+/encoder/layer/4/crossattention/self/value is tied
+/encoder/layer/4/crossattention/output/dense is tied
+/encoder/layer/4/crossattention/output/LayerNorm is tied
+/encoder/layer/4/intermediate/dense is tied
+/encoder/layer/4/output/dense is tied
+/encoder/layer/4/output/LayerNorm is tied
+/encoder/layer/5/crossattention/self/query is tied
+/encoder/layer/5/crossattention/self/key is tied
+/encoder/layer/5/crossattention/self/value is tied
+/encoder/layer/5/crossattention/output/dense is tied
+/encoder/layer/5/crossattention/output/LayerNorm is tied
+/encoder/layer/5/intermediate/dense is tied
+/encoder/layer/5/output/dense is tied
+/encoder/layer/5/output/LayerNorm is tied
+/encoder/layer/6/crossattention/self/query is tied
+/encoder/layer/6/crossattention/self/key is tied
+/encoder/layer/6/crossattention/self/value is tied
+/encoder/layer/6/crossattention/output/dense is tied
+/encoder/layer/6/crossattention/output/LayerNorm is tied
+/encoder/layer/6/intermediate/dense is tied
+/encoder/layer/6/output/dense is tied
+/encoder/layer/6/output/LayerNorm is tied
+/encoder/layer/7/crossattention/self/query is tied
+/encoder/layer/7/crossattention/self/key is tied
+/encoder/layer/7/crossattention/self/value is tied
+/encoder/layer/7/crossattention/output/dense is tied
+/encoder/layer/7/crossattention/output/LayerNorm is tied
+/encoder/layer/7/intermediate/dense is tied
+/encoder/layer/7/output/dense is tied
+/encoder/layer/7/output/LayerNorm is tied
+/encoder/layer/8/crossattention/self/query is tied
+/encoder/layer/8/crossattention/self/key is tied
+/encoder/layer/8/crossattention/self/value is tied
+/encoder/layer/8/crossattention/output/dense is tied
+/encoder/layer/8/crossattention/output/LayerNorm is tied
+/encoder/layer/8/intermediate/dense is tied
+/encoder/layer/8/output/dense is tied
+/encoder/layer/8/output/LayerNorm is tied
+/encoder/layer/9/crossattention/self/query is tied
+/encoder/layer/9/crossattention/self/key is tied
+/encoder/layer/9/crossattention/self/value is tied
+/encoder/layer/9/crossattention/output/dense is tied
+/encoder/layer/9/crossattention/output/LayerNorm is tied
+/encoder/layer/9/intermediate/dense is tied
+/encoder/layer/9/output/dense is tied
+/encoder/layer/9/output/LayerNorm is tied
+/encoder/layer/10/crossattention/self/query is tied
+/encoder/layer/10/crossattention/self/key is tied
+/encoder/layer/10/crossattention/self/value is tied
+/encoder/layer/10/crossattention/output/dense is tied
+/encoder/layer/10/crossattention/output/LayerNorm is tied
+/encoder/layer/10/intermediate/dense is tied
+/encoder/layer/10/output/dense is tied
+/encoder/layer/10/output/LayerNorm is tied
+/encoder/layer/11/crossattention/self/query is tied
+/encoder/layer/11/crossattention/self/key is tied
+/encoder/layer/11/crossattention/self/value is tied
+/encoder/layer/11/crossattention/output/dense is tied
+/encoder/layer/11/crossattention/output/LayerNorm is tied
+/encoder/layer/11/intermediate/dense is tied
+/encoder/layer/11/output/dense is tied
+/encoder/layer/11/output/LayerNorm is tied
+Loaded model weights from: /home/minwoo/Distillation_Project/output/official_pretrain_checkpoint/model_large.pth
+_IncompatibleKeys(missing_keys=['logit_scale'], unexpected_keys=['temp'])
+
+Computing features for ITC-only Retrieval evaluation...
+ITC-only Retrieval Evaluation time 0:09:32
+
+----- ITC-only (cosine) -----
+  i2t (txt retrieval)  R@1=63.16  R@5=86.62  R@10=92.52  mean=80.77
+  t2i (img retrieval)  R@1=47.17  R@5=73.72  R@10=82.53  mean=67.80
+  r_mean = 74.29
+  [576.3s]
+
+Computing features for Retrieval evaluation...
+Retrieval Evaluation:  [   0/5000]  eta: 2:01:47  elapsed: 0:00:01    time: 1.4614  data: 0.0052
+Retrieval Evaluation:  [  50/5000]  eta: 1:51:29  elapsed: 0:01:08    time: 1.3414  data: 0.0000
+Retrieval Evaluation:  [ 100/5000]  eta: 1:49:21  elapsed: 0:02:15    time: 1.3826  data: 0.0000
+Retrieval Evaluation:  [ 150/5000]  eta: 1:40:30  elapsed: 0:03:07    time: 1.0187  data: 0.0000
+Retrieval Evaluation:  [ 200/5000]  eta: 1:34:51  elapsed: 0:03:58    time: 1.0117  data: 0.0000
+Retrieval Evaluation:  [ 250/5000]  eta: 1:31:09  elapsed: 0:04:49    time: 1.0146  data: 0.0000
+Retrieval Evaluation:  [ 300/5000]  eta: 1:28:29  elapsed: 0:05:40    time: 1.0267  data: 0.0000
+Retrieval Evaluation:  [ 350/5000]  eta: 1:26:24  elapsed: 0:06:31    time: 1.0310  data: 0.0000
+Retrieval Evaluation:  [ 400/5000]  eta: 1:24:49  elapsed: 0:07:23    time: 1.0507  data: 0.0000
+Retrieval Evaluation:  [ 450/5000]  eta: 1:23:23  elapsed: 0:08:15    time: 1.0514  data: 0.0000
+Retrieval Evaluation:  [ 500/5000]  eta: 1:22:04  elapsed: 0:09:08    time: 1.0456  data: 0.0000
+Retrieval Evaluation:  [ 550/5000]  eta: 1:20:50  elapsed: 0:10:00    time: 1.0437  data: 0.0000
+Retrieval Evaluation:  [ 600/5000]  eta: 1:19:38  elapsed: 0:10:52    time: 1.0454  data: 0.0000
+Retrieval Evaluation:  [ 650/5000]  eta: 1:18:33  elapsed: 0:11:45    time: 1.0595  data: 0.0000
+Retrieval Evaluation:  [ 700/5000]  eta: 1:17:28  elapsed: 0:12:37    time: 1.0275  data: 0.0000
+Retrieval Evaluation:  [ 750/5000]  eta: 1:16:22  elapsed: 0:13:29    time: 1.0435  data: 0.0000
+Retrieval Evaluation:  [ 800/5000]  eta: 1:15:10  elapsed: 0:14:20    time: 1.0230  data: 0.0000
+Retrieval Evaluation:  [ 850/5000]  eta: 1:14:02  elapsed: 0:15:11    time: 1.0040  data: 0.0000
+Retrieval Evaluation:  [ 900/5000]  eta: 1:12:50  elapsed: 0:16:00    time: 0.9852  data: 0.0000
+Retrieval Evaluation:  [ 950/5000]  eta: 1:11:43  elapsed: 0:16:50    time: 0.9961  data: 0.0000
+Retrieval Evaluation:  [1000/5000]  eta: 1:10:36  elapsed: 0:17:40    time: 0.9927  data: 0.0000
+Retrieval Evaluation:  [1050/5000]  eta: 1:09:31  elapsed: 0:18:30    time: 1.0074  data: 0.0000
+Retrieval Evaluation:  [1100/5000]  eta: 1:08:27  elapsed: 0:19:19    time: 0.9874  data: 0.0000
+Retrieval Evaluation:  [1150/5000]  eta: 1:07:24  elapsed: 0:20:09    time: 0.9830  data: 0.0000
+Retrieval Evaluation:  [1200/5000]  eta: 1:06:22  elapsed: 0:20:58    time: 0.9912  data: 0.0000
+Retrieval Evaluation:  [1250/5000]  eta: 1:05:23  elapsed: 0:21:48    time: 0.9959  data: 0.0000
+Retrieval Evaluation:  [1300/5000]  eta: 1:04:25  elapsed: 0:22:39    time: 1.0165  data: 0.0000
+Retrieval Evaluation:  [1350/5000]  eta: 1:03:33  elapsed: 0:23:31    time: 1.0357  data: 0.0000
+Retrieval Evaluation:  [1400/5000]  eta: 1:02:40  elapsed: 0:24:23    time: 1.0165  data: 0.0000
+Retrieval Evaluation:  [1450/5000]  eta: 1:01:47  elapsed: 0:25:15    time: 1.0082  data: 0.0000
+Retrieval Evaluation:  [1500/5000]  eta: 1:00:56  elapsed: 0:26:08    time: 1.0692  data: 0.0000
+Retrieval Evaluation:  [1550/5000]  eta: 1:00:07  elapsed: 0:27:01    time: 1.0489  data: 0.0000
+Retrieval Evaluation:  [1600/5000]  eta: 0:59:12  elapsed: 0:27:52    time: 1.0337  data: 0.0000
+Retrieval Evaluation:  [1650/5000]  eta: 0:58:20  elapsed: 0:28:45    time: 1.0920  data: 0.0000
+Retrieval Evaluation:  [1700/5000]  eta: 0:57:34  elapsed: 0:29:40    time: 1.0576  data: 0.0000
+Retrieval Evaluation:  [1750/5000]  eta: 0:56:40  elapsed: 0:30:32    time: 1.0495  data: 0.0000
+Retrieval Evaluation:  [1800/5000]  eta: 0:55:49  elapsed: 0:31:25    time: 1.0459  data: 0.0000
+Retrieval Evaluation:  [1850/5000]  eta: 0:54:55  elapsed: 0:32:16    time: 1.0156  data: 0.0000
+Retrieval Evaluation:  [1900/5000]  eta: 0:54:02  elapsed: 0:33:08    time: 1.0605  data: 0.0000
+Retrieval Evaluation:  [1950/5000]  eta: 0:53:09  elapsed: 0:34:00    time: 1.0313  data: 0.0000
+Retrieval Evaluation:  [2000/5000]  eta: 0:52:19  elapsed: 0:34:53    time: 1.0671  data: 0.0000
+Retrieval Evaluation:  [2050/5000]  eta: 0:51:26  elapsed: 0:35:45    time: 1.0338  data: 0.0000
+Retrieval Evaluation:  [2100/5000]  eta: 0:50:32  elapsed: 0:36:36    time: 1.0282  data: 0.0000
+Retrieval Evaluation:  [2150/5000]  eta: 0:49:41  elapsed: 0:37:30    time: 1.0448  data: 0.0000
+Retrieval Evaluation:  [2200/5000]  eta: 0:48:46  elapsed: 0:38:20    time: 0.9962  data: 0.0000
+Retrieval Evaluation:  [2250/5000]  eta: 0:47:51  elapsed: 0:39:10    time: 1.0147  data: 0.0000
+Retrieval Evaluation:  [2300/5000]  eta: 0:47:00  elapsed: 0:40:03    time: 1.0414  data: 0.0000
+Retrieval Evaluation:  [2350/5000]  eta: 0:46:06  elapsed: 0:40:54    time: 0.9573  data: 0.0000
+Retrieval Evaluation:  [2400/5000]  eta: 0:45:11  elapsed: 0:41:43    time: 0.9729  data: 0.0000
+Retrieval Evaluation:  [2450/5000]  eta: 0:44:17  elapsed: 0:42:34    time: 1.0273  data: 0.0000
+Retrieval Evaluation:  [2500/5000]  eta: 0:43:25  elapsed: 0:43:26    time: 1.0201  data: 0.0000
+Retrieval Evaluation:  [2550/5000]  eta: 0:42:32  elapsed: 0:44:17    time: 1.0524  data: 0.0000
+Retrieval Evaluation:  [2600/5000]  eta: 0:41:38  elapsed: 0:45:08    time: 1.0273  data: 0.0000
+Retrieval Evaluation:  [2650/5000]  eta: 0:40:45  elapsed: 0:45:58    time: 1.0113  data: 0.0000
+Retrieval Evaluation:  [2700/5000]  eta: 0:39:52  elapsed: 0:46:50    time: 1.0241  data: 0.0000
+Retrieval Evaluation:  [2750/5000]  eta: 0:39:00  elapsed: 0:47:41    time: 1.0244  data: 0.0000
+Retrieval Evaluation:  [2800/5000]  eta: 0:38:06  elapsed: 0:48:31    time: 0.9957  data: 0.0000
+Retrieval Evaluation:  [2850/5000]  eta: 0:37:12  elapsed: 0:49:21    time: 0.9756  data: 0.0000
+Retrieval Evaluation:  [2900/5000]  eta: 0:36:19  elapsed: 0:50:10    time: 0.9919  data: 0.0000
+Retrieval Evaluation:  [2950/5000]  eta: 0:35:25  elapsed: 0:51:00    time: 0.9782  data: 0.0000
+Retrieval Evaluation:  [3000/5000]  eta: 0:34:33  elapsed: 0:51:50    time: 1.0184  data: 0.0000
+Retrieval Evaluation:  [3050/5000]  eta: 0:33:40  elapsed: 0:52:42    time: 1.0272  data: 0.0000
+Retrieval Evaluation:  [3100/5000]  eta: 0:32:48  elapsed: 0:53:32    time: 1.0013  data: 0.0000
+Retrieval Evaluation:  [3150/5000]  eta: 0:31:55  elapsed: 0:54:23    time: 0.9613  data: 0.0000
+Retrieval Evaluation:  [3200/5000]  eta: 0:31:03  elapsed: 0:55:13    time: 1.0267  data: 0.0000
+Retrieval Evaluation:  [3250/5000]  eta: 0:30:10  elapsed: 0:56:03    time: 1.0034  data: 0.0000
+Retrieval Evaluation:  [3300/5000]  eta: 0:29:17  elapsed: 0:56:53    time: 0.9878  data: 0.0000
+Retrieval Evaluation:  [3350/5000]  eta: 0:28:25  elapsed: 0:57:42    time: 0.9999  data: 0.0000
+Retrieval Evaluation:  [3400/5000]  eta: 0:27:33  elapsed: 0:58:34    time: 1.0809  data: 0.0000
+Retrieval Evaluation:  [3450/5000]  eta: 0:26:40  elapsed: 0:59:24    time: 0.9821  data: 0.0000
+Retrieval Evaluation:  [3500/5000]  eta: 0:25:48  elapsed: 1:00:14    time: 0.9851  data: 0.0000
+Retrieval Evaluation:  [3550/5000]  eta: 0:24:56  elapsed: 1:01:04    time: 0.9909  data: 0.0000
+Retrieval Evaluation:  [3600/5000]  eta: 0:24:04  elapsed: 1:01:54    time: 1.0043  data: 0.0000
+Retrieval Evaluation:  [3650/5000]  eta: 0:23:12  elapsed: 1:02:44    time: 1.0112  data: 0.0000
+Retrieval Evaluation:  [3700/5000]  eta: 0:22:20  elapsed: 1:03:35    time: 1.0008  data: 0.0000
+Retrieval Evaluation:  [3750/5000]  eta: 0:21:27  elapsed: 1:04:24    time: 0.9725  data: 0.0000
+Retrieval Evaluation:  [3800/5000]  eta: 0:20:36  elapsed: 1:05:15    time: 1.0330  data: 0.0000
+Retrieval Evaluation:  [3850/5000]  eta: 0:19:44  elapsed: 1:06:05    time: 0.9989  data: 0.0000
+Retrieval Evaluation:  [3900/5000]  eta: 0:18:52  elapsed: 1:06:55    time: 0.9949  data: 0.0000
+Retrieval Evaluation:  [3950/5000]  eta: 0:18:00  elapsed: 1:07:47    time: 0.9786  data: 0.0000
+Retrieval Evaluation:  [4000/5000]  eta: 0:17:08  elapsed: 1:08:36    time: 1.0000  data: 0.0000
+Retrieval Evaluation:  [4050/5000]  eta: 0:16:17  elapsed: 1:09:28    time: 1.0571  data: 0.0000
+Retrieval Evaluation:  [4100/5000]  eta: 0:15:26  elapsed: 1:10:19    time: 1.0249  data: 0.0000
+Retrieval Evaluation:  [4150/5000]  eta: 0:14:34  elapsed: 1:11:10    time: 1.0209  data: 0.0000
+Retrieval Evaluation:  [4200/5000]  eta: 0:13:42  elapsed: 1:12:01    time: 1.0268  data: 0.0000
+Retrieval Evaluation:  [4250/5000]  eta: 0:12:51  elapsed: 1:12:54    time: 1.0389  data: 0.0000
+Retrieval Evaluation:  [4300/5000]  eta: 0:12:00  elapsed: 1:13:44    time: 1.0141  data: 0.0000
+Retrieval Evaluation:  [4350/5000]  eta: 0:11:08  elapsed: 1:14:33    time: 0.9701  data: 0.0000
+Retrieval Evaluation:  [4400/5000]  eta: 0:10:16  elapsed: 1:15:23    time: 0.9952  data: 0.0000
+Retrieval Evaluation:  [4450/5000]  eta: 0:09:25  elapsed: 1:16:12    time: 1.0182  data: 0.0000
+Retrieval Evaluation:  [4500/5000]  eta: 0:08:33  elapsed: 1:17:03    time: 1.0043  data: 0.0000
+Retrieval Evaluation:  [4550/5000]  eta: 0:07:42  elapsed: 1:17:53    time: 0.9714  data: 0.0000
+Retrieval Evaluation:  [4600/5000]  eta: 0:06:50  elapsed: 1:18:43    time: 0.9923  data: 0.0000
+Retrieval Evaluation:  [4650/5000]  eta: 0:05:59  elapsed: 1:19:34    time: 1.0272  data: 0.0000
+Retrieval Evaluation:  [4700/5000]  eta: 0:05:07  elapsed: 1:20:25    time: 1.0288  data: 0.0000
+Retrieval Evaluation:  [4750/5000]  eta: 0:04:16  elapsed: 1:21:16    time: 1.0155  data: 0.0000
+Retrieval Evaluation:  [4800/5000]  eta: 0:03:25  elapsed: 1:22:07    time: 1.0164  data: 0.0000
+Retrieval Evaluation:  [4850/5000]  eta: 0:02:33  elapsed: 1:22:58    time: 1.0408  data: 0.0000
+Retrieval Evaluation:  [4900/5000]  eta: 0:01:42  elapsed: 1:23:49    time: 1.0217  data: 0.0000
+Retrieval Evaluation:  [4950/5000]  eta: 0:00:51  elapsed: 1:24:40    time: 0.9958  data: 0.0000
+Retrieval Evaluation:  [4999/5000]  eta: 0:00:01  elapsed: 1:25:31    time: 1.0120  data: 0.0000
+Retrieval Evaluation: Total time: 1:25:31 (1.0262 s / it)
+Retrieval Evaluation:  [    0/25010]  eta: 9:24:58  elapsed: 0:00:01    time: 1.3554  data: 0.3532
+Retrieval Evaluation:  [   50/25010]  eta: 7:09:22  elapsed: 0:00:52    time: 1.0245  data: 0.0000
+Retrieval Evaluation:  [  100/25010]  eta: 7:13:42  elapsed: 0:01:45    time: 1.0066  data: 0.0000
+Retrieval Evaluation:  [  150/25010]  eta: 7:07:09  elapsed: 0:02:35    time: 1.0027  data: 0.0000
+Retrieval Evaluation:  [  200/25010]  eta: 7:03:41  elapsed: 0:03:25    time: 1.0059  data: 0.0000
+Retrieval Evaluation:  [  250/25010]  eta: 7:00:04  elapsed: 0:04:15    time: 0.9957  data: 0.0000
+Retrieval Evaluation:  [  300/25010]  eta: 6:58:40  elapsed: 0:05:06    time: 1.0196  data: 0.0000
+Retrieval Evaluation:  [  350/25010]  eta: 6:57:36  elapsed: 0:05:56    time: 1.0135  data: 0.0000
+Retrieval Evaluation:  [  400/25010]  eta: 6:57:09  elapsed: 0:06:47    time: 1.0330  data: 0.0000
+Retrieval Evaluation:  [  450/25010]  eta: 6:56:54  elapsed: 0:07:39    time: 1.0150  data: 0.0000
+Retrieval Evaluation:  [  500/25010]  eta: 6:56:21  elapsed: 0:08:30    time: 1.0039  data: 0.0000
+Retrieval Evaluation:  [  550/25010]  eta: 6:55:14  elapsed: 0:09:21    time: 1.0116  data: 0.0000
+Retrieval Evaluation:  [  600/25010]  eta: 6:54:11  elapsed: 0:10:11    time: 1.0098  data: 0.0000
+Retrieval Evaluation:  [  650/25010]  eta: 6:53:39  elapsed: 0:11:03    time: 1.0113  data: 0.0000
+Retrieval Evaluation:  [  700/25010]  eta: 6:52:20  elapsed: 0:11:53    time: 0.9811  data: 0.0000
+Retrieval Evaluation:  [  750/25010]  eta: 6:50:47  elapsed: 0:12:43    time: 0.9998  data: 0.0000
+Retrieval Evaluation:  [  800/25010]  eta: 6:49:30  elapsed: 0:13:32    time: 0.9981  data: 0.0000
+Retrieval Evaluation:  [  850/25010]  eta: 6:48:49  elapsed: 0:14:24    time: 1.0530  data: 0.0000
+Retrieval Evaluation:  [  900/25010]  eta: 6:47:53  elapsed: 0:15:14    time: 0.9621  data: 0.0000
+Retrieval Evaluation:  [  950/25010]  eta: 6:46:25  elapsed: 0:16:03    time: 0.9843  data: 0.0000
+Retrieval Evaluation:  [ 1000/25010]  eta: 6:45:26  elapsed: 0:16:54    time: 1.0079  data: 0.0000
+Retrieval Evaluation:  [ 1050/25010]  eta: 6:44:12  elapsed: 0:17:43    time: 0.9896  data: 0.0000
+Retrieval Evaluation:  [ 1100/25010]  eta: 6:42:45  elapsed: 0:18:32    time: 0.9757  data: 0.0000
+Retrieval Evaluation:  [ 1150/25010]  eta: 6:41:21  elapsed: 0:19:21    time: 0.9869  data: 0.0000
+Retrieval Evaluation:  [ 1200/25010]  eta: 6:40:29  elapsed: 0:20:12    time: 1.0175  data: 0.0000
+Retrieval Evaluation:  [ 1250/25010]  eta: 6:39:38  elapsed: 0:21:02    time: 0.9745  data: 0.0000
+Retrieval Evaluation:  [ 1300/25010]  eta: 6:38:47  elapsed: 0:21:52    time: 1.0259  data: 0.0000
+Retrieval Evaluation:  [ 1350/25010]  eta: 6:37:56  elapsed: 0:22:43    time: 1.0053  data: 0.0000
+Retrieval Evaluation:  [ 1400/25010]  eta: 6:37:05  elapsed: 0:23:33    time: 1.0092  data: 0.0000
+Retrieval Evaluation:  [ 1450/25010]  eta: 6:36:08  elapsed: 0:24:23    time: 1.0189  data: 0.0000
+Retrieval Evaluation:  [ 1500/25010]  eta: 6:35:14  elapsed: 0:25:14    time: 1.0085  data: 0.0000
+Retrieval Evaluation:  [ 1550/25010]  eta: 6:34:10  elapsed: 0:26:03    time: 0.9721  data: 0.0000
+Retrieval Evaluation:  [ 1600/25010]  eta: 6:32:51  elapsed: 0:26:52    time: 0.9609  data: 0.0000
+Retrieval Evaluation:  [ 1650/25010]  eta: 6:31:36  elapsed: 0:27:40    time: 0.9447  data: 0.0000
+Retrieval Evaluation:  [ 1700/25010]  eta: 6:30:40  elapsed: 0:28:30    time: 1.0126  data: 0.0000
+Retrieval Evaluation:  [ 1750/25010]  eta: 6:29:23  elapsed: 0:29:18    time: 0.9473  data: 0.0000
+Retrieval Evaluation:  [ 1800/25010]  eta: 6:28:01  elapsed: 0:30:06    time: 0.9493  data: 0.0000
+Retrieval Evaluation:  [ 1850/25010]  eta: 6:26:49  elapsed: 0:30:55    time: 0.9702  data: 0.0000
+Retrieval Evaluation:  [ 1900/25010]  eta: 6:25:40  elapsed: 0:31:43    time: 0.9651  data: 0.0000
+Retrieval Evaluation:  [ 1950/25010]  eta: 6:24:36  elapsed: 0:32:32    time: 0.9716  data: 0.0000
+Retrieval Evaluation:  [ 2000/25010]  eta: 6:23:34  elapsed: 0:33:21    time: 0.9841  data: 0.0000
+Retrieval Evaluation:  [ 2050/25010]  eta: 6:22:39  elapsed: 0:34:10    time: 0.9554  data: 0.0000
+Retrieval Evaluation:  [ 2100/25010]  eta: 6:21:38  elapsed: 0:35:00    time: 0.9609  data: 0.0000
+Retrieval Evaluation:  [ 2150/25010]  eta: 6:20:38  elapsed: 0:35:49    time: 0.9674  data: 0.0000
+Retrieval Evaluation:  [ 2200/25010]  eta: 6:19:32  elapsed: 0:36:37    time: 0.9569  data: 0.0000
+Retrieval Evaluation:  [ 2250/25010]  eta: 6:18:21  elapsed: 0:37:25    time: 0.9558  data: 0.0000
+Retrieval Evaluation:  [ 2300/25010]  eta: 6:17:16  elapsed: 0:38:13    time: 0.9587  data: 0.0000
+Retrieval Evaluation:  [ 2350/25010]  eta: 6:16:18  elapsed: 0:39:02    time: 0.9766  data: 0.0000
+Retrieval Evaluation:  [ 2400/25010]  eta: 6:15:17  elapsed: 0:39:51    time: 0.9682  data: 0.0000
+Retrieval Evaluation:  [ 2450/25010]  eta: 6:14:25  elapsed: 0:40:40    time: 0.9844  data: 0.0000
+Retrieval Evaluation:  [ 2500/25010]  eta: 6:13:35  elapsed: 0:41:30    time: 0.9987  data: 0.0000
+Retrieval Evaluation:  [ 2550/25010]  eta: 6:12:55  elapsed: 0:42:21    time: 1.0447  data: 0.0000
+Retrieval Evaluation:  [ 2600/25010]  eta: 6:12:02  elapsed: 0:43:10    time: 0.9914  data: 0.0000
+Retrieval Evaluation:  [ 2650/25010]  eta: 6:11:07  elapsed: 0:44:00    time: 0.9736  data: 0.0000
+Retrieval Evaluation:  [ 2700/25010]  eta: 6:10:14  elapsed: 0:44:49    time: 0.9899  data: 0.0000
+Retrieval Evaluation:  [ 2750/25010]  eta: 6:09:23  elapsed: 0:45:39    time: 0.9898  data: 0.0000
+Retrieval Evaluation:  [ 2800/25010]  eta: 6:08:27  elapsed: 0:46:28    time: 1.0063  data: 0.0000
+Retrieval Evaluation:  [ 2850/25010]  eta: 6:07:40  elapsed: 0:47:18    time: 0.9977  data: 0.0000
+Retrieval Evaluation:  [ 2900/25010]  eta: 6:06:46  elapsed: 0:48:07    time: 0.9877  data: 0.0000
+Retrieval Evaluation:  [ 2950/25010]  eta: 6:05:59  elapsed: 0:48:57    time: 0.9865  data: 0.0000
+Retrieval Evaluation:  [ 3000/25010]  eta: 6:05:14  elapsed: 0:49:48    time: 0.9952  data: 0.0000
+Retrieval Evaluation:  [ 3050/25010]  eta: 6:04:23  elapsed: 0:50:37    time: 0.9975  data: 0.0000
+Retrieval Evaluation:  [ 3100/25010]  eta: 6:03:30  elapsed: 0:51:27    time: 0.9956  data: 0.0000
+Retrieval Evaluation:  [ 3150/25010]  eta: 6:02:40  elapsed: 0:52:16    time: 1.0074  data: 0.0000
+Retrieval Evaluation:  [ 3200/25010]  eta: 6:01:54  elapsed: 0:53:07    time: 1.0131  data: 0.0000
+Retrieval Evaluation:  [ 3250/25010]  eta: 6:01:06  elapsed: 0:53:57    time: 0.9989  data: 0.0000
+Retrieval Evaluation:  [ 3300/25010]  eta: 6:00:19  elapsed: 0:54:47    time: 1.0096  data: 0.0000
+Retrieval Evaluation:  [ 3350/25010]  eta: 5:59:32  elapsed: 0:55:37    time: 1.0015  data: 0.0000
+Retrieval Evaluation:  [ 3400/25010]  eta: 5:58:52  elapsed: 0:56:28    time: 0.9829  data: 0.0000
+Retrieval Evaluation:  [ 3450/25010]  eta: 5:58:00  elapsed: 0:57:18    time: 0.9890  data: 0.0000
+Retrieval Evaluation:  [ 3500/25010]  eta: 5:57:14  elapsed: 0:58:08    time: 1.0041  data: 0.0000
+Retrieval Evaluation:  [ 3550/25010]  eta: 5:56:25  elapsed: 0:58:58    time: 0.9850  data: 0.0000
+Retrieval Evaluation:  [ 3600/25010]  eta: 5:55:41  elapsed: 0:59:49    time: 0.9955  data: 0.0000
+Retrieval Evaluation:  [ 3650/25010]  eta: 5:54:51  elapsed: 1:00:39    time: 1.0024  data: 0.0000
+Retrieval Evaluation:  [ 3700/25010]  eta: 5:54:00  elapsed: 1:01:29    time: 0.9937  data: 0.0000
+Retrieval Evaluation:  [ 3750/25010]  eta: 5:53:12  elapsed: 1:02:19    time: 0.9986  data: 0.0000
+Retrieval Evaluation:  [ 3800/25010]  eta: 5:52:24  elapsed: 1:03:09    time: 0.9900  data: 0.0000
+Retrieval Evaluation:  [ 3850/25010]  eta: 5:51:36  elapsed: 1:03:59    time: 1.0048  data: 0.0000
+Retrieval Evaluation:  [ 3900/25010]  eta: 5:50:48  elapsed: 1:04:49    time: 1.0005  data: 0.0000
+Retrieval Evaluation:  [ 3950/25010]  eta: 5:50:00  elapsed: 1:05:40    time: 1.0094  data: 0.0000
+Retrieval Evaluation:  [ 4000/25010]  eta: 5:49:12  elapsed: 1:06:30    time: 0.9939  data: 0.0000
+Retrieval Evaluation:  [ 4050/25010]  eta: 5:48:21  elapsed: 1:07:19    time: 0.9908  data: 0.0000
+Retrieval Evaluation:  [ 4100/25010]  eta: 5:47:32  elapsed: 1:08:09    time: 1.0050  data: 0.0000
+Retrieval Evaluation:  [ 4150/25010]  eta: 5:46:40  elapsed: 1:08:59    time: 0.9941  data: 0.0000
+Retrieval Evaluation:  [ 4200/25010]  eta: 5:45:49  elapsed: 1:09:48    time: 1.0097  data: 0.0000
+Retrieval Evaluation:  [ 4250/25010]  eta: 5:45:00  elapsed: 1:10:39    time: 0.9884  data: 0.0000
+Retrieval Evaluation:  [ 4300/25010]  eta: 5:44:08  elapsed: 1:11:28    time: 0.9744  data: 0.0000
+Retrieval Evaluation:  [ 4350/25010]  eta: 5:43:18  elapsed: 1:12:18    time: 0.9737  data: 0.0000
+Retrieval Evaluation:  [ 4400/25010]  eta: 5:42:28  elapsed: 1:13:07    time: 1.0075  data: 0.0000
+Retrieval Evaluation:  [ 4450/25010]  eta: 5:41:37  elapsed: 1:13:57    time: 0.9794  data: 0.0000
+Retrieval Evaluation:  [ 4500/25010]  eta: 5:40:47  elapsed: 1:14:47    time: 0.9874  data: 0.0000
+Retrieval Evaluation:  [ 4550/25010]  eta: 5:39:54  elapsed: 1:15:36    time: 0.9881  data: 0.0000
+Retrieval Evaluation:  [ 4600/25010]  eta: 5:39:12  elapsed: 1:16:28    time: 0.9740  data: 0.0000
+Retrieval Evaluation:  [ 4650/25010]  eta: 5:38:34  elapsed: 1:17:20    time: 1.0217  data: 0.0000
+Retrieval Evaluation:  [ 4700/25010]  eta: 5:37:46  elapsed: 1:18:11    time: 0.9962  data: 0.0000
+Retrieval Evaluation:  [ 4750/25010]  eta: 5:36:58  elapsed: 1:19:01    time: 0.9945  data: 0.0000
+Retrieval Evaluation:  [ 4800/25010]  eta: 5:36:08  elapsed: 1:19:51    time: 1.0136  data: 0.0000
+Retrieval Evaluation:  [ 4850/25010]  eta: 5:35:21  elapsed: 1:20:41    time: 1.0140  data: 0.0000
+Retrieval Evaluation:  [ 4900/25010]  eta: 5:34:36  elapsed: 1:21:32    time: 1.0247  data: 0.0000
+Retrieval Evaluation:  [ 4950/25010]  eta: 5:33:51  elapsed: 1:22:24    time: 1.0265  data: 0.0000
+Retrieval Evaluation:  [ 5000/25010]  eta: 5:32:59  elapsed: 1:23:13    time: 0.9741  data: 0.0000
+Retrieval Evaluation:  [ 5050/25010]  eta: 5:32:03  elapsed: 1:24:01    time: 0.9631  data: 0.0000
+Retrieval Evaluation:  [ 5100/25010]  eta: 5:31:07  elapsed: 1:24:50    time: 0.9850  data: 0.0000
+Retrieval Evaluation:  [ 5150/25010]  eta: 5:30:02  elapsed: 1:25:36    time: 0.9331  data: 0.0000
+Retrieval Evaluation:  [ 5200/25010]  eta: 5:29:10  elapsed: 1:26:25    time: 0.9666  data: 0.0000
+Retrieval Evaluation:  [ 5250/25010]  eta: 5:28:20  elapsed: 1:27:15    time: 1.0021  data: 0.0000
+Retrieval Evaluation:  [ 5300/25010]  eta: 5:27:29  elapsed: 1:28:04    time: 0.9938  data: 0.0000
+Retrieval Evaluation:  [ 5350/25010]  eta: 5:26:37  elapsed: 1:28:54    time: 0.9843  data: 0.0000
+Retrieval Evaluation:  [ 5400/25010]  eta: 5:25:47  elapsed: 1:29:44    time: 0.9964  data: 0.0000
+Retrieval Evaluation:  [ 5450/25010]  eta: 5:24:56  elapsed: 1:30:33    time: 0.9920  data: 0.0000
+Retrieval Evaluation:  [ 5500/25010]  eta: 5:24:04  elapsed: 1:31:22    time: 1.0111  data: 0.0000
+Retrieval Evaluation:  [ 5550/25010]  eta: 5:23:15  elapsed: 1:32:12    time: 0.9967  data: 0.0000
+Retrieval Evaluation:  [ 5600/25010]  eta: 5:22:21  elapsed: 1:33:01    time: 0.9705  data: 0.0000
+Retrieval Evaluation:  [ 5650/25010]  eta: 5:21:29  elapsed: 1:33:50    time: 0.9921  data: 0.0000
+Retrieval Evaluation:  [ 5700/25010]  eta: 5:20:41  elapsed: 1:34:40    time: 0.9884  data: 0.0000
+Retrieval Evaluation:  [ 5750/25010]  eta: 5:19:51  elapsed: 1:35:30    time: 0.9917  data: 0.0000
+Retrieval Evaluation:  [ 5800/25010]  eta: 5:19:02  elapsed: 1:36:20    time: 0.9975  data: 0.0000
+Retrieval Evaluation:  [ 5850/25010]  eta: 5:18:11  elapsed: 1:37:10    time: 1.0080  data: 0.0000
+Retrieval Evaluation:  [ 5900/25010]  eta: 5:17:23  elapsed: 1:38:00    time: 0.9861  data: 0.0000
+Retrieval Evaluation:  [ 5950/25010]  eta: 5:16:31  elapsed: 1:38:49    time: 0.9797  data: 0.0000
+Retrieval Evaluation:  [ 6000/25010]  eta: 5:15:39  elapsed: 1:39:38    time: 0.9875  data: 0.0000
+Retrieval Evaluation:  [ 6050/25010]  eta: 5:14:48  elapsed: 1:40:28    time: 0.9939  data: 0.0000
+Retrieval Evaluation:  [ 6100/25010]  eta: 5:13:59  elapsed: 1:41:18    time: 1.0192  data: 0.0000
+Retrieval Evaluation:  [ 6150/25010]  eta: 5:13:07  elapsed: 1:42:07    time: 0.9829  data: 0.0000
+Retrieval Evaluation:  [ 6200/25010]  eta: 5:12:19  elapsed: 1:42:57    time: 1.0070  data: 0.0000
+Retrieval Evaluation:  [ 6250/25010]  eta: 5:11:29  elapsed: 1:43:47    time: 0.9964  data: 0.0000
+Retrieval Evaluation:  [ 6300/25010]  eta: 5:10:40  elapsed: 1:44:37    time: 0.9918  data: 0.0000
+Retrieval Evaluation:  [ 6350/25010]  eta: 5:09:50  elapsed: 1:45:27    time: 0.9949  data: 0.0000
+Retrieval Evaluation:  [ 6400/25010]  eta: 5:09:00  elapsed: 1:46:17    time: 0.9992  data: 0.0000
+Retrieval Evaluation:  [ 6450/25010]  eta: 5:08:10  elapsed: 1:47:06    time: 0.9873  data: 0.0000
+Retrieval Evaluation:  [ 6500/25010]  eta: 5:07:20  elapsed: 1:47:56    time: 0.9935  data: 0.0000
+Retrieval Evaluation:  [ 6550/25010]  eta: 5:06:32  elapsed: 1:48:47    time: 0.9965  data: 0.0000
+Retrieval Evaluation:  [ 6600/25010]  eta: 5:05:42  elapsed: 1:49:37    time: 0.9960  data: 0.0000
+Retrieval Evaluation:  [ 6650/25010]  eta: 5:04:56  elapsed: 1:50:28    time: 1.0610  data: 0.0000
+Retrieval Evaluation:  [ 6700/25010]  eta: 5:04:03  elapsed: 1:51:16    time: 0.9858  data: 0.0000
+Retrieval Evaluation:  [ 6750/25010]  eta: 5:03:13  elapsed: 1:52:06    time: 0.9894  data: 0.0000
+Retrieval Evaluation:  [ 6800/25010]  eta: 5:02:21  elapsed: 1:52:55    time: 0.9856  data: 0.0000
+Retrieval Evaluation:  [ 6850/25010]  eta: 5:01:31  elapsed: 1:53:45    time: 0.9874  data: 0.0000
+Retrieval Evaluation:  [ 6900/25010]  eta: 5:00:40  elapsed: 1:54:34    time: 0.9889  data: 0.0000
+Retrieval Evaluation:  [ 6950/25010]  eta: 4:59:49  elapsed: 1:55:24    time: 0.9794  data: 0.0000
+Retrieval Evaluation:  [ 7000/25010]  eta: 4:58:58  elapsed: 1:56:13    time: 0.9790  data: 0.0000
+Retrieval Evaluation:  [ 7050/25010]  eta: 4:58:07  elapsed: 1:57:02    time: 0.9838  data: 0.0000
+Retrieval Evaluation:  [ 7100/25010]  eta: 4:57:16  elapsed: 1:57:52    time: 0.9840  data: 0.0000
+Retrieval Evaluation:  [ 7150/25010]  eta: 4:56:26  elapsed: 1:58:41    time: 0.9915  data: 0.0000
+Retrieval Evaluation:  [ 7200/25010]  eta: 4:55:36  elapsed: 1:59:31    time: 0.9824  data: 0.0000
+Retrieval Evaluation:  [ 7250/25010]  eta: 4:54:44  elapsed: 2:00:20    time: 0.9846  data: 0.0000
+Retrieval Evaluation:  [ 7300/25010]  eta: 4:53:53  elapsed: 2:01:09    time: 0.9759  data: 0.0000
+Retrieval Evaluation:  [ 7350/25010]  eta: 4:53:01  elapsed: 2:01:58    time: 0.9791  data: 0.0000
+Retrieval Evaluation:  [ 7400/25010]  eta: 4:52:12  elapsed: 2:02:48    time: 1.0034  data: 0.0000
+Retrieval Evaluation:  [ 7450/25010]  eta: 4:51:21  elapsed: 2:03:38    time: 0.9614  data: 0.0000
+Retrieval Evaluation:  [ 7500/25010]  eta: 4:50:30  elapsed: 2:04:27    time: 0.9883  data: 0.0000
+Retrieval Evaluation:  [ 7550/25010]  eta: 4:49:38  elapsed: 2:05:16    time: 0.9731  data: 0.0000
+Retrieval Evaluation:  [ 7600/25010]  eta: 4:48:47  elapsed: 2:06:05    time: 0.9851  data: 0.0000
+Retrieval Evaluation:  [ 7650/25010]  eta: 4:47:56  elapsed: 2:06:54    time: 0.9817  data: 0.0000
+Retrieval Evaluation:  [ 7700/25010]  eta: 4:47:04  elapsed: 2:07:43    time: 0.9830  data: 0.0000
+Retrieval Evaluation:  [ 7750/25010]  eta: 4:46:13  elapsed: 2:08:32    time: 0.9747  data: 0.0000
+Retrieval Evaluation:  [ 7800/25010]  eta: 4:45:23  elapsed: 2:09:21    time: 0.9802  data: 0.0000
+Retrieval Evaluation:  [ 7850/25010]  eta: 4:44:33  elapsed: 2:10:11    time: 0.9898  data: 0.0000
+Retrieval Evaluation:  [ 7900/25010]  eta: 4:43:42  elapsed: 2:11:00    time: 0.9802  data: 0.0000
+Retrieval Evaluation:  [ 7950/25010]  eta: 4:42:51  elapsed: 2:11:50    time: 0.9875  data: 0.0000
+Retrieval Evaluation:  [ 8000/25010]  eta: 4:42:01  elapsed: 2:12:39    time: 0.9870  data: 0.0000
+Retrieval Evaluation:  [ 8050/25010]  eta: 4:41:11  elapsed: 2:13:29    time: 0.9968  data: 0.0000
+Retrieval Evaluation:  [ 8100/25010]  eta: 4:40:20  elapsed: 2:14:18    time: 0.9843  data: 0.0000
+Retrieval Evaluation:  [ 8150/25010]  eta: 4:39:29  elapsed: 2:15:07    time: 0.9760  data: 0.0000
+Retrieval Evaluation:  [ 8200/25010]  eta: 4:38:40  elapsed: 2:15:57    time: 1.0332  data: 0.0000
+Retrieval Evaluation:  [ 8250/25010]  eta: 4:37:49  elapsed: 2:16:46    time: 0.9701  data: 0.0000
+Retrieval Evaluation:  [ 8300/25010]  eta: 4:36:57  elapsed: 2:17:35    time: 0.9754  data: 0.0000
+Retrieval Evaluation:  [ 8350/25010]  eta: 4:36:07  elapsed: 2:18:24    time: 0.9787  data: 0.0000
+Retrieval Evaluation:  [ 8400/25010]  eta: 4:35:16  elapsed: 2:19:13    time: 0.9714  data: 0.0000
+Retrieval Evaluation:  [ 8450/25010]  eta: 4:34:25  elapsed: 2:20:02    time: 0.9807  data: 0.0000
+Retrieval Evaluation:  [ 8500/25010]  eta: 4:33:34  elapsed: 2:20:52    time: 0.9921  data: 0.0000
+Retrieval Evaluation:  [ 8550/25010]  eta: 4:32:43  elapsed: 2:21:41    time: 0.9780  data: 0.0000
+Retrieval Evaluation:  [ 8600/25010]  eta: 4:31:52  elapsed: 2:22:30    time: 0.9848  data: 0.0000
+Retrieval Evaluation:  [ 8650/25010]  eta: 4:31:03  elapsed: 2:23:20    time: 0.9786  data: 0.0000
+Retrieval Evaluation:  [ 8700/25010]  eta: 4:30:12  elapsed: 2:24:09    time: 0.9781  data: 0.0000
+Retrieval Evaluation:  [ 8750/25010]  eta: 4:29:21  elapsed: 2:24:58    time: 0.9901  data: 0.0000
+Retrieval Evaluation:  [ 8800/25010]  eta: 4:28:29  elapsed: 2:25:46    time: 0.9712  data: 0.0000
+Retrieval Evaluation:  [ 8850/25010]  eta: 4:27:39  elapsed: 2:26:35    time: 0.9817  data: 0.0000
+Retrieval Evaluation:  [ 8900/25010]  eta: 4:26:47  elapsed: 2:27:24    time: 0.9757  data: 0.0000
+Retrieval Evaluation:  [ 8950/25010]  eta: 4:25:55  elapsed: 2:28:13    time: 0.9728  data: 0.0000
+Retrieval Evaluation:  [ 9000/25010]  eta: 4:25:05  elapsed: 2:29:02    time: 0.9908  data: 0.0000
+Retrieval Evaluation:  [ 9050/25010]  eta: 4:24:19  elapsed: 2:29:54    time: 1.0202  data: 0.0000
+Retrieval Evaluation:  [ 9100/25010]  eta: 4:23:27  elapsed: 2:30:42    time: 0.9907  data: 0.0000
+Retrieval Evaluation:  [ 9150/25010]  eta: 4:22:38  elapsed: 2:31:32    time: 0.9990  data: 0.0000
+Retrieval Evaluation:  [ 9200/25010]  eta: 4:21:47  elapsed: 2:32:21    time: 0.9826  data: 0.0000
+Retrieval Evaluation:  [ 9250/25010]  eta: 4:20:57  elapsed: 2:33:11    time: 0.9929  data: 0.0000
+Retrieval Evaluation:  [ 9300/25010]  eta: 4:20:07  elapsed: 2:34:00    time: 0.9788  data: 0.0000
+Retrieval Evaluation:  [ 9350/25010]  eta: 4:19:16  elapsed: 2:34:49    time: 0.9779  data: 0.0000
+Retrieval Evaluation:  [ 9400/25010]  eta: 4:18:26  elapsed: 2:35:38    time: 0.9728  data: 0.0000
+Retrieval Evaluation:  [ 9450/25010]  eta: 4:17:35  elapsed: 2:36:27    time: 0.9789  data: 0.0000
+Retrieval Evaluation:  [ 9500/25010]  eta: 4:16:45  elapsed: 2:37:17    time: 0.9771  data: 0.0000
+Retrieval Evaluation:  [ 9550/25010]  eta: 4:15:54  elapsed: 2:38:05    time: 0.9736  data: 0.0000
+Retrieval Evaluation:  [ 9600/25010]  eta: 4:15:03  elapsed: 2:38:54    time: 0.9879  data: 0.0000
+Retrieval Evaluation:  [ 9650/25010]  eta: 4:14:13  elapsed: 2:39:44    time: 0.9880  data: 0.0000
+Retrieval Evaluation:  [ 9700/25010]  eta: 4:13:25  elapsed: 2:40:35    time: 1.0100  data: 0.0000
+Retrieval Evaluation:  [ 9750/25010]  eta: 4:12:36  elapsed: 2:41:24    time: 0.9875  data: 0.0000
+Retrieval Evaluation:  [ 9800/25010]  eta: 4:11:46  elapsed: 2:42:14    time: 0.9966  data: 0.0000
+Retrieval Evaluation:  [ 9850/25010]  eta: 4:10:56  elapsed: 2:43:04    time: 0.9914  data: 0.0000
+Retrieval Evaluation:  [ 9900/25010]  eta: 4:10:08  elapsed: 2:43:54    time: 1.0297  data: 0.0000
+Retrieval Evaluation:  [ 9950/25010]  eta: 4:09:17  elapsed: 2:44:43    time: 0.9651  data: 0.0000
+Retrieval Evaluation:  [10000/25010]  eta: 4:08:25  elapsed: 2:45:31    time: 0.9833  data: 0.0000
+Retrieval Evaluation:  [10050/25010]  eta: 4:07:33  elapsed: 2:46:19    time: 0.9584  data: 0.0000
+Retrieval Evaluation:  [10100/25010]  eta: 4:06:41  elapsed: 2:47:07    time: 0.9377  data: 0.0000
+Retrieval Evaluation:  [10150/25010]  eta: 4:05:48  elapsed: 2:47:55    time: 0.9740  data: 0.0000
+Retrieval Evaluation:  [10200/25010]  eta: 4:04:57  elapsed: 2:48:43    time: 0.9776  data: 0.0000
+Retrieval Evaluation:  [10250/25010]  eta: 4:04:06  elapsed: 2:49:32    time: 0.9657  data: 0.0000
+Retrieval Evaluation:  [10300/25010]  eta: 4:03:15  elapsed: 2:50:21    time: 0.9712  data: 0.0000
+Retrieval Evaluation:  [10350/25010]  eta: 4:02:26  elapsed: 2:51:11    time: 0.9845  data: 0.0000
+Retrieval Evaluation:  [10400/25010]  eta: 4:01:36  elapsed: 2:52:00    time: 0.9838  data: 0.0000
+Retrieval Evaluation:  [10450/25010]  eta: 4:00:47  elapsed: 2:52:50    time: 0.9736  data: 0.0000
+Retrieval Evaluation:  [10500/25010]  eta: 3:59:56  elapsed: 2:53:38    time: 0.9736  data: 0.0000
+Retrieval Evaluation:  [10550/25010]  eta: 3:59:05  elapsed: 2:54:27    time: 0.9742  data: 0.0000
+Retrieval Evaluation:  [10600/25010]  eta: 3:58:14  elapsed: 2:55:16    time: 0.9716  data: 0.0000
+Retrieval Evaluation:  [10650/25010]  eta: 3:57:23  elapsed: 2:56:05    time: 0.9803  data: 0.0000
+Retrieval Evaluation:  [10700/25010]  eta: 3:56:32  elapsed: 2:56:53    time: 0.9659  data: 0.0000
+Retrieval Evaluation:  [10750/25010]  eta: 3:55:44  elapsed: 2:57:43    time: 1.0365  data: 0.0000
+Retrieval Evaluation:  [10800/25010]  eta: 3:54:52  elapsed: 2:58:32    time: 0.9645  data: 0.0000
+Retrieval Evaluation:  [10850/25010]  eta: 3:54:01  elapsed: 2:59:20    time: 0.9588  data: 0.0000
+Retrieval Evaluation:  [10900/25010]  eta: 3:53:10  elapsed: 3:00:08    time: 0.9644  data: 0.0000
+Retrieval Evaluation:  [10950/25010]  eta: 3:52:18  elapsed: 3:00:56    time: 0.9715  data: 0.0000
+Retrieval Evaluation:  [11000/25010]  eta: 3:51:27  elapsed: 3:01:45    time: 0.9672  data: 0.0000
+Retrieval Evaluation:  [11050/25010]  eta: 3:50:37  elapsed: 3:02:34    time: 0.9761  data: 0.0000
+Retrieval Evaluation:  [11100/25010]  eta: 3:49:46  elapsed: 3:03:22    time: 0.9720  data: 0.0000
+Retrieval Evaluation:  [11150/25010]  eta: 3:48:55  elapsed: 3:04:11    time: 0.9649  data: 0.0000
+Retrieval Evaluation:  [11200/25010]  eta: 3:48:05  elapsed: 3:05:00    time: 0.9661  data: 0.0000
+Retrieval Evaluation:  [11250/25010]  eta: 3:47:14  elapsed: 3:05:48    time: 0.9586  data: 0.0000
+Retrieval Evaluation:  [11300/25010]  eta: 3:46:23  elapsed: 3:06:36    time: 0.9624  data: 0.0000
+Retrieval Evaluation:  [11350/25010]  eta: 3:45:32  elapsed: 3:07:25    time: 0.9725  data: 0.0000
+Retrieval Evaluation:  [11400/25010]  eta: 3:44:42  elapsed: 3:08:14    time: 0.9825  data: 0.0000
+Retrieval Evaluation:  [11450/25010]  eta: 3:43:52  elapsed: 3:09:03    time: 0.9857  data: 0.0000
+Retrieval Evaluation:  [11500/25010]  eta: 3:43:02  elapsed: 3:09:52    time: 0.9833  data: 0.0000
+Retrieval Evaluation:  [11550/25010]  eta: 3:42:12  elapsed: 3:10:42    time: 0.9904  data: 0.0000
+Retrieval Evaluation:  [11600/25010]  eta: 3:41:23  elapsed: 3:11:31    time: 0.9896  data: 0.0000
+Retrieval Evaluation:  [11650/25010]  eta: 3:40:33  elapsed: 3:12:20    time: 0.9785  data: 0.0000
+Retrieval Evaluation:  [11700/25010]  eta: 3:39:42  elapsed: 3:13:09    time: 0.9676  data: 0.0000
+Retrieval Evaluation:  [11750/25010]  eta: 3:38:51  elapsed: 3:13:57    time: 0.9664  data: 0.0000
+Retrieval Evaluation:  [11800/25010]  eta: 3:38:01  elapsed: 3:14:46    time: 0.9712  data: 0.0000
+Retrieval Evaluation:  [11850/25010]  eta: 3:37:11  elapsed: 3:15:35    time: 0.9815  data: 0.0000
+Retrieval Evaluation:  [11900/25010]  eta: 3:36:21  elapsed: 3:16:24    time: 0.9963  data: 0.0000
+Retrieval Evaluation:  [11950/25010]  eta: 3:35:31  elapsed: 3:17:13    time: 0.9695  data: 0.0000
+Retrieval Evaluation:  [12000/25010]  eta: 3:34:41  elapsed: 3:18:03    time: 0.9854  data: 0.0000
+Retrieval Evaluation:  [12050/25010]  eta: 3:33:52  elapsed: 3:18:52    time: 0.9780  data: 0.0000
+Retrieval Evaluation:  [12100/25010]  eta: 3:33:01  elapsed: 3:19:40    time: 0.9729  data: 0.0000
+Retrieval Evaluation:  [12150/25010]  eta: 3:32:11  elapsed: 3:20:29    time: 0.9727  data: 0.0000
+Retrieval Evaluation:  [12200/25010]  eta: 3:31:21  elapsed: 3:21:18    time: 0.9756  data: 0.0000
+Retrieval Evaluation:  [12250/25010]  eta: 3:30:31  elapsed: 3:22:07    time: 0.9672  data: 0.0000
+Retrieval Evaluation:  [12300/25010]  eta: 3:29:40  elapsed: 3:22:56    time: 0.9713  data: 0.0000
+Retrieval Evaluation:  [12350/25010]  eta: 3:28:50  elapsed: 3:23:45    time: 0.9792  data: 0.0000
+Retrieval Evaluation:  [12400/25010]  eta: 3:28:00  elapsed: 3:24:34    time: 0.9717  data: 0.0000
+Retrieval Evaluation:  [12450/25010]  eta: 3:27:11  elapsed: 3:25:23    time: 0.9875  data: 0.0000
+Retrieval Evaluation:  [12500/25010]  eta: 3:26:22  elapsed: 3:26:14    time: 0.9906  data: 0.0000
+Retrieval Evaluation:  [12550/25010]  eta: 3:25:32  elapsed: 3:27:03    time: 0.9760  data: 0.0000
+Retrieval Evaluation:  [12600/25010]  eta: 3:24:42  elapsed: 3:27:52    time: 0.9757  data: 0.0000
+Retrieval Evaluation:  [12650/25010]  eta: 3:23:52  elapsed: 3:28:40    time: 0.9880  data: 0.0000
+Retrieval Evaluation:  [12700/25010]  eta: 3:23:03  elapsed: 3:29:30    time: 1.0012  data: 0.0000
+Retrieval Evaluation:  [12750/25010]  eta: 3:22:13  elapsed: 3:30:19    time: 0.9765  data: 0.0000
+Retrieval Evaluation:  [12800/25010]  eta: 3:21:23  elapsed: 3:31:09    time: 0.9830  data: 0.0000
+Retrieval Evaluation:  [12850/25010]  eta: 3:20:33  elapsed: 3:31:58    time: 0.9801  data: 0.0000
+Retrieval Evaluation:  [12900/25010]  eta: 3:19:44  elapsed: 3:32:47    time: 0.9796  data: 0.0000
+Retrieval Evaluation:  [12950/25010]  eta: 3:18:54  elapsed: 3:33:36    time: 0.9901  data: 0.0000
+Retrieval Evaluation:  [13000/25010]  eta: 3:18:04  elapsed: 3:34:25    time: 0.9824  data: 0.0000
+Retrieval Evaluation:  [13050/25010]  eta: 3:17:14  elapsed: 3:35:14    time: 0.9658  data: 0.0000
+Retrieval Evaluation:  [13100/25010]  eta: 3:16:24  elapsed: 3:36:03    time: 0.9976  data: 0.0000
+Retrieval Evaluation:  [13150/25010]  eta: 3:15:34  elapsed: 3:36:52    time: 0.9755  data: 0.0000
+Retrieval Evaluation:  [13200/25010]  eta: 3:14:44  elapsed: 3:37:41    time: 0.9632  data: 0.0000
+Retrieval Evaluation:  [13250/25010]  eta: 3:13:54  elapsed: 3:38:29    time: 0.9641  data: 0.0000
+Retrieval Evaluation:  [13300/25010]  eta: 3:13:05  elapsed: 3:39:19    time: 1.0299  data: 0.0000
+Retrieval Evaluation:  [13350/25010]  eta: 3:12:15  elapsed: 3:40:08    time: 0.9799  data: 0.0000
+Retrieval Evaluation:  [13400/25010]  eta: 3:11:25  elapsed: 3:40:57    time: 0.9865  data: 0.0000
+Retrieval Evaluation:  [13450/25010]  eta: 3:10:35  elapsed: 3:41:46    time: 0.9921  data: 0.0000
+Retrieval Evaluation:  [13500/25010]  eta: 3:09:47  elapsed: 3:42:37    time: 1.0570  data: 0.0000
+Retrieval Evaluation:  [13550/25010]  eta: 3:08:57  elapsed: 3:43:27    time: 0.9915  data: 0.0000
+Retrieval Evaluation:  [13600/25010]  eta: 3:08:08  elapsed: 3:44:16    time: 0.9905  data: 0.0000
+Retrieval Evaluation:  [13650/25010]  eta: 3:07:19  elapsed: 3:45:05    time: 0.9773  data: 0.0000
+Retrieval Evaluation:  [13700/25010]  eta: 3:06:29  elapsed: 3:45:55    time: 0.9816  data: 0.0000
+Retrieval Evaluation:  [13750/25010]  eta: 3:05:40  elapsed: 3:46:45    time: 0.9927  data: 0.0000
+Retrieval Evaluation:  [13800/25010]  eta: 3:04:50  elapsed: 3:47:34    time: 0.9866  data: 0.0000
+Retrieval Evaluation:  [13850/25010]  eta: 3:04:01  elapsed: 3:48:23    time: 0.9822  data: 0.0000
+Retrieval Evaluation:  [13900/25010]  eta: 3:03:11  elapsed: 3:49:13    time: 1.0038  data: 0.0000
+Retrieval Evaluation:  [13950/25010]  eta: 3:02:22  elapsed: 3:50:02    time: 0.9868  data: 0.0000
+Retrieval Evaluation:  [14000/25010]  eta: 3:01:32  elapsed: 3:50:52    time: 0.9861  data: 0.0000
+Retrieval Evaluation:  [14050/25010]  eta: 3:00:43  elapsed: 3:51:41    time: 0.9930  data: 0.0000
+Retrieval Evaluation:  [14100/25010]  eta: 2:59:53  elapsed: 3:52:30    time: 0.9818  data: 0.0000
+Retrieval Evaluation:  [14150/25010]  eta: 2:59:04  elapsed: 3:53:21    time: 0.9730  data: 0.0000
+Retrieval Evaluation:  [14200/25010]  eta: 2:58:14  elapsed: 3:54:10    time: 0.9843  data: 0.0000
+Retrieval Evaluation:  [14250/25010]  eta: 2:57:24  elapsed: 3:54:58    time: 0.9750  data: 0.0000
+Retrieval Evaluation:  [14300/25010]  eta: 2:56:35  elapsed: 3:55:48    time: 1.0045  data: 0.0000
+Retrieval Evaluation:  [14350/25010]  eta: 2:55:46  elapsed: 3:56:37    time: 0.9916  data: 0.0000
+Retrieval Evaluation:  [14400/25010]  eta: 2:54:56  elapsed: 3:57:27    time: 0.9869  data: 0.0000
+Retrieval Evaluation:  [14450/25010]  eta: 2:54:06  elapsed: 3:58:16    time: 0.9762  data: 0.0000
+Retrieval Evaluation:  [14500/25010]  eta: 2:53:17  elapsed: 3:59:05    time: 0.9927  data: 0.0000
+Retrieval Evaluation:  [14550/25010]  eta: 2:52:27  elapsed: 3:59:54    time: 0.9911  data: 0.0000
+Retrieval Evaluation:  [14600/25010]  eta: 2:51:37  elapsed: 4:00:44    time: 0.9820  data: 0.0000
+Retrieval Evaluation:  [14650/25010]  eta: 2:50:48  elapsed: 4:01:33    time: 0.9799  data: 0.0000
+Retrieval Evaluation:  [14700/25010]  eta: 2:49:58  elapsed: 4:02:22    time: 0.9807  data: 0.0000
+Retrieval Evaluation:  [14750/25010]  eta: 2:49:08  elapsed: 4:03:11    time: 0.9741  data: 0.0000
+Retrieval Evaluation:  [14800/25010]  eta: 2:48:19  elapsed: 4:04:00    time: 0.9862  data: 0.0000
+Retrieval Evaluation:  [14850/25010]  eta: 2:47:30  elapsed: 4:04:50    time: 1.0053  data: 0.0000
+Retrieval Evaluation:  [14900/25010]  eta: 2:46:40  elapsed: 4:05:40    time: 0.9913  data: 0.0000
+Retrieval Evaluation:  [14950/25010]  eta: 2:45:51  elapsed: 4:06:30    time: 1.0064  data: 0.0000
+Retrieval Evaluation:  [15000/25010]  eta: 2:45:02  elapsed: 4:07:20    time: 0.9746  data: 0.0000
+Retrieval Evaluation:  [15050/25010]  eta: 2:44:13  elapsed: 4:08:10    time: 1.0089  data: 0.0000
+Retrieval Evaluation:  [15100/25010]  eta: 2:43:25  elapsed: 4:09:01    time: 0.9905  data: 0.0000
+Retrieval Evaluation:  [15150/25010]  eta: 2:42:36  elapsed: 4:09:51    time: 1.0105  data: 0.0000
+Retrieval Evaluation:  [15200/25010]  eta: 2:41:46  elapsed: 4:10:41    time: 0.9820  data: 0.0000
+Retrieval Evaluation:  [15250/25010]  eta: 2:40:57  elapsed: 4:11:31    time: 0.9895  data: 0.0000
+Retrieval Evaluation:  [15300/25010]  eta: 2:40:08  elapsed: 4:12:20    time: 0.9843  data: 0.0000
+Retrieval Evaluation:  [15350/25010]  eta: 2:39:18  elapsed: 4:13:10    time: 0.9847  data: 0.0000
+Retrieval Evaluation:  [15400/25010]  eta: 2:38:29  elapsed: 4:14:00    time: 1.0308  data: 0.0000
+Retrieval Evaluation:  [15450/25010]  eta: 2:37:40  elapsed: 4:14:51    time: 1.0347  data: 0.0000
+Retrieval Evaluation:  [15500/25010]  eta: 2:36:51  elapsed: 4:15:41    time: 1.0029  data: 0.0000
+Retrieval Evaluation:  [15550/25010]  eta: 2:36:02  elapsed: 4:16:30    time: 0.9972  data: 0.0000
+Retrieval Evaluation:  [15600/25010]  eta: 2:35:12  elapsed: 4:17:20    time: 1.0001  data: 0.0000
+Retrieval Evaluation:  [15650/25010]  eta: 2:34:23  elapsed: 4:18:10    time: 1.0089  data: 0.0000
+Retrieval Evaluation:  [15700/25010]  eta: 2:33:35  elapsed: 4:19:01    time: 1.0133  data: 0.0000
+Retrieval Evaluation:  [15750/25010]  eta: 2:32:46  elapsed: 4:19:52    time: 1.0026  data: 0.0000
+Retrieval Evaluation:  [15800/25010]  eta: 2:31:57  elapsed: 4:20:42    time: 1.0305  data: 0.0000
+Retrieval Evaluation:  [15850/25010]  eta: 2:31:10  elapsed: 4:21:37    time: 1.0008  data: 0.0000
+Retrieval Evaluation:  [15900/25010]  eta: 2:30:21  elapsed: 4:22:27    time: 1.0023  data: 0.0000
+Retrieval Evaluation:  [15950/25010]  eta: 2:29:32  elapsed: 4:23:17    time: 0.9960  data: 0.0000
+Retrieval Evaluation:  [16000/25010]  eta: 2:28:43  elapsed: 4:24:07    time: 0.9825  data: 0.0000
+Retrieval Evaluation:  [16050/25010]  eta: 2:27:53  elapsed: 4:24:56    time: 0.9885  data: 0.0000
+Retrieval Evaluation:  [16100/25010]  eta: 2:27:03  elapsed: 4:25:44    time: 0.9512  data: 0.0000
+Retrieval Evaluation:  [16150/25010]  eta: 2:26:13  elapsed: 4:26:33    time: 0.9707  data: 0.0000
+Retrieval Evaluation:  [16200/25010]  eta: 2:25:23  elapsed: 4:27:22    time: 1.0090  data: 0.0000
+Retrieval Evaluation:  [16250/25010]  eta: 2:24:35  elapsed: 4:28:14    time: 1.0879  data: 0.0000
+Retrieval Evaluation:  [16300/25010]  eta: 2:23:46  elapsed: 4:29:04    time: 0.9968  data: 0.0000
+Retrieval Evaluation:  [16350/25010]  eta: 2:22:56  elapsed: 4:29:54    time: 0.9814  data: 0.0000
+Retrieval Evaluation:  [16400/25010]  eta: 2:22:06  elapsed: 4:30:42    time: 0.9579  data: 0.0000
+Retrieval Evaluation:  [16450/25010]  eta: 2:21:16  elapsed: 4:31:31    time: 0.9745  data: 0.0000
+Retrieval Evaluation:  [16500/25010]  eta: 2:20:26  elapsed: 4:32:20    time: 0.9694  data: 0.0000
+Retrieval Evaluation:  [16550/25010]  eta: 2:19:36  elapsed: 4:33:07    time: 0.9475  data: 0.0000
+Retrieval Evaluation:  [16600/25010]  eta: 2:18:46  elapsed: 4:33:57    time: 0.9879  data: 0.0000
+Retrieval Evaluation:  [16650/25010]  eta: 2:17:57  elapsed: 4:34:46    time: 1.0183  data: 0.0000
+Retrieval Evaluation:  [16700/25010]  eta: 2:17:10  elapsed: 4:35:42    time: 1.0686  data: 0.0000
+Retrieval Evaluation:  [16750/25010]  eta: 2:16:21  elapsed: 4:36:31    time: 0.9822  data: 0.0000
+Retrieval Evaluation:  [16800/25010]  eta: 2:15:30  elapsed: 4:37:19    time: 0.9693  data: 0.0000
+Retrieval Evaluation:  [16850/25010]  eta: 2:14:40  elapsed: 4:38:07    time: 0.9579  data: 0.0000
+Retrieval Evaluation:  [16900/25010]  eta: 2:13:50  elapsed: 4:38:55    time: 0.9694  data: 0.0000
+Retrieval Evaluation:  [16950/25010]  eta: 2:12:59  elapsed: 4:39:42    time: 0.9323  data: 0.0000
+Retrieval Evaluation:  [17000/25010]  eta: 2:12:10  elapsed: 4:40:32    time: 0.9745  data: 0.0000
+Retrieval Evaluation:  [17050/25010]  eta: 2:11:20  elapsed: 4:41:21    time: 0.9862  data: 0.0000
+Retrieval Evaluation:  [17100/25010]  eta: 2:10:31  elapsed: 4:42:11    time: 1.0006  data: 0.0000
+Retrieval Evaluation:  [17150/25010]  eta: 2:09:42  elapsed: 4:43:02    time: 1.0046  data: 0.0000
+Retrieval Evaluation:  [17200/25010]  eta: 2:08:52  elapsed: 4:43:51    time: 0.9850  data: 0.0000
+Retrieval Evaluation:  [17250/25010]  eta: 2:08:03  elapsed: 4:44:42    time: 1.0003  data: 0.0000
+Retrieval Evaluation:  [17300/25010]  eta: 2:07:14  elapsed: 4:45:31    time: 0.9699  data: 0.0000
+Retrieval Evaluation:  [17350/25010]  eta: 2:06:24  elapsed: 4:46:20    time: 0.9840  data: 0.0000
+Retrieval Evaluation:  [17400/25010]  eta: 2:05:34  elapsed: 4:47:08    time: 0.9735  data: 0.0000
+Retrieval Evaluation:  [17450/25010]  eta: 2:04:45  elapsed: 4:47:58    time: 0.9914  data: 0.0000
+Retrieval Evaluation:  [17500/25010]  eta: 2:03:57  elapsed: 4:48:51    time: 1.0840  data: 0.0000
+Retrieval Evaluation:  [17550/25010]  eta: 2:03:08  elapsed: 4:49:43    time: 1.0556  data: 0.0000
+Retrieval Evaluation:  [17600/25010]  eta: 2:02:20  elapsed: 4:50:36    time: 1.0080  data: 0.0000
+Retrieval Evaluation:  [17650/25010]  eta: 2:01:30  elapsed: 4:51:25    time: 0.9746  data: 0.0000
+Retrieval Evaluation:  [17700/25010]  eta: 2:00:41  elapsed: 4:52:15    time: 1.0011  data: 0.0000
+Retrieval Evaluation:  [17750/25010]  eta: 1:59:52  elapsed: 4:53:05    time: 0.9635  data: 0.0000
+Retrieval Evaluation:  [17800/25010]  eta: 1:59:02  elapsed: 4:53:55    time: 1.0026  data: 0.0000
+Retrieval Evaluation:  [17850/25010]  eta: 1:58:13  elapsed: 4:54:45    time: 0.9919  data: 0.0000
+Retrieval Evaluation:  [17900/25010]  eta: 1:57:24  elapsed: 4:55:36    time: 0.9893  data: 0.0000
+Retrieval Evaluation:  [17950/25010]  eta: 1:56:34  elapsed: 4:56:25    time: 0.9614  data: 0.0000
+Retrieval Evaluation:  [18000/25010]  eta: 1:55:45  elapsed: 4:57:15    time: 1.0551  data: 0.0000
+Retrieval Evaluation:  [18050/25010]  eta: 1:54:56  elapsed: 4:58:05    time: 1.0118  data: 0.0000
+Retrieval Evaluation:  [18100/25010]  eta: 1:54:06  elapsed: 4:58:55    time: 0.9922  data: 0.0000
+Retrieval Evaluation:  [18150/25010]  eta: 1:53:17  elapsed: 4:59:44    time: 1.0034  data: 0.0000
+Retrieval Evaluation:  [18200/25010]  eta: 1:52:27  elapsed: 5:00:33    time: 0.9696  data: 0.0000
+Retrieval Evaluation:  [18250/25010]  eta: 1:51:37  elapsed: 5:01:23    time: 0.9895  data: 0.0000
+Retrieval Evaluation:  [18300/25010]  eta: 1:50:49  elapsed: 5:02:16    time: 1.0823  data: 0.0000
+Retrieval Evaluation:  [18350/25010]  eta: 1:49:59  elapsed: 5:03:06    time: 0.9773  data: 0.0000
+Retrieval Evaluation:  [18400/25010]  eta: 1:49:10  elapsed: 5:03:56    time: 1.0247  data: 0.0000
+Retrieval Evaluation:  [18450/25010]  eta: 1:48:22  elapsed: 5:04:49    time: 0.9880  data: 0.0000
+Retrieval Evaluation:  [18500/25010]  eta: 1:47:32  elapsed: 5:05:38    time: 0.9625  data: 0.0000
+Retrieval Evaluation:  [18550/25010]  eta: 1:46:42  elapsed: 5:06:26    time: 0.9524  data: 0.0000
+Retrieval Evaluation:  [18600/25010]  eta: 1:45:52  elapsed: 5:07:16    time: 0.9541  data: 0.0000
+Retrieval Evaluation:  [18650/25010]  eta: 1:45:03  elapsed: 5:08:04    time: 0.9578  data: 0.0000
+Retrieval Evaluation:  [18700/25010]  eta: 1:44:13  elapsed: 5:08:54    time: 0.9728  data: 0.0000
+Retrieval Evaluation:  [18750/25010]  eta: 1:43:23  elapsed: 5:09:42    time: 0.9651  data: 0.0000
+Retrieval Evaluation:  [18800/25010]  eta: 1:42:33  elapsed: 5:10:30    time: 0.9701  data: 0.0000
+Retrieval Evaluation:  [18850/25010]  eta: 1:41:43  elapsed: 5:11:18    time: 0.9561  data: 0.0000
+Retrieval Evaluation:  [18900/25010]  eta: 1:40:54  elapsed: 5:12:08    time: 0.9773  data: 0.0000
+Retrieval Evaluation:  [18950/25010]  eta: 1:40:04  elapsed: 5:12:57    time: 0.9803  data: 0.0000
+Retrieval Evaluation:  [19000/25010]  eta: 1:39:14  elapsed: 5:13:46    time: 0.9845  data: 0.0000
+Retrieval Evaluation:  [19050/25010]  eta: 1:38:24  elapsed: 5:14:35    time: 0.9894  data: 0.0000
+Retrieval Evaluation:  [19100/25010]  eta: 1:37:35  elapsed: 5:15:26    time: 1.0570  data: 0.0000
+Retrieval Evaluation:  [19150/25010]  eta: 1:36:47  elapsed: 5:16:18    time: 1.0169  data: 0.0000
+Retrieval Evaluation:  [19200/25010]  eta: 1:35:57  elapsed: 5:17:08    time: 0.9726  data: 0.0000
+Retrieval Evaluation:  [19250/25010]  eta: 1:35:07  elapsed: 5:17:57    time: 0.9912  data: 0.0000
+Retrieval Evaluation:  [19300/25010]  eta: 1:34:18  elapsed: 5:18:48    time: 1.0811  data: 0.0000
+Retrieval Evaluation:  [19350/25010]  eta: 1:33:30  elapsed: 5:19:41    time: 1.0228  data: 0.0000
+Retrieval Evaluation:  [19400/25010]  eta: 1:32:41  elapsed: 5:20:32    time: 1.0103  data: 0.0000
+Retrieval Evaluation:  [19450/25010]  eta: 1:31:52  elapsed: 5:21:23    time: 1.0127  data: 0.0000
+Retrieval Evaluation:  [19500/25010]  eta: 1:31:02  elapsed: 5:22:13    time: 1.0044  data: 0.0000
+Retrieval Evaluation:  [19550/25010]  eta: 1:30:13  elapsed: 5:23:05    time: 1.0329  data: 0.0000
+Retrieval Evaluation:  [19600/25010]  eta: 1:29:24  elapsed: 5:23:56    time: 1.0401  data: 0.0000
+Retrieval Evaluation:  [19650/25010]  eta: 1:28:35  elapsed: 5:24:47    time: 0.9874  data: 0.0000
+Retrieval Evaluation:  [19700/25010]  eta: 1:27:45  elapsed: 5:25:36    time: 0.9846  data: 0.0000
+Retrieval Evaluation:  [19750/25010]  eta: 1:26:55  elapsed: 5:26:25    time: 1.0068  data: 0.0000
+Retrieval Evaluation:  [19800/25010]  eta: 1:26:06  elapsed: 5:27:14    time: 0.9939  data: 0.0000
+Retrieval Evaluation:  [19850/25010]  eta: 1:25:16  elapsed: 5:28:04    time: 0.9851  data: 0.0000
+Retrieval Evaluation:  [19900/25010]  eta: 1:24:26  elapsed: 5:28:53    time: 0.9567  data: 0.0000
+Retrieval Evaluation:  [19950/25010]  eta: 1:23:37  elapsed: 5:29:42    time: 0.9901  data: 0.0000
+Retrieval Evaluation:  [20000/25010]  eta: 1:22:47  elapsed: 5:30:32    time: 0.9896  data: 0.0000
+Retrieval Evaluation:  [20050/25010]  eta: 1:21:58  elapsed: 5:31:22    time: 1.0176  data: 0.0000
+Retrieval Evaluation:  [20100/25010]  eta: 1:21:08  elapsed: 5:32:13    time: 1.0151  data: 0.0000
+Retrieval Evaluation:  [20150/25010]  eta: 1:20:19  elapsed: 5:33:03    time: 1.0244  data: 0.0000
+Retrieval Evaluation:  [20200/25010]  eta: 1:19:30  elapsed: 5:33:54    time: 0.9708  data: 0.0000
+Retrieval Evaluation:  [20250/25010]  eta: 1:18:40  elapsed: 5:34:44    time: 0.9899  data: 0.0000
+Retrieval Evaluation:  [20300/25010]  eta: 1:17:51  elapsed: 5:35:34    time: 0.9818  data: 0.0000
+Retrieval Evaluation:  [20350/25010]  eta: 1:17:01  elapsed: 5:36:24    time: 1.0059  data: 0.0000
+Retrieval Evaluation:  [20400/25010]  eta: 1:16:12  elapsed: 5:37:14    time: 0.9973  data: 0.0000
+Retrieval Evaluation:  [20450/25010]  eta: 1:15:22  elapsed: 5:38:04    time: 0.9874  data: 0.0000
+Retrieval Evaluation:  [20500/25010]  eta: 1:14:33  elapsed: 5:38:54    time: 1.0163  data: 0.0000
+Retrieval Evaluation:  [20550/25010]  eta: 1:13:43  elapsed: 5:39:44    time: 1.0175  data: 0.0000
+Retrieval Evaluation:  [20600/25010]  eta: 1:12:54  elapsed: 5:40:35    time: 1.0293  data: 0.0000
+Retrieval Evaluation:  [20650/25010]  eta: 1:12:05  elapsed: 5:41:27    time: 1.0317  data: 0.0000
+Retrieval Evaluation:  [20700/25010]  eta: 1:11:15  elapsed: 5:42:17    time: 1.0079  data: 0.0000
+Retrieval Evaluation:  [20750/25010]  eta: 1:10:26  elapsed: 5:43:08    time: 0.9987  data: 0.0000
+Retrieval Evaluation:  [20800/25010]  eta: 1:09:36  elapsed: 5:43:58    time: 0.9933  data: 0.0000
+Retrieval Evaluation:  [20850/25010]  eta: 1:08:47  elapsed: 5:44:47    time: 1.0017  data: 0.0000
+Retrieval Evaluation:  [20900/25010]  eta: 1:07:57  elapsed: 5:45:38    time: 0.9883  data: 0.0000
+Retrieval Evaluation:  [20950/25010]  eta: 1:07:08  elapsed: 5:46:27    time: 0.9860  data: 0.0000
+Retrieval Evaluation:  [21000/25010]  eta: 1:06:18  elapsed: 5:47:17    time: 0.9921  data: 0.0000
+Retrieval Evaluation:  [21050/25010]  eta: 1:05:29  elapsed: 5:48:10    time: 1.0604  data: 0.0000
+Retrieval Evaluation:  [21100/25010]  eta: 1:04:40  elapsed: 5:48:59    time: 0.9943  data: 0.0000
+Retrieval Evaluation:  [21150/25010]  eta: 1:03:50  elapsed: 5:49:51    time: 1.0948  data: 0.0000
+Retrieval Evaluation:  [21200/25010]  eta: 1:03:01  elapsed: 5:50:44    time: 1.0551  data: 0.0000
+Retrieval Evaluation:  [21250/25010]  eta: 1:02:12  elapsed: 5:51:36    time: 1.0311  data: 0.0000
+Retrieval Evaluation:  [21300/25010]  eta: 1:01:23  elapsed: 5:52:27    time: 1.0410  data: 0.0000
+Retrieval Evaluation:  [21350/25010]  eta: 1:00:33  elapsed: 5:53:19    time: 1.0170  data: 0.0000
+Retrieval Evaluation:  [21400/25010]  eta: 0:59:44  elapsed: 5:54:10    time: 1.0238  data: 0.0000
+Retrieval Evaluation:  [21450/25010]  eta: 0:58:55  elapsed: 5:55:02    time: 1.0213  data: 0.0000
+Retrieval Evaluation:  [21500/25010]  eta: 0:58:05  elapsed: 5:55:52    time: 0.9579  data: 0.0000
+Retrieval Evaluation:  [21550/25010]  eta: 0:57:16  elapsed: 5:56:42    time: 1.0217  data: 0.0000
+Retrieval Evaluation:  [21600/25010]  eta: 0:56:26  elapsed: 5:57:30    time: 0.9671  data: 0.0000
+Retrieval Evaluation:  [21650/25010]  eta: 0:55:35  elapsed: 5:58:16    time: 0.8991  data: 0.0000
+Retrieval Evaluation:  [21700/25010]  eta: 0:54:46  elapsed: 5:59:04    time: 0.9649  data: 0.0000
+Retrieval Evaluation:  [21750/25010]  eta: 0:53:56  elapsed: 5:59:52    time: 0.9703  data: 0.0000
+Retrieval Evaluation:  [21800/25010]  eta: 0:53:06  elapsed: 6:00:42    time: 0.9986  data: 0.0000
+Retrieval Evaluation:  [21850/25010]  eta: 0:52:16  elapsed: 6:01:32    time: 1.0017  data: 0.0000
+Retrieval Evaluation:  [21900/25010]  eta: 0:51:27  elapsed: 6:02:22    time: 1.0038  data: 0.0000
+Retrieval Evaluation:  [21950/25010]  eta: 0:50:37  elapsed: 6:03:11    time: 0.9889  data: 0.0000
+Retrieval Evaluation:  [22000/25010]  eta: 0:49:48  elapsed: 6:04:00    time: 0.9885  data: 0.0000
+Retrieval Evaluation:  [22050/25010]  eta: 0:48:58  elapsed: 6:04:50    time: 0.9948  data: 0.0000
+Retrieval Evaluation:  [22100/25010]  eta: 0:48:08  elapsed: 6:05:41    time: 1.0015  data: 0.0000
+Retrieval Evaluation:  [22150/25010]  eta: 0:47:19  elapsed: 6:06:30    time: 1.0057  data: 0.0000
+Retrieval Evaluation:  [22200/25010]  eta: 0:46:29  elapsed: 6:07:20    time: 0.9949  data: 0.0000
+Retrieval Evaluation:  [22250/25010]  eta: 0:45:40  elapsed: 6:08:10    time: 0.9735  data: 0.0000
+Retrieval Evaluation:  [22300/25010]  eta: 0:44:50  elapsed: 6:09:00    time: 1.0098  data: 0.0000
+Retrieval Evaluation:  [22350/25010]  eta: 0:44:00  elapsed: 6:09:48    time: 0.9730  data: 0.0000
+Retrieval Evaluation:  [22400/25010]  eta: 0:43:10  elapsed: 6:10:37    time: 0.9726  data: 0.0000
+Retrieval Evaluation:  [22450/25010]  eta: 0:42:21  elapsed: 6:11:26    time: 0.9776  data: 0.0000
+Retrieval Evaluation:  [22500/25010]  eta: 0:41:31  elapsed: 6:12:16    time: 1.0254  data: 0.0000
+Retrieval Evaluation:  [22550/25010]  eta: 0:40:41  elapsed: 6:13:06    time: 0.9800  data: 0.0000
+Retrieval Evaluation:  [22600/25010]  eta: 0:39:52  elapsed: 6:13:56    time: 1.0046  data: 0.0000
+Retrieval Evaluation:  [22650/25010]  eta: 0:39:02  elapsed: 6:14:45    time: 0.9707  data: 0.0000
+Retrieval Evaluation:  [22700/25010]  eta: 0:38:13  elapsed: 6:15:35    time: 0.9899  data: 0.0000
+Retrieval Evaluation:  [22750/25010]  eta: 0:37:23  elapsed: 6:16:24    time: 0.9654  data: 0.0000
+Retrieval Evaluation:  [22800/25010]  eta: 0:36:33  elapsed: 6:17:13    time: 0.9735  data: 0.0000
+Retrieval Evaluation:  [22850/25010]  eta: 0:35:44  elapsed: 6:18:02    time: 1.0023  data: 0.0000
+Retrieval Evaluation:  [22900/25010]  eta: 0:34:54  elapsed: 6:18:50    time: 0.9484  data: 0.0000
+Retrieval Evaluation:  [22950/25010]  eta: 0:34:04  elapsed: 6:19:39    time: 0.9782  data: 0.0000
+Retrieval Evaluation:  [23000/25010]  eta: 0:33:14  elapsed: 6:20:28    time: 0.9811  data: 0.0000
+Retrieval Evaluation:  [23050/25010]  eta: 0:32:25  elapsed: 6:21:19    time: 0.9666  data: 0.0000
+Retrieval Evaluation:  [23100/25010]  eta: 0:31:35  elapsed: 6:22:08    time: 0.9782  data: 0.0000
+Retrieval Evaluation:  [23150/25010]  eta: 0:30:45  elapsed: 6:22:56    time: 0.9620  data: 0.0000
+Retrieval Evaluation:  [23200/25010]  eta: 0:29:56  elapsed: 6:23:45    time: 0.9859  data: 0.0000
+Retrieval Evaluation:  [23250/25010]  eta: 0:29:06  elapsed: 6:24:35    time: 0.9803  data: 0.0000
+Retrieval Evaluation:  [23300/25010]  eta: 0:28:16  elapsed: 6:25:23    time: 0.9922  data: 0.0000
+Retrieval Evaluation:  [23350/25010]  eta: 0:27:27  elapsed: 6:26:13    time: 1.0082  data: 0.0000
+Retrieval Evaluation:  [23400/25010]  eta: 0:26:37  elapsed: 6:27:04    time: 0.9778  data: 0.0000
+Retrieval Evaluation:  [23450/25010]  eta: 0:25:48  elapsed: 6:27:53    time: 0.9718  data: 0.0000
+Retrieval Evaluation:  [23500/25010]  eta: 0:24:58  elapsed: 6:28:42    time: 0.9786  data: 0.0000
+Retrieval Evaluation:  [23550/25010]  eta: 0:24:08  elapsed: 6:29:31    time: 0.9987  data: 0.0000
+Retrieval Evaluation:  [23600/25010]  eta: 0:23:19  elapsed: 6:30:21    time: 0.9897  data: 0.0000
+Retrieval Evaluation:  [23650/25010]  eta: 0:22:29  elapsed: 6:31:10    time: 0.9930  data: 0.0000
+Retrieval Evaluation:  [23700/25010]  eta: 0:21:39  elapsed: 6:31:59    time: 0.9931  data: 0.0000
+Retrieval Evaluation:  [23750/25010]  eta: 0:20:50  elapsed: 6:32:49    time: 0.9921  data: 0.0000
+Retrieval Evaluation:  [23800/25010]  eta: 0:20:00  elapsed: 6:33:39    time: 1.0269  data: 0.0000
+Retrieval Evaluation:  [23850/25010]  eta: 0:19:11  elapsed: 6:34:31    time: 0.9874  data: 0.0000
+Retrieval Evaluation:  [23900/25010]  eta: 0:18:21  elapsed: 6:35:20    time: 0.9856  data: 0.0000
+Retrieval Evaluation:  [23950/25010]  eta: 0:17:32  elapsed: 6:36:11    time: 1.0088  data: 0.0000
+Retrieval Evaluation:  [24000/25010]  eta: 0:16:42  elapsed: 6:37:01    time: 1.0178  data: 0.0000
+Retrieval Evaluation:  [24050/25010]  eta: 0:15:52  elapsed: 6:37:52    time: 1.0129  data: 0.0000
+Retrieval Evaluation:  [24100/25010]  eta: 0:15:03  elapsed: 6:38:42    time: 1.0017  data: 0.0000
+Retrieval Evaluation:  [24150/25010]  eta: 0:14:13  elapsed: 6:39:32    time: 1.0119  data: 0.0000
+Retrieval Evaluation:  [24200/25010]  eta: 0:13:24  elapsed: 6:40:23    time: 1.0136  data: 0.0000
+Retrieval Evaluation:  [24250/25010]  eta: 0:12:34  elapsed: 6:41:15    time: 1.0033  data: 0.0000
+Retrieval Evaluation:  [24300/25010]  eta: 0:11:44  elapsed: 6:42:04    time: 0.9600  data: 0.0000
+Retrieval Evaluation:  [24350/25010]  eta: 0:10:55  elapsed: 6:42:54    time: 1.0034  data: 0.0000
+Retrieval Evaluation:  [24400/25010]  eta: 0:10:05  elapsed: 6:43:44    time: 0.9994  data: 0.0000
+Retrieval Evaluation:  [24450/25010]  eta: 0:09:15  elapsed: 6:44:34    time: 1.0010  data: 0.0000
+Retrieval Evaluation:  [24500/25010]  eta: 0:08:26  elapsed: 6:45:24    time: 0.9981  data: 0.0000
+Retrieval Evaluation:  [24550/25010]  eta: 0:07:36  elapsed: 6:46:13    time: 0.9905  data: 0.0000
+Retrieval Evaluation:  [24600/25010]  eta: 0:06:47  elapsed: 6:47:03    time: 1.0025  data: 0.0000
+Retrieval Evaluation:  [24650/25010]  eta: 0:05:57  elapsed: 6:47:55    time: 1.0418  data: 0.0000
+Retrieval Evaluation:  [24700/25010]  eta: 0:05:07  elapsed: 6:48:43    time: 0.9765  data: 0.0000
+Retrieval Evaluation:  [24750/25010]  eta: 0:04:18  elapsed: 6:49:33    time: 0.9866  data: 0.0000
+Retrieval Evaluation:  [24800/25010]  eta: 0:03:28  elapsed: 6:50:22    time: 0.9784  data: 0.0000
+Retrieval Evaluation:  [24850/25010]  eta: 0:02:38  elapsed: 6:51:12    time: 0.9976  data: 0.0000
+Retrieval Evaluation:  [24900/25010]  eta: 0:01:49  elapsed: 6:52:01    time: 0.9930  data: 0.0000
+Retrieval Evaluation:  [24950/25010]  eta: 0:00:59  elapsed: 6:52:51    time: 0.9843  data: 0.0000
+Retrieval Evaluation:  [25000/25010]  eta: 0:00:09  elapsed: 6:53:43    time: 1.0248  data: 0.0000
+Retrieval Evaluation:  [25009/25010]  eta: 0:00:00  elapsed: 6:53:53    time: 1.0334  data: 0.0000
+Retrieval Evaluation: Total time: 6:53:53 (0.9929 s / it)
+Retrieval Evaluation time 8:30:49
+
+----- ITM-rerank (z2 + cosine) -----
+  i2t (txt retrieval)  R@1=73.28  R@5=91.46  R@10=95.66  mean=86.80
+  t2i (img retrieval)  R@1=56.37  R@5=80.50  R@10=87.98  mean=74.95
+  r_mean = 80.88
+  [30656.4s]
+
+  ITM 재정렬 이득: r_mean 74.29 -> 80.88  (+6.59)
+
+saved: /home/minwoo/Distillation_Project/critical_bugfix/2026-07-31_itm_batch_logit_raw/coco_retrieval_check.json

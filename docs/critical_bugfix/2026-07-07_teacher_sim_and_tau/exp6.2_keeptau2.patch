@@ -1,0 +1,59 @@
+diff --git a/configs/pretrain_itc_distill.yaml b/configs/pretrain_itc_distill.yaml
+index 6a88f58..9ab6d2b 100644
+--- a/configs/pretrain_itc_distill.yaml
++++ b/configs/pretrain_itc_distill.yaml
+@@ -11,10 +11,11 @@ cc12m_ratio: 5
+ used_dataset: 'coco_vg'
+ 
+ # ===== ITC distillation 런 (student + frozen BLIP-large teacher, ITC-only) =====
+-output_dir: '/home/minwoo/Distillation_Project/output/pt_smallreg_minilm_itc_distill'
++# ablation KEEP-τ² arm: τ=0.022 + ×τ² 유지 (drop-τ² 비교군은 dev pretrain.yaml, exp 6.1)
++output_dir: '/home/minwoo/Distillation_Project/output/pt_smallreg_minilm_itc_distill_tau0.022_keeptau2'
+ 
+ # experiment 태그 (tensorboard run 이름에 사용)
+-exp: '6.itc_distill'
++exp: '6.2.itc_distill_tau0.022_keeptau2'
+ # 이미지 증강 토글: 온라인 티처 증류는 augmentation ON 필수 (no-aug는 NO-GO였음)
+ pretrain_train_aug: true
+ 
+@@ -92,7 +93,7 @@ distill:
+   itc:
+     enabled: true           # 이번 런은 ITC-only
+     weight: 1.0             # λ_itc — 고정 하이퍼파라미터, 첫 런에서 loss_train/itc_kd 스케일 보고 조정
+-    temp: 0.05              # τ, 증류 온도 (model logit_scale와 별개)
++    temp: 0.022             # τ, 증류 온도 (dev 6.1과 동일 τ — 차이는 ×τ² 유무뿐)
+   lm:
+     enabled: false          # ITC-only 이므로 LM distill 끔
+     weight: 1.0
+diff --git a/distillation/losses.py b/distillation/losses.py
+index 81a603a..14c783a 100644
+--- a/distillation/losses.py
++++ b/distillation/losses.py
+@@ -11,12 +11,13 @@ def itc_distill_loss(image_feat_s, text_feat_s, teacher_img_feat, teacher_txt_fe
+         temp: distillation temperature τ (same for teacher and student).
+ 
+     Returns:
+-        Scalar tensor = 0.5 * (KL_i2t + KL_t2i), with KL(teacher ‖ student).
++        Scalar tensor = 0.5 * (KL_i2t + KL_t2i) * τ², with KL(teacher ‖ student).
+ 
+-    Note: Hinton의 × T² 보정은 T>1(softening) 전제에서만 gradient를 order-1로 되돌린다.
+-    ITC-KD의 τ는 CLIP식 contrastive 온도로 τ≪1(sharpening)이라, × τ²는 보정이 아니라
+-    gradient를 τ배로 죽이는 역효과(2026-07-07 측정·분석: critical_bugfix/). → 제거.
+-    크기 정합은 loss 합산 시 λ_itc(weight)로 잡는다.
++    Note: ★ 이 워크트리는 τ² **유지** 대조군 (ablation의 KEEP-τ² arm, exp 6.2).
++    Hinton의 × T² 보정은 T>1(softening) 전제에서만 gradient를 order-1로 되돌린다.
++    여기 τ=0.022≪1(sharpening)이라 × τ²는 보정이 아니라 gradient를 τ배로 죽이는
++    역효과(critical_bugfix/) — 그 효과를 τ=0.022에서 실증하려 일부러 유지한다.
++    비교군(drop-τ², exp 6.1)은 dev의 configs/pretrain.yaml.
+     """
+     teacher_img_feat = teacher_img_feat.detach()
+     teacher_txt_feat = teacher_txt_feat.detach()
+@@ -29,7 +30,7 @@ def itc_distill_loss(image_feat_s, text_feat_s, teacher_img_feat, teacher_txt_fe
+     # text->image: transpose
+     loss_t2i = F.kl_div(F.log_softmax(s_s.t(), dim=1), F.softmax(s_t.t(), dim=1), reduction="batchmean")
+ 
+-    return 0.5 * (loss_i2t + loss_t2i)
++    return 0.5 * (loss_i2t + loss_t2i) * (temp ** 2)
+ 
+ 
+ def lm_distill_loss(student_logits, teacher_logits, decoder_targets, temp):
