@@ -13,28 +13,28 @@ def itm_bxb_logits(text_encoder, itm_head, image_embeds, image_atts,
     activation 절약 → full B×B가 24GB에 맞음). 티처(no_grad)/eval에선 자동 plain.
     enc_token_id는 호출자가 encoder_input_ids에 이미 설정한 상태로 받는다.
     """
-    B = image_embeds.size(0)
+    B = image_embeds.size(0) # vit가 벹은 이미지 패치 임베딩, [B, L_img, D]
 
     def _row(enc_hidden, enc_att):
-        out = text_encoder(encoder_input_ids,
-                           attention_mask=text_atts,
-                           encoder_hidden_states=enc_hidden,
-                           encoder_attention_mask=enc_att,
+        out = text_encoder(encoder_input_ids, # 토큰 인덱스를 줌
+                           attention_mask=text_atts, # 텍스트 자기 자신에 대한 셀프 어텐션 마스크. 1이면 토큰 0이면 패딩임을 알려줌. 바이디렉셔널임
+                           encoder_hidden_states=enc_hidden, # vit patch embed. [B, L_img, D_vit] L_img는 14*14+1(CLS)로 197개
+                           encoder_attention_mask=enc_att, # 관례적으로 인코더 히든 스테이트를 받으면 디코더 역할로 작동해서 크로스 어텐션을 받는 칸이라 보면 됨.
                            return_dict=True)
-        return out.last_hidden_state[:, 0, :]                  # [B, D]
+        return out.last_hidden_state[:, 0, :]                  # [B, D] enc 토큰 B개를 뽑아서 리턴하는 함수
 
-    cls_rows = []
-    for i in range(B):
-        enc_hidden = image_embeds[i:i + 1].repeat(B, 1, 1)     # [B, L_img, D]
-        enc_att = image_atts[i:i + 1].repeat(B, 1)             # [B, L_img]
+    cls_rows = [] # 텍스트 enc토큰들을 모으는 행렬
+    for i in range(B): # 이건 이미지 기준으로 돌게 만듦.
+        enc_hidden = image_embeds[i:i + 1].repeat(B, 1, 1)     # [B, L_img, D] 0번 이미지를 반복 생성
+        enc_att = image_atts[i:i + 1].repeat(B, 1)             # [B, L_img] 어텐션 마스크도 반복 생성
         if use_checkpoint and torch.is_grad_enabled():
             cls = checkpoint(_row, enc_hidden, enc_att, use_reentrant=False)
         else:
             cls = _row(enc_hidden, enc_att)
         cls_rows.append(cls)                                   # [B, D]
-    cls = torch.stack(cls_rows, dim=0)                         # [B, B, D]
+    cls = torch.stack(cls_rows, dim=0)                         # [B, B, D] 그럼 축은? 바깥이 이미지, 안쪽이 텍스트가 된다.
     with torch.autocast(device_type=image_embeds.device.type, enabled=False):
-        logits = itm_head(cls.float())                         # [B, B, 2] fp32
+        logits = itm_head(cls.float())                         # [B, B, 2] fp32 다음 계산은 autocast를 끄는 것.
     return logits
 
 
@@ -44,11 +44,19 @@ def itm_pair_logits(text_encoder, itm_head, image_embeds, image_atts,
     pool(image_embeds/enc_ids)로의 인덱스; row r은 (image_embeds[image_idx[r,m]],
     enc_ids[text_idx[r,m]]) M개를 채점 → [B,M,2] fp32. 단일 배치 forward(B*M).
     itm_head는 autocast 밖 fp32(프로브 §7). enc_token_id는 호출자가 enc_ids에 설정."""
-    B, M = image_idx.shape
-    fi = image_idx.reshape(-1)                                 # [B*M]
+    B, M = image_idx.shape # 이미지 B개에 채점할 M개 텍스트
+    ''' 이미지 0번과 텍스트 3번을 비교 / 이미지 1번과 텍스트 2번을 비교 / ...
+    image_idx = [[0, 1],
+             [2, 3],
+             [1, 0]]
+    text_idx  = [[3, 2],
+             [0, 1],
+             [2, 2]]
+    '''
+    fi = image_idx.reshape(-1)                                 # [B*M] 그래서 플래튼해도되는 것.
     ft = text_idx.reshape(-1)                                  # [B*M]
-    out = text_encoder(enc_ids[ft],
-                       attention_mask=text_atts[ft],
+    out = text_encoder(enc_ids[ft], # 몇 번의 텍스트를 쓸 건지 순서대로 뽑아서 새 배치를 만들.
+                       attention_mask=text_atts[ft], # 인덱스 중복 허용함. 
                        encoder_hidden_states=image_embeds[fi],
                        encoder_attention_mask=image_atts[fi],
                        return_dict=True)

@@ -45,7 +45,7 @@ class OnlineTeacher:
             # teacher's learned ITC temperature (for teacher-guided neg selection scale).
             # model_large.pth carries `temp` (=0.0157); the reparam'd model has none, so read it here.
             if "temp" in state:
-                self.teacher_temp = float(state["temp"])
+                self.teacher_temp = float(state["temp"]) # 기본 모델의 온도로 변경
             msg = model.load_state_dict(state, strict=False)
             print("teacher load:", msg)
             critical_prefixes = tuple(p for k in self.keep for p in CRITICAL_PREFIXES[k])
@@ -60,11 +60,11 @@ class OnlineTeacher:
         self.teacher_scale = 1.0 / self.teacher_temp
 
         # keep 합집합 외 서브모듈/버퍼 해제 (로드 후 → .to(device) 전이므로 GPU엔 안 올라감)
-        needed = set().union(*(NEEDS[k] for k in self.keep))
-        for attr in sorted(ALL_SUBMODULES - needed):
-            setattr(model, attr, None)
-        for buf in ("image_queue", "text_queue", "queue_ptr"):
-            setattr(model, buf, None)
+        needed = set().union(*(NEEDS[k] for k in self.keep)) # 꺼내서 중복 제거하는 문법
+        for attr in sorted(ALL_SUBMODULES - needed): # 차집합이 됨
+            setattr(model, attr, None) # model.attr=None을 하려는데 이러면 attr이라는 속성이 새로 생겨나버리니깐 setattr를 사용한다.
+        for buf in ("image_queue", "text_queue", "queue_ptr"): # 티처의 이미지 큐와 텍스트 큐 포인터는 모두 스튜던트 쪽에서 저장함. 그리고 티처 큐는 옛날거라서 다 드랍하게 됨
+            setattr(model, buf, None) # 그리고 모든 모듈에서 _m이 붙으면 애초에 다 사라지게됨
 
         model.eval()
         for p in model.parameters():
@@ -103,11 +103,11 @@ class OnlineTeacher:
             img_feat = F.normalize(self.model.vision_proj(image_embeds[:, 0, :]), dim=-1)
             text = self.tokenizer(caption, padding="max_length", truncation=True,
                                   max_length=30, return_tensors="pt").to(device)
-            text_output = self.model.text_encoder(text.input_ids,
+            text_output = self.model.text_encoder(text.input_ids, # [B, L]의 배치 x 문장을 넣어주는 셈.
                                                   attention_mask=text.attention_mask,
                                                   return_dict=True, mode="text")
-            txt_feat = F.normalize(self.model.text_proj(text_output.last_hidden_state[:, 0, :]), dim=-1)
-        return img_feat, txt_feat
+            txt_feat = F.normalize(self.model.text_proj(text_output.last_hidden_state[:, 0, :]), dim=-1) # [B,L,V]에서 L=0번만 뽑는것
+        return img_feat, txt_feat # 파이토치의 축은 인덱싱과 같다. dim=-1이면 제일 뒤를 정규화하는것. 256차원을 노름 1로 정규화
 
     @torch.no_grad()
     def lm_logits(self, image, caption, image_embeds=None):
@@ -124,10 +124,10 @@ class OnlineTeacher:
                                   max_length=30, return_tensors="pt").to(device)
             decoder_input_ids = text.input_ids.clone()
             decoder_input_ids[:, 0] = self.tokenizer.bos_token_id
-            out = self.model.text_decoder(decoder_input_ids,
-                                          attention_mask=text.attention_mask,
-                                          encoder_hidden_states=image_embeds,
-                                          encoder_attention_mask=image_atts,
+            out = self.model.text_decoder(decoder_input_ids, # 자동으로 코잘 마스크가 만들어짐 
+                                          attention_mask=text.attention_mask, # 텍스트 마스크인데, 기존거랑 달라야하지않나? 이 마스크는 이거보다 더 안쪽에서 디코더가 호출되는순간 코잘 마스크로 생성됨.
+                                          encoder_hidden_states=image_embeds, # 이미지 임베딩
+                                          encoder_attention_mask=image_atts, # 이미지 마스크
                                           return_dict=True)   # labels 없음 → logits만
         return out.logits, decoder_input_ids
 

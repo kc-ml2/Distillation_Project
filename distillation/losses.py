@@ -16,22 +16,32 @@ def lm_distill_loss(student_logits, teacher_logits, decoder_targets, temp):
         CE와 동일한 shift 프레임: 위치 i 로짓이 토큰 i+1을 예측하므로
         마지막 위치를 버리고, targets를 한 칸 미뤄 유효 마스크를 만든다.
     """
-    assert student_logits.shape[-1] == teacher_logits.shape[-1], (
+    assert student_logits.shape[-1] == teacher_logits.shape[-1], ( # [B, L, V] 형태. 보캐블러리 사이즈를 뽑아서 보는거
         f"vocab size mismatch: student {student_logits.shape[-1]} "
         f"vs teacher {teacher_logits.shape[-1]}"
     )
-    s = student_logits[:, :-1, :]
-    t = teacher_logits[:, :-1, :].detach()
-    valid = decoder_targets[:, 1:] != -100      # [B, L-1], CE가 학습하는 위치와 동일 집합
-    s = s[valid]                                 # [N_valid, V]
-    t = t[valid]
+    s = student_logits[:, :-1, :] # 마지막 토큰을 잘라냄. 칸 만드려고 [B, L-1, V]
+    t = teacher_logits[:, :-1, :].detach() # 티처 쪽은 그래디언트가 흐르면 안되기 때문에 detach로 계산 그래프에서 끊어버림. 안전장치를 다는것
+    valid = decoder_targets[:, 1:] != -100      # [B, L-1], 디코더 타겟을 L-1개만 true가 나오도록 하게
+    # 이렇게 하면 지금 토큰이 맞춰야 할 위치 = 다음 토큰인 상태를 valid로 불리안 마스크 제작
+    # 밑에처럼 인덱싱을 하면 벨리드 토큰 위치를 싹 읽으면서 일렬로 내보냄.
+    s = s[valid]                                 # [N_valid, V] (true 위치들만 싹 모아서 일렬로 나열하기)
+    t = t[valid]                                 # 이것도 true 위치들만 싹 나열하기
     return F.kl_div(
-        F.log_softmax(s / temp, dim=-1),
+        F.log_softmax(s / temp, dim=-1), 
         F.softmax(t / temp, dim=-1),
         reduction="batchmean",                   # N_valid로 나눔 = 유효 토큰당 평균
     ) * (temp ** 2)
+    
+    # 이거 변경함 8.14
+    # return F.kl_div( 
+    #     F.log_softmax(s / temp, dim=-1), 
+    #     F.log_softmax(t / temp, dim=-1),
+    #     reduction="batchmean",                   # N_valid로 나눔 = 유효 토큰당 평균
+    #     log_target=True,
+    # ) * (temp ** 2)
 
-
+# 이건 안쓰는놈같음
 def itm_matrix_kd_loss(student_logits, teacher_logits, direction, temp):
     """Full B×B ITM 매치-로짓 매트릭스 관계 KD (ITC KD의 ITM 미러).
 
@@ -70,10 +80,10 @@ def itm_gathered_kd_loss(s_i2t, t_i2t, s_t2i, t_t2i, direction, temp):
     if channels is None:
         raise ValueError(f"direction must be forward/reverse/bidir, got {direction!r}")
     total, n = 0.0, 0
-    for s, t in ((s_i2t, t_i2t), (s_t2i, t_t2i)):
+    for s, t in ((s_i2t, t_i2t), (s_t2i, t_t2i)): # 루프를 2번 돈다. 튜플이 길이 2기 때문에
         s = s.float()
         t = t.float().detach()
-        for c in channels:
+        for c in channels: # 각 i2t와 t2i는 다르기 때문에 두번 도는 것.
             total = total + F.kl_div(F.log_softmax(s[:, :, c] / temp, dim=1),
                                      F.softmax(t[:, :, c] / temp, dim=1), reduction="batchmean")
             n += 1
