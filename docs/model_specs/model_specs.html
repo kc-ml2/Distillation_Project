@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>모델 스펙 비교 — BLIP-large / BLIP-base / DINOv3-S+MiniLM 학생</title>
+<style>
+  :root {
+    color-scheme: light;
+    --surface-0: #ffffff;
+    --surface-1: #fcfcfb;
+    --surface-2: #f4f3f0;
+    --border:    #dedcd6;
+    --text-primary:   #0b0b0b;
+    --text-secondary: #52514e;
+    --text-muted:     #78766f;
+    --series-1: #2a78d6;  /* vision encoder */
+    --series-2: #eb6834;  /* text embeddings */
+    --series-3: #1baf7a;  /* self-attention */
+    --series-4: #eda100;  /* cross-attention (랜덤 초기화) */
+    --series-5: #e87ba4;  /* FFN */
+    --series-6: #008300;  /* 기타(헤드/proj) */
+    --accent-soft: #eef4fd;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) {
+      color-scheme: dark;
+      --surface-0: #121211;
+      --surface-1: #1a1a19;
+      --surface-2: #242422;
+      --border:    #383835;
+      --text-primary:   #ffffff;
+      --text-secondary: #c3c2b7;
+      --text-muted:     #9a9890;
+      --series-1: #3987e5;
+      --series-2: #d95926;
+      --series-3: #199e70;
+      --series-4: #c98500;
+      --series-5: #d55181;
+      --series-6: #008300;
+      --accent-soft: #17263a;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --surface-0: #121211;
+    --surface-1: #1a1a19;
+    --surface-2: #242422;
+    --border:    #383835;
+    --text-primary:   #ffffff;
+    --text-secondary: #c3c2b7;
+    --text-muted:     #9a9890;
+    --series-1: #3987e5;
+    --series-2: #d95926;
+    --series-3: #199e70;
+    --series-4: #c98500;
+    --series-5: #d55181;
+    --series-6: #008300;
+    --accent-soft: #17263a;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 0;
+    background: var(--surface-0);
+    color: var(--text-primary);
+    font: 15px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans KR", "Malgun Gothic", sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 40px 24px 80px; }
+  header { border-bottom: 1px solid var(--border); padding-bottom: 24px; margin-bottom: 40px; }
+  h1 { font-size: 26px; line-height: 1.3; margin: 0 0 8px; letter-spacing: -0.01em; }
+  .sub { color: var(--text-secondary); font-size: 14px; margin: 0; }
+  .meta { color: var(--text-muted); font-size: 12.5px; margin-top: 10px; font-variant-numeric: tabular-nums; }
+  h2 { font-size: 18px; margin: 48px 0 6px; letter-spacing: -0.01em; }
+  h2 .num { color: var(--text-muted); font-weight: 400; margin-right: 8px; }
+  h3 { font-size: 14.5px; margin: 28px 0 4px; }
+  .lede { color: var(--text-secondary); font-size: 13.5px; margin: 0 0 18px; max-width: 76ch; }
+  p { max-width: 82ch; }
+  code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.88em;
+         background: var(--surface-2); padding: 1px 5px; border-radius: 4px; }
+  a { color: var(--series-1); }
+
+  /* ---- cards ---- */
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; margin-top: 18px; }
+  .card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; }
+  .card .role { font-size: 11px; letter-spacing: .07em; text-transform: uppercase; color: var(--text-muted); }
+  .card .name { font-size: 16px; font-weight: 650; margin: 3px 0 2px; }
+  .card .arch { font-size: 12.5px; color: var(--text-secondary); margin-bottom: 12px; font-family: ui-monospace, monospace; }
+  .card .hero { font-size: 27px; font-weight: 680; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+  .card .hero span { font-size: 13px; font-weight: 400; color: var(--text-muted); margin-left: 5px; }
+  .card dl { display: grid; grid-template-columns: auto 1fr; gap: 3px 12px; margin: 12px 0 0; font-size: 12.5px; }
+  .card dt { color: var(--text-muted); }
+  .card dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
+
+  /* ---- charts ---- */
+  figure { margin: 20px 0 0; }
+  figcaption { font-size: 12.5px; color: var(--text-muted); margin-top: 12px; max-width: 82ch; }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 0 0 16px; font-size: 12.5px; color: var(--text-secondary); }
+  .legend span { display: inline-flex; align-items: center; gap: 7px; }
+  .swatch { width: 11px; height: 11px; border-radius: 3px; flex: none; }
+
+  .bars { display: flex; flex-direction: column; gap: 18px; }
+  .barrow { display: grid; grid-template-columns: 190px 1fr; align-items: center; gap: 14px; }
+  .barlabel { font-size: 13px; text-align: right; color: var(--text-primary); }
+  .barlabel em { display: block; font-style: normal; font-size: 11.5px; color: var(--text-muted); font-family: ui-monospace, monospace; }
+  .track { display: flex; align-items: center; min-width: 0; }
+  .stack { display: flex; height: 22px; gap: 2px; min-width: 0; }
+  .seg { height: 100%; cursor: default; }
+  .stack .seg:first-child { border-radius: 4px 0 0 4px; }
+  .stack .seg:last-child  { border-radius: 0 4px 4px 0; }
+  .total { font-size: 12.5px; color: var(--text-secondary); margin-left: 10px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .total b { color: var(--text-primary); font-weight: 620; }
+
+  .simplebars { display: flex; flex-direction: column; gap: 12px; }
+  .sbrow { display: grid; grid-template-columns: 190px 1fr; align-items: center; gap: 14px; }
+  .sbtrack { display: flex; align-items: center; }
+  .sbfill { height: 20px; border-radius: 0 4px 4px 0; background: var(--series-1); }
+  .sbfill.alt { background: var(--series-2); }
+  .sbval { font-size: 12.5px; margin-left: 9px; color: var(--text-secondary); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .axisnote { font-size: 11.5px; color: var(--text-muted); margin-top: 8px; }
+
+  /* ---- tables ---- */
+  .tablewrap { overflow-x: auto; margin: 16px 0 0; border: 1px solid var(--border); border-radius: 10px; }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; min-width: 640px; }
+  th, td { padding: 8px 12px; text-align: right; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  th:first-child, td:first-child { text-align: left; white-space: normal; }
+  thead th { background: var(--surface-2); font-weight: 620; font-size: 12px; color: var(--text-secondary); position: sticky; top: 0; }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr.sum td { font-weight: 650; background: var(--surface-1); }
+  td.num { font-variant-numeric: tabular-nums; }
+  .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
+  .warn { color: var(--series-2); font-weight: 600; }
+  .dot { display: inline-block; width: 9px; height: 9px; border-radius: 3px; margin-right: 7px; vertical-align: -1px; }
+
+  .callout { background: var(--accent-soft); border: 1px solid var(--border); border-left: 3px solid var(--series-1);
+             border-radius: 8px; padding: 14px 16px; margin: 20px 0 0; font-size: 13.5px; }
+  .callout strong { display: block; margin-bottom: 4px; }
+  .callout.amber { border-left-color: var(--series-4); background: var(--surface-1); }
+
+  #tip { position: fixed; pointer-events: none; opacity: 0; transition: opacity .1s;
+         background: var(--surface-0); color: var(--text-primary); border: 1px solid var(--border);
+         border-radius: 7px; padding: 7px 10px; font-size: 12.5px; box-shadow: 0 4px 14px rgba(0,0,0,.16);
+         z-index: 50; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  #tip .tt { font-weight: 620; display: block; }
+  #tip .tv { color: var(--text-secondary); }
+
+  footer { margin-top: 60px; padding-top: 20px; border-top: 1px solid var(--border);
+           font-size: 12.5px; color: var(--text-muted); }
+  footer ul { padding-left: 18px; margin: 8px 0; }
+  @media (max-width: 620px) {
+    .barrow, .sbrow { grid-template-columns: 1fr; gap: 6px; }
+    .barlabel { text-align: left; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>모델 스펙 비교 — 티처 BLIP-large · BLIP-base · 학생(DINOv3-S + MiniLM)</h1>
+  <p class="sub">모든 파라미터 수치는 <code>models/blip_pretrain.py</code>의 모델을 실제로 인스턴스화해 측정했으며, tied 파라미터는 <code>data_ptr</code>로 중복 제거한 <b>고유 파라미터</b> 기준이다.</p>
+  <p class="meta">2026-07-30 · 재생성: <code>python docs/model_specs/count_specs.py</code> · 원본 문서: <code>configs/model_size.md</code>, <code>configs/corpus_and_pretraining.md</code></p>
+</header>
+
+<!-- ============ 1. 카드 ============ -->
+<h2><span class="num">1</span>한눈에 보기</h2>
+<p class="lede">online 파라미터 = 추론(retrieval / caption)에 실제로 쓰이는 값. pretrain 시에는 momentum 인코더 사본과 queue가 추가로 상주한다.</p>
+
+<div class="cards">
+  <div class="card">
+    <div class="role">teacher · frozen</div>
+    <div class="name">BLIP-large</div>
+    <div class="arch">vit=large · bert=base</div>
+    <div class="hero">474.7<span>M online</span></div>
+    <dl>
+      <dt>vision</dt><dd>ViT-L/16 · 24층 · 1024</dd>
+      <dt>text</dt><dd>bert-base · 12층 · 768</dd>
+      <dt>cross-attn K/V in</dt><dd>1024</dd>
+      <dt>이미지 토큰</dt><dd>197</dd>
+      <dt>itm_head</dt><dd>Linear(768, 2)</dd>
+      <dt>전체(momentum 포함)</dt><dd>920.5M</dd>
+    </dl>
+  </div>
+  <div class="card">
+    <div class="role">reference</div>
+    <div class="name">BLIP-base</div>
+    <div class="arch">vit=base · bert=base</div>
+    <div class="hero">252.4<span>M online</span></div>
+    <dl>
+      <dt>vision</dt><dd>ViT-B/16 · 12층 · 768</dd>
+      <dt>text</dt><dd>bert-base · 12층 · 768</dd>
+      <dt>cross-attn K/V in</dt><dd>768</dd>
+      <dt>이미지 토큰</dt><dd>197</dd>
+      <dt>itm_head</dt><dd>Linear(768, 2)</dd>
+      <dt>전체(momentum 포함)</dt><dd>475.9M</dd>
+    </dl>
+  </div>
+  <div class="card">
+    <div class="role">student · 학습 대상</div>
+    <div class="name">DINOv3-S + MiniLM</div>
+    <div class="arch">vit=small_reg · bert=minilm</div>
+    <div class="hero">69.4<span>M online</span></div>
+    <dl>
+      <dt>vision</dt><dd>ViT-S/16 · 12층 · 384</dd>
+      <dt>text</dt><dd>MiniLM · 12층 · 384</dd>
+      <dt>cross-attn K/V in</dt><dd>384</dd>
+      <dt>이미지 토큰</dt><dd>197 <span style="color:var(--text-muted)">(reg 4개 제거 후)</span></dd>
+      <dt>itm_head</dt><dd>Linear(384, 2)</dd>
+      <dt>전체(momentum 포함)</dt><dd>131.5M</dd>
+    </dl>
+  </div>
+</div>
+
+<div class="callout">
+  <strong>압축비 (online 기준)</strong>
+  학생 / BLIP-large = <b>14.6%</b> (6.84× 감소) · 학생 / BLIP-base = 27.5% ·
+  vision만 <b>7.1%</b> (14.05×) · text encoder만 28.4% (3.52×)
+</div>
+
+<!-- ============ 2. 파라미터 구성 ============ -->
+<h2><span class="num">2</span>파라미터 구성</h2>
+<p class="lede">막대의 <b>전체 길이</b>는 모델의 online 파라미터 총량에 비례한다(가장 긴 막대 = BLIP-large 474.7M). 세그먼트에 마우스를 올리면 정확한 값이 나온다. 정확한 수치는 아래 표에 전부 있다.</p>
+
+<div class="legend" id="legend"></div>
+
+<figure>
+  <div class="bars" id="stackchart"></div>
+  <figcaption>
+    self-attention은 인코더(양방향)와 디코더(causal)가 <b>가중치를 공유하지 않으므로</b> 두 벌을 합산했다.
+    embeddings · cross-attention · FFN은 <code>tie_encoder_decoder_weights</code>로 공유되어 <b>한 번만</b> 셌다.
+    "기타"는 <code>itm_head</code>, ITC projection 2개, LM head transform, output bias, <code>logit_scale</code>.
+  </figcaption>
+</figure>
+
+<div class="tablewrap">
+<table>
+  <thead><tr>
+    <th>모듈</th><th>BLIP-large</th><th>BLIP-base</th><th>학생</th><th>학생/티처</th>
+  </tr></thead>
+  <tbody>
+    <tr><td><span class="dot" style="background:var(--series-1)"></span>vision encoder</td><td class="num">303,301,632</td><td class="num">85,798,656</td><td class="num">21,586,944</td><td class="num">7.1%</td></tr>
+    <tr><td><span class="dot" style="background:var(--series-2)"></span>text embeddings</td><td class="num">23,837,184</td><td class="num">23,837,184</td><td class="num">11,918,592</td><td class="num">50.0%</td></tr>
+    <tr><td><span class="dot" style="background:var(--series-3)"></span>self-attention (enc + dec)</td><td class="num">56,733,696</td><td class="num">56,733,696</td><td class="num">14,211,072</td><td class="num">25.0%</td></tr>
+    <tr><td><span class="dot" style="background:var(--series-4)"></span>cross-attention <span class="warn">(랜덤 초기화)</span></td><td class="num">33,085,440</td><td class="num">28,366,848</td><td class="num">7,105,536</td><td class="num">21.5%</td></tr>
+    <tr><td><span class="dot" style="background:var(--series-5)"></span>FFN</td><td class="num">56,687,616</td><td class="num">56,687,616</td><td class="num">14,188,032</td><td class="num">25.0%</td></tr>
+    <tr><td><span class="dot" style="background:var(--series-6)"></span>기타 (헤드 · projection)</td><td class="num">1,083,454</td><td class="num">1,017,918</td><td class="num">377,022</td><td class="num">34.8%</td></tr>
+    <tr class="sum"><td>online 합계</td><td class="num">474,729,022</td><td class="num">252,441,918</td><td class="num">69,387,198</td><td class="num">14.6%</td></tr>
+    <tr><td>+ momentum 사본 · queue buffer</td><td class="num">920,467,007</td><td class="num">475,892,799</td><td class="num">131,488,959</td><td class="num">14.3%</td></tr>
+  </tbody>
+</table>
+</div>
+
+<!-- ============ 3. 사전학습 로드 vs 랜덤 ============ -->
+<h2><span class="num">3</span>사전학습 가중치 vs 랜덤 초기화</h2>
+<p class="lede"><code>from_pretrained(..., output_loading_info=True)</code>의 <code>missing_keys</code> 실측. BLIP는 텍스트 인코더에 cross-attention을 새로 달기 때문에 어느 백본을 쓰든 그 부분은 랜덤에서 출발한다 — 하지만 MiniLM은 <b>LM head까지</b> 랜덤이라는 추가 손실이 있다.</p>
+
+<div class="tablewrap">
+<table>
+  <thead><tr><th>로드 경로</th><th>랜덤 초기화 텐서</th><th>파라미터</th><th>버려지는 체크포인트 키</th></tr></thead>
+  <tbody>
+    <tr><td>MiniLM → <code>BertModel</code> (ITM 인코더)</td><td>120개 · 전부 <code>crossattention</code></td><td class="num">7,105,536</td><td class="mono">pooler.*, token_type_embeddings</td></tr>
+    <tr><td>MiniLM → <code>BertLMHeadModel</code> (캡션 디코더)</td><td>120 crossattention + <span class="warn"><code>cls.predictions.transform.*</code>, <code>cls.predictions.bias</code></span></td><td class="num">+179,132</td><td class="mono">pooler.*, token_type_embeddings</td></tr>
+    <tr><td>bert-base → <code>BertLMHeadModel</code> (대조군)</td><td>120 crossattention <b>만</b> — MLM 헤드는 전부 로드</td><td class="num">28,366,848</td><td class="mono">cls.seq_relationship.*, token_type_embeddings</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="callout amber">
+  <strong>왜 MiniLM엔 MLM/NSP 헤드가 없나</strong>
+  MiniLM은 티처의 <b>마지막 층 self-attention 분포 KL + value-relation KL</b>만으로 학습됐다 (MLM 없음, NSP 없음).
+  그래서 배포 체크포인트(199 텐서 / 33,360,000 파라미터)에 <code>cls.*</code> 키가 아예 없다.
+  변환 당시 로그의 45,260,348 = 33,360,000 + 11,899,578(untied MLM head) + 770(NSP head)로 자릿수까지 분해된다 — 원래는 있었고 배포판에서 제거된 것.
+</div>
+
+<!-- ============ 4. 코퍼스 · 학습 목표 ============ -->
+<h2><span class="num">4</span>사전학습 코퍼스 · 학습 목표 · 토크나이저</h2>
+<p class="lede">학생의 두 백본 모두 <b>증류 산물</b>이라는 점이 특징이다 — 텍스트는 UniLMv2에서, 비전은 DINOv3 ViT-7B에서.</p>
+
+<div class="tablewrap">
+<table>
+  <thead><tr><th></th><th>bert-base-uncased</th><th>MiniLM-L12-H384</th><th>DINOv3 ViT-S/16</th><th>BLIP-large</th></tr></thead>
+  <tbody>
+    <tr><td>역할</td><td>티처 텍스트 측</td><td><b>학생 텍스트</b></td><td><b>학생 비전</b></td><td>티처</td></tr>
+    <tr><td>사전학습 데이터</td><td>Wikipedia + BookCorpus<br><b>≈16GB</b></td><td>Wiki + Books + OpenWebText<br>+ CC-News + Stories <b>160GB</b></td><td><b>LVD-1689M</b><br>(16.89억 이미지)</td><td>129M 이미지-텍스트<br>(COCO/VG/SBU/CC3M/CC12M/LAION)</td></tr>
+    <tr><td>학습 방식</td><td>from scratch</td><td><b>증류</b></td><td><b>증류</b></td><td>from scratch</td></tr>
+    <tr><td>티처</td><td>—</td><td>in-house UniLM v2<br>(BERT-base 크기)</td><td>DINOv3 ViT-7B</td><td>—</td></tr>
+    <tr><td>목표 함수</td><td>MLM + NSP</td><td>𝓛<sub>AT</sub> + 𝓛<sub>VR</sub></td><td>self-supervised<br>(DINO/iBOT + Gram anchoring)</td><td>ITC + ITM + LM</td></tr>
+    <tr><td>토크나이저 / 전처리</td><td>WordPiece 30,522 uncased</td><td><b>동일 파일</b></td><td>ImageNet mean/std<br>native 256×256</td><td>bert-base WordPiece</td></tr>
+    <tr class="sum"><td>파라미터</td><td class="num">109M</td><td class="num">33.4M</td><td class="num">21.6M</td><td class="num">474.7M</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="callout">
+  <strong>토크나이저 동일성 — 바이트 단위 증명</strong>
+  <code>vocab.txt</code>의 git blob sha1이 두 repo에서 동일하다: <code>fb140275c155a9c7c5a3b3e0e77a9e839594a938</code> (231,508 B).
+  git blob sha1은 <code>blob &lt;size&gt;\0&lt;content&gt;</code>의 SHA-1이므로 <b>동일 sha1 + 동일 size ⇒ 내용 완전 동일</b>.
+  덕분에 <code>[DEC]=30522</code>, <code>[ENC]=30523</code>, <code>len(tokenizer)=30524</code>가 티처·학생에서 정확히 일치하고,
+  LM logit 증류의 <code>assert torch.equal(teacher_lm_input_ids, decoder_input_ids)</code>가 구조적으로 항상 참이다.
+  <br><br>
+  <b>단, 코퍼스는 다르다.</b> 우리가 쓰는 MiniLM 릴리즈본은 논문 §4.1(BERT-base 티처 · 16GB)이 아니라
+  <b>§5.1 "Better Teacher Better Student"</b>(UniLMv2 티처 · 160GB) 판본이다 —
+  HF 카드의 성능표가 논문 Table 8과 숫자 하나까지 일치한다.
+</div>
+
+<!-- ============ 5. ITM 헤드 기하 ============ -->
+<h2><span class="num">5</span><code>itm_head</code> 기하 — 손실이 구속하지 않는 성분</h2>
+<p class="lede">
+  <code>itm_head</code>는 <code>Linear(d, 2)</code>이고 softmax CE는 shift-invariant이므로,
+  손실이 구속하는 것은 차분 성분 <b>w<sub>d</sub> = w<sub>1</sub> − w<sub>0</sub></b>뿐이다(명목 770개 중 유효 385개).
+  합 성분 <b>w<sub>s</sub> = w<sub>1</sub> + w<sub>0</sub></b>는 손실이 방치하고 weight decay(0.05)만 천천히 깎는다.
+  평가는 <code>z1</code>(= (w<sub>d</sub>+w<sub>s</sub>)·h / 2 + …)로 랭킹하므로,
+  <b>‖w<sub>s</sub>‖/‖w<sub>d</sub>‖ 가 0에 가까울수록 <code>z1</code> 랭킹 = <code>gap</code> 랭킹</b>이 된다.
+</p>
+
+<figure>
+  <div class="simplebars" id="wschart"></div>
+  <div class="axisnote">0.0 ─────────────────────────── 1.0 &nbsp;&nbsp;(0에 가까울수록 z1 랭킹 ≡ gap 랭킹)</div>
+  <figcaption>
+    티처는 완전 수렴해 w<sub>1</sub> ≈ −w<sub>0</sub> (cos = −0.9971)이므로 offset 성분이 물리적으로 존재하지 않는다.
+    학생은 20 에폭으로는 부족해 w<sub>s</sub>가 w<sub>d</sub>의 55~86% 크기로 남아 있다.
+    <b>단 2026-07-30 로짓 실측에서, 학생도 실제로는 랭킹이 거의 갈리지 않는다</b> —
+    쿼리 내 h의 변동이 w<sub>s</sub>와 거의 직교해서 offset 산포가 gap 산포의 0.15~4.6%에 불과하다
+    (Kendall τ(z1, gap) = 0.945~0.998). 이 비율은 불일치의 <i>순서</i>는 맞히지만 크기는 과대평가한다.
+    → <code>critical_bugfix/2026-07-30_itm_logit_offset_and_head_geometry/</code>
+  </figcaption>
+</figure>
+
+<div class="tablewrap">
+<table>
+  <thead><tr><th>모델</th><th>‖w<sub>0</sub>‖</th><th>‖w<sub>1</sub>‖</th><th>cos(w<sub>0</sub>,w<sub>1</sub>)</th><th>‖w<sub>d</sub>‖</th><th>‖w<sub>s</sub>‖</th><th>‖w<sub>s</sub>‖/‖w<sub>d</sub>‖</th></tr></thead>
+  <tbody>
+    <tr><td>teacher BLIP-large</td><td class="num">1.6674</td><td class="num">1.6732</td><td class="num"><b>−0.9971</b></td><td class="num"><b>3.3382</b></td><td class="num">0.1269</td><td class="num"><b>0.038</b></td></tr>
+    <tr><td>student baseline · ep0 (초기)</td><td class="num">0.5998</td><td class="num">0.5842</td><td class="num">−0.0710</td><td class="num">0.8665</td><td class="num">0.8070</td><td class="num">0.931</td></tr>
+    <tr><td>student baseline · ep3</td><td class="num">0.6474</td><td class="num">0.6229</td><td class="num">−0.2648</td><td class="num">1.0103</td><td class="num">0.7704</td><td class="num">0.763</td></tr>
+    <tr><td>student baseline · ep15</td><td class="num">0.7241</td><td class="num">0.6959</td><td class="num">−0.5079</td><td class="num">1.2331</td><td class="num">0.7048</td><td class="num">0.572</td></tr>
+    <tr><td>student baseline · ep19</td><td class="num">0.7327</td><td class="num">0.7065</td><td class="num">−0.5337</td><td class="num">1.2604</td><td class="num">0.6953</td><td class="num">0.552</td></tr>
+    <tr><td>schemeA · ep15</td><td class="num">0.5406</td><td class="num">0.5237</td><td class="num">−0.1238</td><td class="num">0.7979</td><td class="num">0.7046</td><td class="num">0.883</td></tr>
+    <tr><td>schemeA · ep19</td><td class="num">0.5395</td><td class="num">0.5253</td><td class="num">−0.1483</td><td class="num">0.8069</td><td class="num">0.6949</td><td class="num">0.861</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h3><code>separation</code> 원값은 스케일 비불변 — 올바른 지표는 within-query <i>d</i>′</h3>
+<p class="lede">
+  separation = mean(match_gap) − mean(distractor_gap) = w<sub>d</sub>·(h<sub>match</sub> − h<sub>distractor</sub>) 이므로
+  <b>‖w<sub>d</sub>‖에 정비례</b>한다. 티처의 ‖w<sub>d</sub>‖는 학생의 2.7배(3.338 vs 1.233)라서 원값 비교는 헤드 스케일에 오염돼 있다.
+  스케일을 완전히 제거하려면 분모가 gap과 같은 단위여야 한다 —
+  <b><i>d</i>′ = (평균 gap<sub>정답</sub> − 평균 gap<sub>distractor</sub>) / std(gap<sub>distractor</sub>)</b>, 쿼리 내부 기준.
+</p>
+
+<div class="legend">
+  <span><i class="swatch" style="background:var(--series-1)"></i>separation 원값</span>
+  <span><i class="swatch" style="background:var(--series-2)"></i>within-query <i>d</i>′ (i2t, 스케일 무관)</span>
+</div>
+<figure>
+  <div class="simplebars" id="sepchart"></div>
+  <div class="axisnote">0.0 ─────────────────────────── 3.5</div>
+  <figcaption>
+    <i>d</i>′로 재면 순서는 <b>티처 2.195 &gt; baseline 1.492 &gt; schemeA 1.083</b> 으로, R@1(72.4 / 58.2 / 50.0)과 단조 일치한다.
+    즉 "티처가 더 sharp하다"는 서사는 <b>유지된다</b> — 다만 배율은 원값 비교(3.399/1.670 = 2.04)보다 작다(<i>d</i>′ = <b>1.47</b>).
+    <br>
+    ⚠️ 이 문서의 이전 판이 대안으로 제시했던 "sep / ‖w<sub>d</sub>‖"(티처 1.02 · baseline 1.35 · schemeA 0.78)는 <b>폐기됐다</b> —
+    헤드 스케일만 제거하고 특징 스케일(768차원 티처 vs 384차원 학생, LayerNorm gain)을 남기는 부분 정규화라 순서를 뒤집는 오류를 냈다.
+    <br>
+    실측 출처: <code>critical_bugfix/2026-07-30_itm_logit_offset_and_head_geometry/</code> (500쿼리 × top-128, 헤드 fp32),
+    <code>2026-07-24_itm_distill_sharpness/</code>, <code>2026-07-27_itm_eval_ranking_and_structure/</code>
+  </figcaption>
+</figure>
+
+<footer>
+  <b>출처 · 검증 방법</b>
+  <ul>
+    <li>파라미터: <code>BLIP_Pretrain</code> 인스턴스화 후 <code>data_ptr</code> 중복 제거 — <code>docs/model_specs/count_specs.py</code></li>
+    <li>랜덤 초기화 목록: <code>from_pretrained(..., output_loading_info=True)</code>의 <code>missing_keys</code></li>
+    <li>토크나이저 동일성: HF Hub API <code>?blobs=true</code>의 <code>blobId</code>(git blob sha1) 대조</li>
+    <li>MiniLM 판본 확정: HF 모델 카드 문장 + 성능표 ↔ arXiv:2002.10957 Table 8 대조</li>
+    <li>DINOv3: timm <code>vit_small_patch16_dinov3.lvd1689m</code> 모델 카드 + 로컬 모델 실측(21,586,944 / 12층 / 384 / 6 heads / RoPE)</li>
+    <li><code>itm_head</code> 기하: <code>output/pt_smallreg_minilm_baseline</code>, <code>output/pt_itm_schemeA_tempered</code>, <code>output/official_pretrain_checkpoint/model_large.pth</code>의 <code>itm_head.{weight,bias}</code> 직접 분해</li>
+  </ul>
+  색상 팔레트는 6슬롯 categorical로 light/dark 양쪽에서 CVD 분리 검증 통과 (worst adjacent ΔE 9.1 light / 8.4 dark).
+  light 모드에서 3:1 미달 슬롯이 있어 <b>표 view를 함께 제공</b>한다.
+</footer>
+
+</div>
+<div id="tip"><span class="tt"></span><span class="tv"></span></div>
+
+<script>
+(function () {
+  var SERIES = [
+    { key: "vision",   label: "vision encoder",                 css: "--series-1" },
+    { key: "emb",      label: "text embeddings",                css: "--series-2" },
+    { key: "selfattn", label: "self-attention (enc + dec)",     css: "--series-3" },
+    { key: "cross",    label: "cross-attention (랜덤 초기화)",   css: "--series-4" },
+    { key: "ffn",      label: "FFN",                            css: "--series-5" },
+    { key: "other",    label: "기타 (헤드 · projection)",        css: "--series-6" }
+  ];
+  var MODELS = [
+    { name: "BLIP-large", arch: "vit=large · bert=base", vision: 303301632, emb: 23837184, selfattn: 56733696, cross: 33085440, ffn: 56687616, other: 1083454 },
+    { name: "BLIP-base",  arch: "vit=base · bert=base",  vision: 85798656,  emb: 23837184, selfattn: 56733696, cross: 28366848, ffn: 56687616, other: 1017918 },
+    { name: "학생 DINOv3-S+MiniLM", arch: "vit=small_reg · bert=minilm", vision: 21586944, emb: 11918592, selfattn: 14211072, cross: 7105536, ffn: 14188032, other: 377022 }
+  ];
+
+  function fmt(n) { return n.toLocaleString("en-US"); }
+  function mfmt(n) { return (n / 1e6).toFixed(1) + "M"; }
+
+  // legend
+  var lg = document.getElementById("legend");
+  SERIES.forEach(function (s) {
+    var el = document.createElement("span");
+    el.innerHTML = '<i class="swatch" style="background:var(' + s.css + ')"></i>' + s.label;
+    lg.appendChild(el);
+  });
+
+  // stacked bars — row width ∝ total
+  var totals = MODELS.map(function (m) {
+    return SERIES.reduce(function (a, s) { return a + m[s.key]; }, 0);
+  });
+  var max = Math.max.apply(null, totals);
+  var host = document.getElementById("stackchart");
+  MODELS.forEach(function (m, i) {
+    var row = document.createElement("div");
+    row.className = "barrow";
+    var pct = (totals[i] / max * 100);
+    var segs = SERIES.map(function (s) {
+      return '<div class="seg" style="background:var(' + s.css + ');flex:' + m[s.key] +
+             ' 0 0" data-t="' + m.name + ' — ' + s.label + '" data-v="' + fmt(m[s.key]) +
+             ' (' + (m[s.key] / totals[i] * 100).toFixed(1) + '%)"></div>';
+    }).join("");
+    row.innerHTML =
+      '<div class="barlabel">' + m.name + '<em>' + m.arch + '</em></div>' +
+      '<div class="track"><div class="stack" style="width:' + pct.toFixed(2) + '%">' + segs + '</div>' +
+      '<span class="total"><b>' + mfmt(totals[i]) + '</b> · ' + pct.toFixed(1) + '%</span></div>';
+    host.appendChild(row);
+  });
+
+  // simple magnitude bars
+  function simpleBars(hostId, rows, scaleMax, fmtVal, altIdx) {
+    var h = document.getElementById(hostId);
+    rows.forEach(function (r) {
+      var row = document.createElement("div");
+      row.className = "sbrow";
+      var w = (r.value / scaleMax * 100).toFixed(2);
+      row.innerHTML =
+        '<div class="barlabel">' + r.label + (r.note ? '<em>' + r.note + '</em>' : '') + '</div>' +
+        '<div class="sbtrack"><div class="sbfill' + (altIdx && r.alt ? ' alt' : '') +
+        '" style="width:' + w + '%" data-t="' + r.label + '" data-v="' + fmtVal(r.value) + '"></div>' +
+        '<span class="sbval">' + fmtVal(r.value) + '</span></div>';
+      h.appendChild(row);
+    });
+  }
+
+  simpleBars("wschart", [
+    { label: "teacher BLIP-large",     value: 0.038, note: "cos(w₀,w₁) = −0.9971 · 완전 수렴" },
+    { label: "student baseline @ep19", value: 0.552, note: "‖w_d‖ 1.2604" },
+    { label: "schemeA @ep19",          value: 0.861, note: "‖w_d‖ 0.8069" },
+    { label: "랜덤 초기화 @ep0",        value: 0.931, note: "학습 전 기준선" }
+  ], 1.0, function (v) { return v.toFixed(3); });
+
+  simpleBars("sepchart", [
+    { label: "teacher — sep 원값",     value: 3.399 },
+    { label: "teacher — d′",           value: 2.195, alt: 1 },
+    { label: "baseline@ep15 — sep 원값", value: 1.670 },
+    { label: "baseline@ep15 — d′",     value: 1.492, alt: 1 },
+    { label: "schemeA@ep15 — sep 원값",  value: 0.620 },
+    { label: "schemeA@ep15 — d′",      value: 1.083, alt: 1 }
+  ], 3.5, function (v) { return v.toFixed(3); }, true);
+
+  // hover tooltip
+  var tip = document.getElementById("tip");
+  var tt = tip.querySelector(".tt"), tv = tip.querySelector(".tv");
+  document.addEventListener("mousemove", function (e) {
+    var t = e.target.closest ? e.target.closest("[data-t]") : null;
+    if (!t) { tip.style.opacity = 0; return; }
+    tt.textContent = t.getAttribute("data-t");
+    tv.textContent = t.getAttribute("data-v");
+    tip.style.opacity = 1;
+    var x = e.clientX + 14, y = e.clientY + 14;
+    var r = tip.getBoundingClientRect();
+    if (x + r.width > window.innerWidth - 8) x = e.clientX - r.width - 14;
+    if (y + r.height > window.innerHeight - 8) y = e.clientY - r.height - 14;
+    tip.style.left = x + "px"; tip.style.top = y + "px";
+  });
+})();
+</script>
+</body>
+</html>

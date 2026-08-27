@@ -59,10 +59,10 @@ used_dataset: 'coco_vg'
 #
 # 주의: pretrain.py에 `assert alpha == itc_target_mix.soft_weight` 가 있다(γ=0 tail-skip 불변식).
 #       alpha=0.4 / soft_weight=0.4 로 충족. γ가 0에 도달하지 않으므로 tail-skip 경로는 타지 않는다.
-output_dir: '/home/minwoo/Distillation_Project/output/pt_ttm_queue_lm_holdhalf'
+output_dir: '/home/minwoo/Distillation_Project/output/pt_ttm_queue_lm_holdhalf_tctmp00157'
 
 # experiment 태그 (tensorboard run 이름에 사용)
-exp: '9.5.ttm_queue_lm_holdhalf'
+exp: '9.5.2 ttm_queue_lm_holdhalf_tctmp0.0157'
 # 이미지 증강 토글: 온라인 티처 증류는 augmentation ON 필수 (no-aug는 NO-GO였음)
 pretrain_train_aug: true
 
@@ -130,7 +130,7 @@ val_caption_num_workers: 4
 val_caption_mid_interval_steps: 18675   # ITM mid와 동일
 val_caption_epoch_end: true
 val_caption_use_spice: true             # epoch-end에서만 SPICE
-caption_score_cpu_list: '32-63'         # 잡B
+caption_score_cpu_list: '0-63'         # 잡B
 
 image_size: 224
 batch_size: 40
@@ -157,7 +157,7 @@ distill:
   itc_target_mix:
     enabled: true
     variant: queue
-    temp: 0.05
+    temp: 0.0157
     soft_weight: 0.4
     hold_epochs: 2
     decay_end_epochs: 42  # ★ 티처 상시 유지 (γ(ep20)=0.9999982, 20에폭 총 감쇠 1.8e-6)

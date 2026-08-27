@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Model Spec Comparison — BLIP-large / BLIP-base / DINOv3-S+MiniLM student</title>
+<style>
+  :root {
+    color-scheme: light;
+    --surface-0: #ffffff;
+    --surface-1: #fcfcfb;
+    --surface-2: #f4f3f0;
+    --border:    #dedcd6;
+    --text-primary:   #0b0b0b;
+    --text-secondary: #52514e;
+    --text-muted:     #78766f;
+    --series-1: #2a78d6;  /* vision encoder */
+    --series-2: #eb6834;  /* text embeddings */
+    --series-3: #1baf7a;  /* self-attention */
+    --series-4: #eda100;  /* cross-attention (random init) */
+    --series-5: #e87ba4;  /* FFN */
+    --series-6: #008300;  /* other (heads/proj) */
+    --accent-soft: #eef4fd;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) {
+      color-scheme: dark;
+      --surface-0: #121211;
+      --surface-1: #1a1a19;
+      --surface-2: #242422;
+      --border:    #383835;
+      --text-primary:   #ffffff;
+      --text-secondary: #c3c2b7;
+      --text-muted:     #9a9890;
+      --series-1: #3987e5;
+      --series-2: #d95926;
+      --series-3: #199e70;
+      --series-4: #c98500;
+      --series-5: #d55181;
+      --series-6: #008300;
+      --accent-soft: #17263a;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --surface-0: #121211;
+    --surface-1: #1a1a19;
+    --surface-2: #242422;
+    --border:    #383835;
+    --text-primary:   #ffffff;
+    --text-secondary: #c3c2b7;
+    --text-muted:     #9a9890;
+    --series-1: #3987e5;
+    --series-2: #d95926;
+    --series-3: #199e70;
+    --series-4: #c98500;
+    --series-5: #d55181;
+    --series-6: #008300;
+    --accent-soft: #17263a;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 0;
+    background: var(--surface-0);
+    color: var(--text-primary);
+    font: 15px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans KR", "Malgun Gothic", sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 40px 24px 80px; }
+  header { border-bottom: 1px solid var(--border); padding-bottom: 24px; margin-bottom: 40px; }
+  h1 { font-size: 26px; line-height: 1.3; margin: 0 0 8px; letter-spacing: -0.01em; }
+  .sub { color: var(--text-secondary); font-size: 14px; margin: 0; }
+  .meta { color: var(--text-muted); font-size: 12.5px; margin-top: 10px; font-variant-numeric: tabular-nums; }
+  h2 { font-size: 18px; margin: 48px 0 6px; letter-spacing: -0.01em; }
+  h2 .num { color: var(--text-muted); font-weight: 400; margin-right: 8px; }
+  h3 { font-size: 14.5px; margin: 28px 0 4px; }
+  .lede { color: var(--text-secondary); font-size: 13.5px; margin: 0 0 18px; max-width: 76ch; }
+  p { max-width: 82ch; }
+  code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.88em;
+         background: var(--surface-2); padding: 1px 5px; border-radius: 4px; }
+  a { color: var(--series-1); }
+
+  /* ---- cards ---- */
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; margin-top: 18px; }
+  .card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; }
+  .card .role { font-size: 11px; letter-spacing: .07em; text-transform: uppercase; color: var(--text-muted); }
+  .card .name { font-size: 16px; font-weight: 650; margin: 3px 0 2px; }
+  .card .arch { font-size: 12.5px; color: var(--text-secondary); margin-bottom: 12px; font-family: ui-monospace, monospace; }
+  .card .hero { font-size: 27px; font-weight: 680; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+  .card .hero span { font-size: 13px; font-weight: 400; color: var(--text-muted); margin-left: 5px; }
+  .card dl { display: grid; grid-template-columns: auto 1fr; gap: 3px 12px; margin: 12px 0 0; font-size: 12.5px; }
+  .card dt { color: var(--text-muted); }
+  .card dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
+
+  /* ---- charts ---- */
+  figure { margin: 20px 0 0; }
+  figcaption { font-size: 12.5px; color: var(--text-muted); margin-top: 12px; max-width: 82ch; }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 0 0 16px; font-size: 12.5px; color: var(--text-secondary); }
+  .legend span { display: inline-flex; align-items: center; gap: 7px; }
+  .swatch { width: 11px; height: 11px; border-radius: 3px; flex: none; }
+
+  .bars { display: flex; flex-direction: column; gap: 18px; }
+  .barrow { display: grid; grid-template-columns: 190px 1fr; align-items: center; gap: 14px; }
+  .barlabel { font-size: 13px; text-align: right; color: var(--text-primary); }
+  .barlabel em { display: block; font-style: normal; font-size: 11.5px; color: var(--text-muted); font-family: ui-monospace, monospace; }
+  .track { display: flex; align-items: center; min-width: 0; }
+  .stack { display: flex; height: 22px; gap: 2px; min-width: 0; }
+  .seg { height: 100%; cursor: default; }
+  .stack .seg:first-child { border-radius: 4px 0 0 4px; }
+  .stack .seg:last-child  { border-radius: 0 4px 4px 0; }
+  .total { font-size: 12.5px; color: var(--text-secondary); margin-left: 10px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .total b { color: var(--text-primary); font-weight: 620; }
+
+  .simplebars { display: flex; flex-direction: column; gap: 12px; }
+  .sbrow { display: grid; grid-template-columns: 190px 1fr; align-items: center; gap: 14px; }
+  .sbtrack { display: flex; align-items: center; }
+  .sbfill { height: 20px; border-radius: 0 4px 4px 0; background: var(--series-1); }
+  .sbfill.alt { background: var(--series-2); }
+  .sbval { font-size: 12.5px; margin-left: 9px; color: var(--text-secondary); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .axisnote { font-size: 11.5px; color: var(--text-muted); margin-top: 8px; }
+
+  /* ---- tables ---- */
+  .tablewrap { overflow-x: auto; margin: 16px 0 0; border: 1px solid var(--border); border-radius: 10px; }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; min-width: 640px; }
+  th, td { padding: 8px 12px; text-align: right; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  th:first-child, td:first-child { text-align: left; white-space: normal; }
+  thead th { background: var(--surface-2); font-weight: 620; font-size: 12px; color: var(--text-secondary); position: sticky; top: 0; }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr.sum td { font-weight: 650; background: var(--surface-1); }
+  td.num { font-variant-numeric: tabular-nums; }
+  .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
+  .warn { color: var(--series-2); font-weight: 600; }
+  .dot { display: inline-block; width: 9px; height: 9px; border-radius: 3px; margin-right: 7px; vertical-align: -1px; }
+
+  .callout { background: var(--accent-soft); border: 1px solid var(--border); border-left: 3px solid var(--series-1);
+             border-radius: 8px; padding: 14px 16px; margin: 20px 0 0; font-size: 13.5px; }
+  .callout strong { display: block; margin-bottom: 4px; }
+  .callout.amber { border-left-color: var(--series-4); background: var(--surface-1); }
+
+  #tip { position: fixed; pointer-events: none; opacity: 0; transition: opacity .1s;
+         background: var(--surface-0); color: var(--text-primary); border: 1px solid var(--border);
+         border-radius: 7px; padding: 7px 10px; font-size: 12.5px; box-shadow: 0 4px 14px rgba(0,0,0,.16);
+         z-index: 50; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  #tip .tt { font-weight: 620; display: block; }
+  #tip .tv { color: var(--text-secondary); }
+
+  footer { margin-top: 60px; padding-top: 20px; border-top: 1px solid var(--border);
+           font-size: 12.5px; color: var(--text-muted); }
+  footer ul { padding-left: 18px; margin: 8px 0; }
+  @media (max-width: 620px) {
+    .barrow, .sbrow { grid-template-columns: 1fr; gap: 6px; }
+    .barlabel { text-align: left; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>Model Spec Comparison — teacher BLIP-large · BLIP-base · student (DINOv3-S + MiniLM)</h1>
+  <p class="sub">All parameter counts were measured by actually instantiating the models in <code>models/blip_pretrain.py</code>; tied parameters are de-duplicated by <code>data_ptr</code>, so figures are <b>unique parameters</b>.</p>
+  <p class="meta">2026-07-30 · regenerate: <code>python docs/model_specs/count_specs.py</code> · source docs: <code>configs/model_size.md</code>, <code>configs/corpus_and_pretraining.md</code></p>
+</header>
+
+<!-- ============ 1. cards ============ -->
+<h2><span class="num">1</span>At a glance</h2>
+<p class="lede">online parameters = the ones actually used at inference (retrieval / caption). During pretraining a momentum-encoder copy and a queue also reside in memory.</p>
+
+<div class="cards">
+  <div class="card">
+    <div class="role">teacher · frozen</div>
+    <div class="name">BLIP-large</div>
+    <div class="arch">vit=large · bert=base</div>
+    <div class="hero">474.7<span>M online</span></div>
+    <dl>
+      <dt>vision</dt><dd>ViT-L/16 · 24 layers · 1024</dd>
+      <dt>text</dt><dd>bert-base · 12 layers · 768</dd>
+      <dt>cross-attn K/V in</dt><dd>1024</dd>
+      <dt>image tokens</dt><dd>197</dd>
+      <dt>itm_head</dt><dd>Linear(768, 2)</dd>
+      <dt>total (incl. momentum)</dt><dd>920.5M</dd>
+    </dl>
+  </div>
+  <div class="card">
+    <div class="role">reference</div>
+    <div class="name">BLIP-base</div>
+    <div class="arch">vit=base · bert=base</div>
+    <div class="hero">252.4<span>M online</span></div>
+    <dl>
+      <dt>vision</dt><dd>ViT-B/16 · 12 layers · 768</dd>
+      <dt>text</dt><dd>bert-base · 12 layers · 768</dd>
+      <dt>cross-attn K/V in</dt><dd>768</dd>
+      <dt>image tokens</dt><dd>197</dd>
+      <dt>itm_head</dt><dd>Linear(768, 2)</dd>
+      <dt>total (incl. momentum)</dt><dd>475.9M</dd>
+    </dl>
+  </div>
+  <div class="card">
+    <div class="role">student · being trained</div>
+    <div class="name">DINOv3-S + MiniLM</div>
+    <div class="arch">vit=small_reg · bert=minilm</div>
+    <div class="hero">69.4<span>M online</span></div>
+    <dl>
+      <dt>vision</dt><dd>ViT-S/16 · 12 layers · 384</dd>
+      <dt>text</dt><dd>MiniLM · 12 layers · 384</dd>
+      <dt>cross-attn K/V in</dt><dd>384</dd>
+      <dt>image tokens</dt><dd>197 <span style="color:var(--text-muted)">(after dropping 4 reg tokens)</span></dd>
+      <dt>itm_head</dt><dd>Linear(384, 2)</dd>
+      <dt>total (incl. momentum)</dt><dd>131.5M</dd>
+    </dl>
+  </div>
+</div>
+
+<div class="callout">
+  <strong>Compression ratio (online basis)</strong>
+  student / BLIP-large = <b>14.6%</b> (6.84× reduction) · student / BLIP-base = 27.5% ·
+  vision only <b>7.1%</b> (14.05×) · text encoder only 28.4% (3.52×)
+</div>
+
+<!-- ============ 2. parameter breakdown ============ -->
+<h2><span class="num">2</span>Parameter breakdown</h2>
+<p class="lede">The <b>full length</b> of each bar is proportional to the model's total online parameter count (longest bar = BLIP-large 474.7M). Hover a segment for its exact value. All exact numbers are in the table below.</p>
+
+<div class="legend" id="legend"></div>
+
+<figure>
+  <div class="bars" id="stackchart"></div>
+  <figcaption>
+    Self-attention is summed over both copies because the encoder (bidirectional) and decoder (causal) <b>do not share weights</b>.
+    embeddings · cross-attention · FFN are shared via <code>tie_encoder_decoder_weights</code>, so they are counted <b>once</b>.
+    "other" is <code>itm_head</code>, 2 ITC projections, the LM head transform, output bias, and <code>logit_scale</code>.
+  </figcaption>
+</figure>
+
+<div class="tablewrap">
+<table>
+  <thead><tr>
+    <th>module</th><th>BLIP-large</th><th>BLIP-base</th><th>student</th><th>student/teacher</th>
+  </tr></thead>
+  <tbody>
+    <tr><td><span class="dot" style="background:var(--series-1)"></span>vision encoder</td><td class="num">303,301,632</td><td class="num">85,798,656</td><td class="num">21,586,944</td><td class="num">7.1%</td></tr>
+    <tr><td><span class="dot" style="background:var(--series-2)"></span>text embeddings</td><td class="num">23,837,184</td><td class="num">23,837,184</td><td class="num">11,918,592</td><td class="num">50.0%</td></tr>
+    <tr><td><span class="dot" style="background:var(--series-3)"></span>self-attention (enc + dec)</td><td class="num">56,733,696</td><td class="num">56,733,696</td><td class="num">14,211,072</td><td class="num">25.0%</td></tr>
+    <tr><td><span class="dot" style="background:var(--series-4)"></span>cross-attention <span class="warn">(random init)</span></td><td class="num">33,085,440</td><td class="num">28,366,848</td><td class="num">7,105,536</td><td class="num">21.5%</td></tr>
+    <tr><td><span class="dot" style="background:var(--series-5)"></span>FFN</td><td class="num">56,687,616</td><td class="num">56,687,616</td><td class="num">14,188,032</td><td class="num">25.0%</td></tr>
+    <tr><td><span class="dot" style="background:var(--series-6)"></span>other (heads · projections)</td><td class="num">1,083,454</td><td class="num">1,017,918</td><td class="num">377,022</td><td class="num">34.8%</td></tr>
+    <tr class="sum"><td>online total</td><td class="num">474,729,022</td><td class="num">252,441,918</td><td class="num">69,387,198</td><td class="num">14.6%</td></tr>
+    <tr><td>+ momentum copy · queue buffer</td><td class="num">920,467,007</td><td class="num">475,892,799</td><td class="num">131,488,959</td><td class="num">14.3%</td></tr>
+  </tbody>
+</table>
+</div>
+
+<!-- ============ 3. pretrained load vs random ============ -->
+<h2><span class="num">3</span>Pretrained weights vs random init</h2>
+<p class="lede">Measured from the <code>missing_keys</code> of <code>from_pretrained(..., output_loading_info=True)</code>. BLIP attaches a fresh cross-attention to the text encoder, so that part starts from random regardless of which backbone is used — but MiniLM has an extra loss: the <b>LM head is random too</b>.</p>
+
+<div class="tablewrap">
+<table>
+  <thead><tr><th>load path</th><th>randomly-initialized tensors</th><th>parameters</th><th>discarded checkpoint keys</th></tr></thead>
+  <tbody>
+    <tr><td>MiniLM → <code>BertModel</code> (ITM encoder)</td><td>120 · all <code>crossattention</code></td><td class="num">7,105,536</td><td class="mono">pooler.*, token_type_embeddings</td></tr>
+    <tr><td>MiniLM → <code>BertLMHeadModel</code> (caption decoder)</td><td>120 crossattention + <span class="warn"><code>cls.predictions.transform.*</code>, <code>cls.predictions.bias</code></span></td><td class="num">+179,132</td><td class="mono">pooler.*, token_type_embeddings</td></tr>
+    <tr><td>bert-base → <code>BertLMHeadModel</code> (control)</td><td>120 crossattention <b>only</b> — the MLM head loads in full</td><td class="num">28,366,848</td><td class="mono">cls.seq_relationship.*, token_type_embeddings</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="callout amber">
+  <strong>Why MiniLM has no MLM/NSP head</strong>
+  MiniLM was trained purely on the teacher's <b>last-layer self-attention distribution KL + value-relation KL</b> (no MLM, no NSP).
+  So the released checkpoint (199 tensors / 33,360,000 parameters) has no <code>cls.*</code> keys at all.
+  The 45,260,348 in the conversion-time log decomposes exactly as 33,360,000 + 11,899,578 (untied MLM head) + 770 (NSP head) — they were there originally and stripped in the release.
+</div>
+
+<!-- ============ 4. corpus · objectives ============ -->
+<h2><span class="num">4</span>Pretraining corpus · objectives · tokenizer</h2>
+<p class="lede">A defining trait of the student is that <b>both</b> of its backbones are <b>distillation products</b> — the text from UniLMv2, the vision from DINOv3 ViT-7B.</p>
+
+<div class="tablewrap">
+<table>
+  <thead><tr><th></th><th>bert-base-uncased</th><th>MiniLM-L12-H384</th><th>DINOv3 ViT-S/16</th><th>BLIP-large</th></tr></thead>
+  <tbody>
+    <tr><td>role</td><td>teacher text side</td><td><b>student text</b></td><td><b>student vision</b></td><td>teacher</td></tr>
+    <tr><td>pretraining data</td><td>Wikipedia + BookCorpus<br><b>≈16GB</b></td><td>Wiki + Books + OpenWebText<br>+ CC-News + Stories <b>160GB</b></td><td><b>LVD-1689M</b><br>(1.689B images)</td><td>129M image-text<br>(COCO/VG/SBU/CC3M/CC12M/LAION)</td></tr>
+    <tr><td>training method</td><td>from scratch</td><td><b>distillation</b></td><td><b>distillation</b></td><td>from scratch</td></tr>
+    <tr><td>teacher</td><td>—</td><td>in-house UniLM v2<br>(BERT-base size)</td><td>DINOv3 ViT-7B</td><td>—</td></tr>
+    <tr><td>objective</td><td>MLM + NSP</td><td>𝓛<sub>AT</sub> + 𝓛<sub>VR</sub></td><td>self-supervised<br>(DINO/iBOT + Gram anchoring)</td><td>ITC + ITM + LM</td></tr>
+    <tr><td>tokenizer / preprocessing</td><td>WordPiece 30,522 uncased</td><td><b>identical file</b></td><td>ImageNet mean/std<br>native 256×256</td><td>bert-base WordPiece</td></tr>
+    <tr class="sum"><td>parameters</td><td class="num">109M</td><td class="num">33.4M</td><td class="num">21.6M</td><td class="num">474.7M</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="callout">
+  <strong>Tokenizer identity — a byte-level proof</strong>
+  The git blob sha1 of <code>vocab.txt</code> is identical across both repos: <code>fb140275c155a9c7c5a3b3e0e77a9e839594a938</code> (231,508 B).
+  A git blob sha1 is the SHA-1 of <code>blob &lt;size&gt;\0&lt;content&gt;</code>, so <b>same sha1 + same size ⇒ contents are exactly identical</b>.
+  Thanks to this, <code>[DEC]=30522</code>, <code>[ENC]=30523</code>, and <code>len(tokenizer)=30524</code> match exactly between teacher and student,
+  and the LM-logit-distillation <code>assert torch.equal(teacher_lm_input_ids, decoder_input_ids)</code> is structurally always true.
+  <br><br>
+  <b>The corpora, however, differ.</b> The MiniLM release we use is not the one from paper §4.1 (BERT-base teacher · 16GB) but the
+  <b>§5.1 "Better Teacher Better Student"</b> variant (UniLMv2 teacher · 160GB) —
+  the HF card's performance table matches paper Table 8 to the last digit.
+</div>
+
+<!-- ============ 5. ITM head geometry ============ -->
+<h2><span class="num">5</span><code>itm_head</code> geometry — the component the loss does not constrain</h2>
+<p class="lede">
+  <code>itm_head</code> is <code>Linear(d, 2)</code> and softmax CE is shift-invariant, so
+  the loss only constrains the difference component <b>w<sub>d</sub> = w<sub>1</sub> − w<sub>0</sub></b> (385 effective out of a nominal 770).
+  The sum component <b>w<sub>s</sub> = w<sub>1</sub> + w<sub>0</sub></b> is left free by the loss and only slowly shaved by weight decay (0.05).
+  Evaluation ranks by <code>z1</code> (= (w<sub>d</sub>+w<sub>s</sub>)·h / 2 + …), so
+  <b>the closer ‖w<sub>s</sub>‖/‖w<sub>d</sub>‖ is to 0, the more <code>z1</code> ranking = <code>gap</code> ranking</b>.
+</p>
+
+<figure>
+  <div class="simplebars" id="wschart"></div>
+  <div class="axisnote">0.0 ─────────────────────────── 1.0 &nbsp;&nbsp;(closer to 0 ⇒ z1 ranking ≡ gap ranking)</div>
+  <figcaption>
+    The teacher has fully converged to w<sub>1</sub> ≈ −w<sub>0</sub> (cos = −0.9971), so the offset component physically does not exist.
+    The student, at only 20 epochs, still carries a w<sub>s</sub> that is 55–86% the size of w<sub>d</sub>.
+    <b>But in the 2026-07-30 logit measurements, the student's ranking too is barely affected in practice</b> —
+    the variation of h within a query is nearly orthogonal to w<sub>s</sub>, so offset spread is only 0.15–4.6% of gap spread
+    (Kendall τ(z1, gap) = 0.945–0.998). This ratio gets the <i>order</i> of the mismatch right but overstates its magnitude.
+    → <code>critical_bugfix/2026-07-30_itm_logit_offset_and_head_geometry/</code>
+  </figcaption>
+</figure>
+
+<div class="tablewrap">
+<table>
+  <thead><tr><th>model</th><th>‖w<sub>0</sub>‖</th><th>‖w<sub>1</sub>‖</th><th>cos(w<sub>0</sub>,w<sub>1</sub>)</th><th>‖w<sub>d</sub>‖</th><th>‖w<sub>s</sub>‖</th><th>‖w<sub>s</sub>‖/‖w<sub>d</sub>‖</th></tr></thead>
+  <tbody>
+    <tr><td>teacher BLIP-large</td><td class="num">1.6674</td><td class="num">1.6732</td><td class="num"><b>−0.9971</b></td><td class="num"><b>3.3382</b></td><td class="num">0.1269</td><td class="num"><b>0.038</b></td></tr>
+    <tr><td>student baseline · ep0 (initial)</td><td class="num">0.5998</td><td class="num">0.5842</td><td class="num">−0.0710</td><td class="num">0.8665</td><td class="num">0.8070</td><td class="num">0.931</td></tr>
+    <tr><td>student baseline · ep3</td><td class="num">0.6474</td><td class="num">0.6229</td><td class="num">−0.2648</td><td class="num">1.0103</td><td class="num">0.7704</td><td class="num">0.763</td></tr>
+    <tr><td>student baseline · ep15</td><td class="num">0.7241</td><td class="num">0.6959</td><td class="num">−0.5079</td><td class="num">1.2331</td><td class="num">0.7048</td><td class="num">0.572</td></tr>
+    <tr><td>student baseline · ep19</td><td class="num">0.7327</td><td class="num">0.7065</td><td class="num">−0.5337</td><td class="num">1.2604</td><td class="num">0.6953</td><td class="num">0.552</td></tr>
+    <tr><td>schemeA · ep15</td><td class="num">0.5406</td><td class="num">0.5237</td><td class="num">−0.1238</td><td class="num">0.7979</td><td class="num">0.7046</td><td class="num">0.883</td></tr>
+    <tr><td>schemeA · ep19</td><td class="num">0.5395</td><td class="num">0.5253</td><td class="num">−0.1483</td><td class="num">0.8069</td><td class="num">0.6949</td><td class="num">0.861</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h3>Raw <code>separation</code> is not scale-invariant — the correct metric is within-query <i>d</i>′</h3>
+<p class="lede">
+  separation = mean(match_gap) − mean(distractor_gap) = w<sub>d</sub>·(h<sub>match</sub> − h<sub>distractor</sub>), so it is
+  <b>directly proportional to ‖w<sub>d</sub>‖</b>. The teacher's ‖w<sub>d</sub>‖ is 2.7× the student's (3.338 vs 1.233), so a raw comparison is contaminated by head scale.
+  To remove scale entirely, the denominator must be in the same units as gap —
+  <b><i>d</i>′ = (mean gap<sub>correct</sub> − mean gap<sub>distractor</sub>) / std(gap<sub>distractor</sub>)</b>, measured within a query.
+</p>
+
+<div class="legend">
+  <span><i class="swatch" style="background:var(--series-1)"></i>raw separation</span>
+  <span><i class="swatch" style="background:var(--series-2)"></i>within-query <i>d</i>′ (i2t, scale-free)</span>
+</div>
+<figure>
+  <div class="simplebars" id="sepchart"></div>
+  <div class="axisnote">0.0 ─────────────────────────── 3.5</div>
+  <figcaption>
+    Measured by <i>d</i>′, the order is <b>teacher 2.195 &gt; baseline 1.492 &gt; schemeA 1.083</b>, monotonically consistent with R@1 (72.4 / 58.2 / 50.0).
+    So the "the teacher is sharper" narrative <b>holds</b> — but the factor is smaller than the raw comparison (3.399/1.670 = 2.04) suggests (<i>d</i>′ = <b>1.47</b>).
+    <br>
+    ⚠️ The "sep / ‖w<sub>d</sub>‖" alternative that an earlier version of this document proposed (teacher 1.02 · baseline 1.35 · schemeA 0.78) is <b>retracted</b> —
+    being a partial normalization that removes only head scale while leaving feature scale (768-dim teacher vs 384-dim student, LayerNorm gain), it produced order-reversing errors.
+    <br>
+    Measurement sources: <code>critical_bugfix/2026-07-30_itm_logit_offset_and_head_geometry/</code> (500 queries × top-128, head in fp32),
+    <code>2026-07-24_itm_distill_sharpness/</code>, <code>2026-07-27_itm_eval_ranking_and_structure/</code>
+  </figcaption>
+</figure>
+
+<footer>
+  <b>Sources · verification methods</b>
+  <ul>
+    <li>parameters: instantiate <code>BLIP_Pretrain</code>, then de-duplicate by <code>data_ptr</code> — <code>docs/model_specs/count_specs.py</code></li>
+    <li>random-init list: the <code>missing_keys</code> of <code>from_pretrained(..., output_loading_info=True)</code></li>
+    <li>tokenizer identity: compare the <code>blobId</code> (git blob sha1) from the HF Hub API <code>?blobs=true</code></li>
+    <li>MiniLM variant confirmation: HF model card text + performance table ↔ arXiv:2002.10957 Table 8</li>
+    <li>DINOv3: timm <code>vit_small_patch16_dinov3.lvd1689m</code> model card + local model measurement (21,586,944 / 12 layers / 384 / 6 heads / RoPE)</li>
+    <li><code>itm_head</code> geometry: direct decomposition of <code>itm_head.{weight,bias}</code> from <code>output/pt_smallreg_minilm_baseline</code>, <code>output/pt_itm_schemeA_tempered</code>, <code>output/official_pretrain_checkpoint/model_large.pth</code></li>
+  </ul>
+  The color palette is a 6-slot categorical set that passes CVD-separation checks in both light and dark (worst adjacent ΔE 9.1 light / 8.4 dark).
+  Some slots fall below 3:1 in light mode, so a <b>table view is provided alongside</b>.
+</footer>
+
+</div>
+<div id="tip"><span class="tt"></span><span class="tv"></span></div>
+
+<script>
+(function () {
+  var SERIES = [
+    { key: "vision",   label: "vision encoder",                 css: "--series-1" },
+    { key: "emb",      label: "text embeddings",                css: "--series-2" },
+    { key: "selfattn", label: "self-attention (enc + dec)",     css: "--series-3" },
+    { key: "cross",    label: "cross-attention (random init)",  css: "--series-4" },
+    { key: "ffn",      label: "FFN",                            css: "--series-5" },
+    { key: "other",    label: "other (heads · projections)",    css: "--series-6" }
+  ];
+  var MODELS = [
+    { name: "BLIP-large", arch: "vit=large · bert=base", vision: 303301632, emb: 23837184, selfattn: 56733696, cross: 33085440, ffn: 56687616, other: 1083454 },
+    { name: "BLIP-base",  arch: "vit=base · bert=base",  vision: 85798656,  emb: 23837184, selfattn: 56733696, cross: 28366848, ffn: 56687616, other: 1017918 },
+    { name: "student DINOv3-S+MiniLM", arch: "vit=small_reg · bert=minilm", vision: 21586944, emb: 11918592, selfattn: 14211072, cross: 7105536, ffn: 14188032, other: 377022 }
+  ];
+
+  function fmt(n) { return n.toLocaleString("en-US"); }
+  function mfmt(n) { return (n / 1e6).toFixed(1) + "M"; }
+
+  // legend
+  var lg = document.getElementById("legend");
+  SERIES.forEach(function (s) {
+    var el = document.createElement("span");
+    el.innerHTML = '<i class="swatch" style="background:var(' + s.css + ')"></i>' + s.label;
+    lg.appendChild(el);
+  });
+
+  // stacked bars — row width ∝ total
+  var totals = MODELS.map(function (m) {
+    return SERIES.reduce(function (a, s) { return a + m[s.key]; }, 0);
+  });
+  var max = Math.max.apply(null, totals);
+  var host = document.getElementById("stackchart");
+  MODELS.forEach(function (m, i) {
+    var row = document.createElement("div");
+    row.className = "barrow";
+    var pct = (totals[i] / max * 100);
+    var segs = SERIES.map(function (s) {
+      return '<div class="seg" style="background:var(' + s.css + ');flex:' + m[s.key] +
+             ' 0 0" data-t="' + m.name + ' — ' + s.label + '" data-v="' + fmt(m[s.key]) +
+             ' (' + (m[s.key] / totals[i] * 100).toFixed(1) + '%)"></div>';
+    }).join("");
+    row.innerHTML =
+      '<div class="barlabel">' + m.name + '<em>' + m.arch + '</em></div>' +
+      '<div class="track"><div class="stack" style="width:' + pct.toFixed(2) + '%">' + segs + '</div>' +
+      '<span class="total"><b>' + mfmt(totals[i]) + '</b> · ' + pct.toFixed(1) + '%</span></div>';
+    host.appendChild(row);
+  });
+
+  // simple magnitude bars
+  function simpleBars(hostId, rows, scaleMax, fmtVal, altIdx) {
+    var h = document.getElementById(hostId);
+    rows.forEach(function (r) {
+      var row = document.createElement("div");
+      row.className = "sbrow";
+      var w = (r.value / scaleMax * 100).toFixed(2);
+      row.innerHTML =
+        '<div class="barlabel">' + r.label + (r.note ? '<em>' + r.note + '</em>' : '') + '</div>' +
+        '<div class="sbtrack"><div class="sbfill' + (altIdx && r.alt ? ' alt' : '') +
+        '" style="width:' + w + '%" data-t="' + r.label + '" data-v="' + fmtVal(r.value) + '"></div>' +
+        '<span class="sbval">' + fmtVal(r.value) + '</span></div>';
+      h.appendChild(row);
+    });
+  }
+
+  simpleBars("wschart", [
+    { label: "teacher BLIP-large",     value: 0.038, note: "cos(w₀,w₁) = −0.9971 · fully converged" },
+    { label: "student baseline @ep19", value: 0.552, note: "‖w_d‖ 1.2604" },
+    { label: "schemeA @ep19",          value: 0.861, note: "‖w_d‖ 0.8069" },
+    { label: "random init @ep0",       value: 0.931, note: "pre-training baseline" }
+  ], 1.0, function (v) { return v.toFixed(3); });
+
+  simpleBars("sepchart", [
+    { label: "teacher — raw sep",      value: 3.399 },
+    { label: "teacher — d′",           value: 2.195, alt: 1 },
+    { label: "baseline@ep15 — raw sep", value: 1.670 },
+    { label: "baseline@ep15 — d′",     value: 1.492, alt: 1 },
+    { label: "schemeA@ep15 — raw sep",  value: 0.620 },
+    { label: "schemeA@ep15 — d′",      value: 1.083, alt: 1 }
+  ], 3.5, function (v) { return v.toFixed(3); }, true);
+
+  // hover tooltip
+  var tip = document.getElementById("tip");
+  var tt = tip.querySelector(".tt"), tv = tip.querySelector(".tv");
+  document.addEventListener("mousemove", function (e) {
+    var t = e.target.closest ? e.target.closest("[data-t]") : null;
+    if (!t) { tip.style.opacity = 0; return; }
+    tt.textContent = t.getAttribute("data-t");
+    tv.textContent = t.getAttribute("data-v");
+    tip.style.opacity = 1;
+    var x = e.clientX + 14, y = e.clientY + 14;
+    var r = tip.getBoundingClientRect();
+    if (x + r.width > window.innerWidth - 8) x = e.clientX - r.width - 14;
+    if (y + r.height > window.innerHeight - 8) y = e.clientY - r.height - 14;
+    tip.style.left = x + "px"; tip.style.top = y + "px";
+  });
+})();
+</script>
+</body>
+</html>

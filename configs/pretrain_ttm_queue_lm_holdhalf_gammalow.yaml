@@ -1,0 +1,145 @@
+train_file: ['/home/minwoo/Distillation_Project/datasets/vision/coco/annotations/coco_karpathy_train.json',
+             '/home/minwoo/Distillation_Project/datasets/vision/vg/annotations/vg_train.json'
+             ]
+laion_path: ''
+image_root_coco: '/home/minwoo/Distillation_Project/datasets/vision/coco/images/'
+image_root_vg: '/home/minwoo/Distillation_Project/datasets/vision/vg/images/'
+
+cc12m_tar_path: ''
+cc12m_ratio: 5
+
+used_dataset: 'coco_vg'
+
+# ===== 크레이터 root-cause 진단: γ 스케줄 실험 (2026-08-18) =====
+# 배경: holdhalf(hold_epochs=2, decay_end=42)는 ep13.3~14.2 구간에서 txt_r1이 급락하는
+#   "크레이터"가 재현됨(원본 τ=0.05, 재현 τ=0.0258 둘 다 동일 지점·동일 폭으로 크레이터
+#   발생 → ttm_temp은 원인이 아님이 확인됨, project_refactor_itc_instability memory 참고).
+#   holdteacher(γ≈1 상시)는 이 지점에서 안 터지고 대신 ep7-8/ep17-18에서 터짐 → 데이터
+#   자체(same-epoch=same DistributedSampler shuffle, seed=0+epoch라 모든 런이 동일)가
+#   아니라 "그 시점의 γ×logit_scale 조합"이 트리거라는 가설.
+#
+# 이 config가 검증하는 것: **크레이터 지점(ep13~14)에서 γ를 원본보다 낮게** 만들면
+#   (원본 0.70~0.73 → 이 config 0.40~0.42) 크레이터가 사라지는가.
+#   hold_epochs=-10 → γ=1 홀드 구간이 없어지고 스텝0부터 이미 감쇠가 진행중인 것으로 취급
+#   (ttm_gamma()는 hold_epochs 음수를 막지 않음, hold_steps<=decay_end_steps만 assert).
+#   decay_end_epochs=30 → 감쇠를 ep42가 아니라 ep30에서 끝냄(더 가파른 하강).
+#   결과 γ(ep0)=0.75, γ(ep12)=0.45, γ(ep13)=0.42, γ(ep14)=0.40, γ(ep20)=0.25(0 도달 못함).
+#
+# ★ 처음부터(--checkpoint 없이) 돌리면 초반 2에폭 티처 scaffold(γ=1)가 사라져 학습 초반
+#   궤적 자체가 바뀌므로, "그 지점만 γ가 낮아서 크레이터가 없어졌다"를 깨끗하게 검증할 수
+#   없다. **반드시 ckpt_12(크레이터 직전, 원본 스케줄로 정상학습된 가중치)에서
+#   --checkpoint output/pt_ttm_queue_lm_holdhalf/checkpoint_12.pth 로 재시작할 것.**
+#   그러면 ep12까지는 원본과 완전히 동일한 궤적이고, 재개 순간 γ만 0.75→0.45로
+#   불연속 하강하는 단일변수 자연실험이 된다.
+#
+# temp는 지난 검증 런(τ=0.0258, project_refactor_itc_instability memory의 "T*")과
+# 동일하게 유지 — 이번 런의 변인은 γ 스케줄 하나뿐.
+output_dir: '/home/minwoo/Distillation_Project/output/pt_ttm_queue_lm_holdhalf_gammalow'
+
+# experiment 태그 (tensorboard run 이름에 사용)
+exp: '9.5.4 ttm_queue_lm_holdhalf_gammalow_hold-10_decay30'
+# 이미지 증강 토글: 온라인 티처 증류는 augmentation ON 필수 (no-aug는 NO-GO였음)
+pretrain_train_aug: true
+
+# new) tenserboard log interval
+tb_train_log_interval: 50
+tb_val_log_interval: 1000
+
+# ===== student architecture (pretrain_student.yaml과 동일 — baseline 대비 변인 통제) =====
+vit: 'small_reg'
+vit_grad_ckpt: False
+vit_ckpt_layer: 0
+
+my_bert_size: 'minilm'
+
+
+## 벨리데이션 과정
+#### COCO Karpathy validation loss ####
+val_loss_enabled: true
+
+val_loss_file: '/home/minwoo/Distillation_Project/datasets/vision/coco/annotations/coco_karpathy_val.json'
+val_loss_image_root: '/home/minwoo/Distillation_Project/datasets/vision/coco/images/'
+
+val_loss_batch_size: 32
+val_loss_num_workers: 4
+val_loss_caption_mode: first
+val_loss_drop_last: true
+val_loss_pin_memory: true
+
+val_loss_print_freq: 50
+
+val_loss_interval_steps: 500
+val_loss_max_batches: 30 # 전체가 39더라
+
+val_loss_epoch_end: true
+val_loss_epoch_max_batches: 30
+
+val_loss_alpha_mode: current
+val_loss_restore_rng: true
+val_loss_amp: true
+
+#### COCO Karpathy retrieval validation (momentum 없는 student-only R@1/5/10) ####
+val_retrieval_enabled: true
+val_retrieval_ann_root: '/home/minwoo/Distillation_Project/datasets/vision/coco/annotations/'
+val_retrieval_image_root: '/home/minwoo/Distillation_Project/datasets/vision/coco/images/'
+val_retrieval_split: 'val'
+val_retrieval_batch_size: 64
+val_retrieval_num_workers: 4
+val_retrieval_amp: true
+k_test: 128
+
+val_retrieval_itc_interval_steps: 1000
+val_retrieval_itc_epoch_end: true
+
+val_retrieval_itm_interval_steps: 18675
+val_retrieval_itm_epoch_end: true
+
+#### 학습 중 caption 지표 검증 (BLEU/METEOR/ROUGE/CIDEr/SPICE) ####
+val_caption_enabled: true
+val_caption_ann_root: '/home/minwoo/Distillation_Project/datasets/vision/coco/annotations/'
+val_caption_image_root: '/home/minwoo/Distillation_Project/datasets/vision/coco/images/'
+val_caption_gt_root: '/home/minwoo/Distillation_Project/datasets/vision/coco/annotation/coco_gt'
+val_caption_split: 'val'
+val_caption_batch_size: 32
+val_caption_num_workers: 4
+val_caption_mid_interval_steps: 18675
+val_caption_epoch_end: true
+val_caption_use_spice: true
+caption_score_cpu_list: '0-63'
+
+image_size: 224
+batch_size: 40
+
+queue_size: 57600
+alpha: 0.4
+
+weight_decay: 0.05
+init_lr: 1.0e-5
+
+min_lr: 0.0667e-6
+warmup_lr: 0.0667e-6
+lr_decay_rate: 0.9
+max_epoch: 20
+warmup_steps: 37000
+
+# ====== knowledge distillation ======
+distill:
+  itc:
+    enabled: false
+    weight: 1.0
+    temp: 0.05
+  itc_target_mix:
+    enabled: true
+    variant: queue
+    temp: 0.0258
+    soft_weight: 0.4
+    hold_epochs: -10
+    decay_end_epochs: 30
+  lm:
+    enabled: true
+    weight: 1.0
+    temp: 2.0
+
+teacher:
+  arch: 'blip_large'
+  checkpoint: '/home/minwoo/Distillation_Project/output/official_pretrain_checkpoint/model_large.pth'
